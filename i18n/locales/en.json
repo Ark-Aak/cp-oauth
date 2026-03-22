@@ -124,6 +124,7 @@
         "scopes": {
             "openid": "Base identity — your user ID",
             "profile": "Profile — username, avatar, and bio",
+            "email": "Email — your email address",
             "cp_linked": "Linked Accounts — your linked competitive programming platform accounts",
             "cp_summary": "CP Summary — aggregated competitive programming stats",
             "cp_details": "CP Details — full submission history and rating trends"
@@ -171,6 +172,7 @@
             "data_col": "Data Returned",
             "openid": "User ID (sub claim)",
             "profile": "Username, display name, avatar URL, and bio",
+            "email": "Email address and verification status",
             "cp_linked": "Linked competitive programming platform accounts (platform, UID, username)",
             "cp_summary": "Linked OJ accounts, total problems solved, highest rating",
             "cp_details": "Full submission history and rating trend data"

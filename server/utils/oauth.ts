@@ -3,6 +3,7 @@ import crypto from 'crypto';
 export const SCOPES = {
     openid: 'Base identity (user ID)',
     profile: 'Username, avatar, and bio',
+    email: 'Email address',
     'cp:linked': 'Linked competitive programming accounts',
     'cp:summary': 'Aggregated competitive programming stats',
     'cp:details': 'Full submission history and rating trends'

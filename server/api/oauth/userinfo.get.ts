@@ -56,6 +56,12 @@ export default defineEventHandler(async event => {
         response.bio = user.bio;
     }
 
+    // email — email address and verification status
+    if (scopes.includes('email')) {
+        response.email = user.email;
+        response.email_verified = user.emailVerified;
+    }
+
     // cp:linked — linked platform accounts
     if (scopes.includes('cp:linked')) {
         const linked = await prisma.linkedAccount.findMany({
