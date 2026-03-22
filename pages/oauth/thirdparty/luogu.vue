@@ -35,21 +35,19 @@
                     size="large"
                 />
             </el-form-item>
-            <el-form-item>
-                <el-button
-                    class="luogu-login-card__btn"
-                    type="primary"
-                    native-type="submit"
-                    :loading="loading"
-                    :disabled="!pasteId.trim() || !thirdPartyCaptchaReady"
-                    size="large"
-                >
-                    <span class="luogu-login-card__btn-content">
-                        <AppPlatformIcon platform="luogu" />
-                        <span>{{ $t('auth.login.luogu_login_by_credential') }}</span>
-                    </span>
-                </el-button>
-            </el-form-item>
+            <el-button
+                class="luogu-login-card__btn"
+                type="primary"
+                native-type="submit"
+                :loading="loading"
+                :disabled="!pasteId.trim() || !thirdPartyCaptchaReady"
+                size="large"
+            >
+                <span class="luogu-login-card__btn-content">
+                    <AppPlatformIcon platform="luogu" />
+                    <span>{{ $t('auth.login.luogu_login_by_credential') }}</span>
+                </span>
+            </el-button>
         </el-form>
 
         <div v-else>
