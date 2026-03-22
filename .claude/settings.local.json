@@ -14,7 +14,24 @@
             "Bash(mv D:/WebstormProjects/cp-oauth/pages/user/[id].vue D:/WebstormProjects/cp-oauth/pages/user/[username].vue)",
             "Bash(docker compose:*)",
             "Bash(docker exec:*)",
-            "Bash(npx nuxt:*)"
+            "Bash(npx nuxt:*)",
+            "Bash(npm info:*)",
+            "WebSearch",
+            "WebFetch(domain:nuxt.com)",
+            "Bash(npx nuxi@latest upgrade --help)",
+            "Bash(npm view:*)",
+            "Bash(npm show:*)",
+            "Bash(npx nuxi@latest init /tmp/nuxt4test --packageManager npm --no-install --no-gitInit)",
+            "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(f''''{k}: {v}''''\\) for k,v in sorted\\(d.items\\(\\)\\)]\")",
+            "Bash(npm run:*)",
+            "Bash(git add:*)",
+            "Bash(git commit:*)",
+            "Bash(git push:*)",
+            "Bash(PGPASSWORD=cppass psql -h localhost -U cpuser -d cpoauth -c \"UPDATE system_config SET value = 'false' WHERE key = 'turnstile_enabled';\")",
+            "Bash(docker ps:*)",
+            "WebFetch(domain:0f-0b.github.io)",
+            "Bash(curl -sL \"https://0f-0b.github.io/luogu-api-docs/\")",
+            "Bash(curl:*)"
         ]
     }
 }
