@@ -6,11 +6,13 @@ export default defineEventHandler(async () => {
         turnstileEnabled === 'true' ? await getConfig('turnstile_site_key') : '';
     const siteTitle = await getConfig('site_title');
     const registrationEnabled = await getConfig('registration_enabled');
+    const codeforcesClientId = await getConfig('codeforces_client_id');
 
     return {
         siteTitle,
         registrationEnabled: registrationEnabled !== 'false',
         turnstileEnabled: turnstileEnabled === 'true',
-        turnstileSiteKey
+        turnstileSiteKey,
+        codeforcesLoginEnabled: codeforcesClientId.trim().length > 0
     };
 });

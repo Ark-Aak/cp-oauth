@@ -27,6 +27,12 @@
             "password": "密码",
             "submit": "登录",
             "loading": "登录中...",
+            "oauth_divider": "或",
+            "with_codeforces": "使用 Codeforces 登录",
+            "codeforces_callback_title": "Codeforces 登录",
+            "codeforces_callback_loading": "正在完成 Codeforces 授权...",
+            "codeforces_callback_success": "登录成功，正在跳转...",
+            "codeforces_callback_invalid": "无效的授权回调参数",
             "footer": "还没有账号？",
             "register_link": "注册",
             "error": "登录失败"
@@ -96,7 +102,8 @@
         "verify_success": "账号关联成功！",
         "verify_error": "验证失败",
         "platforms": {
-            "luogu": "洛谷"
+            "luogu": "洛谷",
+            "codeforces": "Codeforces"
         }
     },
     "settings": {
@@ -216,6 +223,9 @@
             "turnstile_toggle": "Turnstile 验证",
             "turnstile_site_key": "站点密钥",
             "turnstile_secret": "密钥",
+            "codeforces": "Codeforces OAuth",
+            "codeforces_client_id": "Codeforces Client ID",
+            "codeforces_client_secret": "Codeforces Client Secret",
             "save": "保存",
             "saving": "保存中...",
             "saved": "配置保存成功。"

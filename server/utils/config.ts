@@ -14,7 +14,9 @@ const DEFAULTS: Record<string, string> = {
     smtp_from: 'noreply@example.com',
     turnstile_enabled: 'false',
     turnstile_site_key: '',
-    turnstile_secret_key: ''
+    turnstile_secret_key: '',
+    codeforces_client_id: '',
+    codeforces_client_secret: ''
 };
 
 export async function getConfig(key: string): Promise<string> {

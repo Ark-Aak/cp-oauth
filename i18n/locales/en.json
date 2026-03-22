@@ -27,6 +27,12 @@
             "password": "Password",
             "submit": "Sign In",
             "loading": "Signing in...",
+            "oauth_divider": "or",
+            "with_codeforces": "Sign in with Codeforces",
+            "codeforces_callback_title": "Codeforces Sign In",
+            "codeforces_callback_loading": "Finishing Codeforces authorization...",
+            "codeforces_callback_success": "Sign in successful, redirecting...",
+            "codeforces_callback_invalid": "Invalid authorization callback parameters",
             "footer": "Don't have an account?",
             "register_link": "Register",
             "error": "Login failed"
@@ -96,7 +102,8 @@
         "verify_success": "Account linked successfully!",
         "verify_error": "Verification failed",
         "platforms": {
-            "luogu": "Luogu"
+            "luogu": "Luogu",
+            "codeforces": "Codeforces"
         }
     },
     "settings": {
@@ -216,6 +223,9 @@
             "turnstile_toggle": "Turnstile Verification",
             "turnstile_site_key": "Site Key",
             "turnstile_secret": "Secret Key",
+            "codeforces": "Codeforces OAuth",
+            "codeforces_client_id": "Codeforces Client ID",
+            "codeforces_client_secret": "Codeforces Client Secret",
             "save": "Save",
             "saving": "Saving...",
             "saved": "Configuration saved successfully."

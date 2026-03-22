@@ -47,6 +47,18 @@
                 </el-button>
             </el-form-item>
         </el-form>
+
+        <div v-if="codeforcesLoginEnabled" class="login-card__oauth">
+            <el-divider>{{ $t('auth.login.oauth_divider') }}</el-divider>
+            <el-button
+                class="login-card__oauth-btn"
+                :loading="codeforcesLoading"
+                @click="handleCodeforcesLogin"
+            >
+                {{ $t('auth.login.with_codeforces') }}
+            </el-button>
+        </div>
+
         <p class="login-card__footer">
             {{ $t('auth.login.footer') }}
             <NuxtLink to="/register">{{ $t('auth.login.register_link') }}</NuxtLink>
@@ -67,8 +79,16 @@ useHead({ title: () => `${t('auth.login.title')} - CP OAuth` });
 const route = useRoute();
 const formRef = ref<FormInstance>();
 const loading = ref(false);
+const codeforcesLoading = ref(false);
 const verified = computed(() => route.query.verified === 'true');
 const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
+
+interface PublicConfigResponse {
+    siteTitle?: string;
+    turnstileEnabled?: boolean;
+    turnstileSiteKey?: string;
+    codeforcesLoginEnabled?: boolean;
+}
 
 const form = reactive({
     email: '',
@@ -80,10 +100,11 @@ const rules = computed<FormRules>(() => ({
     password: [{ required: true, message: t('auth.login.password'), trigger: 'blur' }]
 }));
 
-const { data: publicConfig } = await useFetch('/api/public/config');
+const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
 const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
 const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
 const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
+const codeforcesLoginEnabled = computed(() => publicConfig.value?.codeforcesLoginEnabled || false);
 const { token: turnstileToken, el: turnstileEl } = useTurnstile(turnstileSiteKey);
 
 async function handleLogin() {
@@ -108,6 +129,26 @@ async function handleLogin() {
         ElMessage.error(err.data?.message || t('auth.login.error'));
     } finally {
         loading.value = false;
+    }
+}
+
+async function handleCodeforcesLogin() {
+    codeforcesLoading.value = true;
+    try {
+        const result = await $fetch<{ authorizationUrl: string }>(
+            '/api/auth/thirdparty/codeforces/start',
+            {
+                query: {
+                    redirect: redirectTarget.value
+                }
+            }
+        );
+        await navigateTo(result.authorizationUrl, { external: true });
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('auth.login.error'));
+    } finally {
+        codeforcesLoading.value = false;
     }
 }
 </script>
@@ -144,6 +185,14 @@ async function handleLogin() {
     }
 
     &__btn {
+        width: 100%;
+    }
+
+    &__oauth {
+        margin-bottom: 8px;
+    }
+
+    &__oauth-btn {
         width: 100%;
     }
 

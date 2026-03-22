@@ -27,6 +27,12 @@
             "password": "パスワード",
             "submit": "サインイン",
             "loading": "サインイン中...",
+            "oauth_divider": "または",
+            "with_codeforces": "Codeforces でログイン",
+            "codeforces_callback_title": "Codeforces ログイン",
+            "codeforces_callback_loading": "Codeforces 認可を完了しています...",
+            "codeforces_callback_success": "ログイン成功、リダイレクトしています...",
+            "codeforces_callback_invalid": "認可コールバックのパラメータが無効です",
             "footer": "アカウントをお持ちでないですか？",
             "register_link": "登録",
             "error": "ログインに失敗しました"
@@ -96,7 +102,8 @@
         "verify_success": "アカウントを連携しました！",
         "verify_error": "確認に失敗しました",
         "platforms": {
-            "luogu": "洛谷"
+            "luogu": "洛谷",
+            "codeforces": "Codeforces"
         }
     },
     "settings": {
@@ -216,6 +223,9 @@
             "turnstile_toggle": "Turnstile 認証",
             "turnstile_site_key": "サイトキー",
             "turnstile_secret": "シークレットキー",
+            "codeforces": "Codeforces OAuth",
+            "codeforces_client_id": "Codeforces Client ID",
+            "codeforces_client_secret": "Codeforces Client Secret",
             "save": "保存",
             "saving": "保存中...",
             "saved": "設定を保存しました。"

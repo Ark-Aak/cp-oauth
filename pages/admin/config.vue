@@ -58,6 +58,15 @@
                 <el-input v-model="form.turnstile_secret_key" type="password" show-password />
             </el-form-item>
 
+            <!-- Codeforces OAuth -->
+            <h2 class="admin__section-title">{{ $t('admin.config.codeforces') }}</h2>
+            <el-form-item :label="$t('admin.config.codeforces_client_id')">
+                <el-input v-model="form.codeforces_client_id" />
+            </el-form-item>
+            <el-form-item :label="$t('admin.config.codeforces_client_secret')">
+                <el-input v-model="form.codeforces_client_secret" type="password" show-password />
+            </el-form-item>
+
             <el-form-item>
                 <el-button type="primary" native-type="submit" :loading="saving">
                     {{ saving ? $t('admin.config.saving') : $t('admin.config.save') }}
@@ -88,7 +97,9 @@ const form = reactive({
     smtp_from: '',
     turnstile_enabled: 'false',
     turnstile_site_key: '',
-    turnstile_secret_key: ''
+    turnstile_secret_key: '',
+    codeforces_client_id: '',
+    codeforces_client_secret: ''
 });
 
 function handleTabClick() {
