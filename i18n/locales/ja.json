@@ -1,0 +1,187 @@
+{
+    "app": {
+        "name": "CP OAuth"
+    },
+    "nav": {
+        "home": "ホーム",
+        "profile": "プロフィール",
+        "my_profile": "マイプロフィール",
+        "settings": "設定",
+        "developer": "開発者",
+        "about": "ドキュメント",
+        "login": "ログイン",
+        "logout": "ログアウト",
+        "admin": "管理"
+    },
+    "home": {
+        "title": "ようこそ",
+        "subtitle": "アルゴリズム競技向け統合認証プラットフォーム",
+        "recent_users": "最近のメンバー",
+        "loading": "読み込み中...",
+        "no_users": "まだユーザーがいません。最初の登録者になりましょう！"
+    },
+    "auth": {
+        "login": {
+            "title": "サインイン",
+            "email": "メール",
+            "password": "パスワード",
+            "submit": "サインイン",
+            "loading": "サインイン中...",
+            "footer": "アカウントをお持ちでないですか？",
+            "register_link": "登録",
+            "error": "ログインに失敗しました"
+        },
+        "register": {
+            "title": "登録",
+            "username": "ユーザー名",
+            "email": "メール",
+            "password": "パスワード",
+            "submit": "登録",
+            "loading": "アカウント作成中...",
+            "footer": "すでにアカウントをお持ちですか？",
+            "login_link": "サインイン",
+            "error": "登録に失敗しました"
+        }
+    },
+    "profile": {
+        "title": "マイプロフィール",
+        "loading": "読み込み中...",
+        "display_name": "表示名",
+        "bio": "自己紹介",
+        "homepage": "ホームページ",
+        "homepage_hint": "（Markdown 対応）",
+        "avatar_url": "アバターURL",
+        "avatar_url_hint": "https://example.com/avatar.png",
+        "view_public": "公開プロフィールを見る",
+        "save": "保存",
+        "saving": "保存中...",
+        "updated": "プロフィールを更新しました",
+        "update_error": "更新に失敗しました"
+    },
+    "user": {
+        "loading": "読み込み中...",
+        "not_found": "ユーザーが見つかりません。",
+        "joined": "登録日",
+        "linked_accounts": "連携済みCPアカウント",
+        "no_linked": "まだ競技プログラミングのアカウントが連携されていません。",
+        "homepage": "ホームページ"
+    },
+    "settings": {
+        "title": "設定",
+        "theme": {
+            "label": "テーマ",
+            "system": "システム設定",
+            "light": "ライト",
+            "dark": "ダーク"
+        },
+        "language": {
+            "label": "言語",
+            "en": "English",
+            "zh": "中文",
+            "ja": "日本語"
+        }
+    },
+    "oauth": {
+        "consent": {
+            "title": "認可リクエスト",
+            "wants_access": "があなたのアカウントへのアクセスを求めています。",
+            "permissions": "このアプリケーションは次の権限を要求しています：",
+            "authorize": "許可",
+            "deny": "拒否",
+            "loading": "読み込み中...",
+            "error": "認可リクエストに失敗しました"
+        },
+        "scopes": {
+            "openid": "基本情報 — あなたのユーザーID",
+            "profile": "プロフィール — ユーザー名、アバター、自己紹介",
+            "cp_summary": "CP概要 — 競技プログラミング統計の集計データ",
+            "cp_details": "CP詳細 — 完全な提出履歴とレーティング推移"
+        }
+    },
+    "developer": {
+        "title": "開発者設定",
+        "subtitle": "CP OAuth と連携する OAuth アプリを登録・管理します。",
+        "register_app": "新しいアプリを登録",
+        "app_name": "アプリ名",
+        "redirect_uris": "リダイレクトURI",
+        "redirect_uris_hint": "カンマ区切りのURI（例: https://myapp.com/callback）",
+        "create": "アプリを作成",
+        "creating": "作成中...",
+        "create_error": "アプリの作成に失敗しました",
+        "secret_warning": "このクライアントシークレットは今すぐ保存してください — 再表示されません。",
+        "dismiss": "保存しました",
+        "your_apps": "あなたのアプリ",
+        "no_apps": "まだアプリを登録していません。",
+        "delete": "削除",
+        "delete_error": "アプリの削除に失敗しました"
+    },
+    "about": {
+        "title": "開発者向けドキュメント",
+        "intro": "CP OAuth は PKCE に対応した OAuth 2.0 認可コードフローを実装しています。サードパーティアプリはユーザー認証を行い、競技プログラミングのプロフィールデータへのきめ細かなアクセスを要求できます。",
+        "flow": {
+            "title": "認可コードフロー",
+            "description": "標準的な OAuth2 認可コードフローは次のとおりです：",
+            "step1": "アプリケーションは、client_id・redirect_uri・要求スコープを付けてユーザーを /oauth/authorize エンドポイントへリダイレクトします。",
+            "step2": "ユーザーは同意画面でアクセスを許可するかどうかを選択します。",
+            "step3": "承認されると、ユーザーは認可コード付きで redirect_uri にリダイレクトされます。",
+            "step4": "サーバーは POST /oauth/token を使って認可コードをアクセストークンに交換します。",
+            "step5": "アクセストークンで GET /oauth/userinfo を呼び出し、ユーザーデータを取得します。"
+        },
+        "endpoints": {
+            "title": "APIエンドポイント",
+            "authorize_desc": "認可フローを開始します。ユーザーを同意画面へリダイレクトします。",
+            "token_desc": "認可コードをアクセストークンに交換します。client_secret と PKCE（code_verifier）の両方をサポートします。",
+            "userinfo_desc": "認可時に付与されたスコープに基づいてフィルタされたユーザーデータを返します。"
+        },
+        "scopes": {
+            "title": "権限スコープ",
+            "description": "アプリに必要なスコープのみを要求してください。/oauth/userinfo のレスポンスは付与されたスコープに応じて動的にフィルタされます。",
+            "scope_col": "スコープ",
+            "data_col": "返されるデータ",
+            "openid": "ユーザーID（subクレーム）",
+            "profile": "ユーザー名、表示名、アバターURL、自己紹介",
+            "cp_summary": "連携されたOJアカウント、解いた問題数の合計、最高レーティング",
+            "cp_details": "完全な提出履歴とレーティング推移データ"
+        },
+        "pkce": {
+            "title": "PKCE（Proof Key for Code Exchange）",
+            "description": "client_secret を安全に保存できない公開クライアント（例：SPA、モバイルアプリ）では、代わりに PKCE を使用してください。code_verifier を生成し、SHA-256 で code_challenge を導出して、認可リクエストに含めます。"
+        }
+    },
+    "admin": {
+        "title": "管理パネル",
+        "error": "操作に失敗しました",
+        "users": {
+            "tab": "ユーザー",
+            "search": "ユーザー名またはメールで検索...",
+            "username": "ユーザー名",
+            "email": "メール",
+            "role": "ロール",
+            "verified": "認証済み",
+            "actions": "操作",
+            "verify": "認証",
+            "no_results": "ユーザーが見つかりません。"
+        },
+        "config": {
+            "tab": "設定",
+            "site": "サイト設定",
+            "site_title": "サイトタイトル",
+            "registration": "登録",
+            "enabled": "有効",
+            "disabled": "無効",
+            "smtp": "SMTPメール",
+            "smtp_host": "SMTPホスト",
+            "smtp_port": "SMTPポート",
+            "smtp_user": "SMTPユーザー名",
+            "smtp_pass": "SMTPパスワード",
+            "smtp_from": "送信元アドレス",
+            "turnstile": "Cloudflare Turnstile",
+            "turnstile_toggle": "Turnstile 認証",
+            "turnstile_site_key": "サイトキー",
+            "turnstile_secret": "シークレットキー",
+            "save": "保存",
+            "saving": "保存中...",
+            "saved": "設定を保存しました。"
+        }
+    }
+}

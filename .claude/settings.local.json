@@ -1,0 +1,20 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(npx nuxi@latest init . --force --packageManager npm)",
+            "Bash(npm install:*)",
+            "Bash(npx lint-staged:*)",
+            "Bash(npx prettier:*)",
+            "Bash(npx eslint:*)",
+            "Bash(cd:*)",
+            "Bash(npx prisma:*)",
+            "Bash(npx nuxi:*)",
+            "Bash(npm uninstall:*)",
+            "Bash(rm D:/WebstormProjects/cp-oauth/server/api/users/[id].get.ts)",
+            "Bash(mv D:/WebstormProjects/cp-oauth/pages/user/[id].vue D:/WebstormProjects/cp-oauth/pages/user/[username].vue)",
+            "Bash(docker compose:*)",
+            "Bash(docker exec:*)",
+            "Bash(npx nuxt:*)"
+        ]
+    }
+}

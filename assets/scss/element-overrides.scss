@@ -1,0 +1,182 @@
+/* Element Plus Light Mode Overrides - Monochrome */
+:root {
+    --el-color-primary: #000000;
+    --el-color-primary-light-3: #333333;
+    --el-color-primary-light-5: #666666;
+    --el-color-primary-light-7: #999999;
+    --el-color-primary-light-8: #bbbbbb;
+    --el-color-primary-light-9: #dddddd;
+    --el-color-primary-dark-2: #1a1a1a;
+
+    --el-bg-color: #ffffff;
+    --el-bg-color-page: #f5f5f5;
+    --el-bg-color-overlay: #ffffff;
+
+    --el-text-color-primary: #171717;
+    --el-text-color-regular: #525252;
+    --el-text-color-secondary: #a3a3a3;
+    --el-text-color-placeholder: #a3a3a3;
+    --el-text-color-disabled: #c0c0c0;
+
+    --el-border-color: #d4d4d4;
+    --el-border-color-light: #e0e0e0;
+    --el-border-color-lighter: #e8e8e8;
+    --el-border-color-extra-light: #f0f0f0;
+    --el-border-color-dark: #c0c0c0;
+    --el-border-color-darker: #b0b0b0;
+
+    --el-fill-color: #f0f0f0;
+    --el-fill-color-light: #f5f5f5;
+    --el-fill-color-lighter: #fafafa;
+    --el-fill-color-extra-light: #fafafa;
+    --el-fill-color-dark: #e8e8e8;
+    --el-fill-color-darker: #e0e0e0;
+    --el-fill-color-blank: #ffffff;
+
+    --el-mask-color: rgba(255, 255, 255, 0.9);
+    --el-mask-color-extra-light: rgba(255, 255, 255, 0.3);
+}
+
+/* Element Plus Dark Mode Overrides - Monochrome */
+.dark {
+    --el-bg-color: #141414;
+    --el-bg-color-page: #0a0a0a;
+    --el-bg-color-overlay: #1e1e1e;
+
+    --el-text-color-primary: #e5e5e5;
+    --el-text-color-regular: #a0a0a0;
+    --el-text-color-secondary: #666666;
+    --el-text-color-placeholder: #525252;
+    --el-text-color-disabled: #3a3a3a;
+
+    --el-border-color: #2a2a2a;
+    --el-border-color-light: #222222;
+    --el-border-color-lighter: #1e1e1e;
+    --el-border-color-extra-light: #1a1a1a;
+    --el-border-color-dark: #333333;
+    --el-border-color-darker: #3a3a3a;
+
+    --el-fill-color: #1e1e1e;
+    --el-fill-color-light: #1a1a1a;
+    --el-fill-color-lighter: #161616;
+    --el-fill-color-extra-light: #141414;
+    --el-fill-color-dark: #2a2a2a;
+    --el-fill-color-darker: #333333;
+    --el-fill-color-blank: #0a0a0a;
+
+    --el-color-primary: #ffffff;
+    --el-color-primary-light-3: #cccccc;
+    --el-color-primary-light-5: #999999;
+    --el-color-primary-light-7: #666666;
+    --el-color-primary-light-8: #444444;
+    --el-color-primary-light-9: #222222;
+    --el-color-primary-dark-2: #e5e5e5;
+
+    --el-mask-color: rgba(0, 0, 0, 0.8);
+    --el-mask-color-extra-light: rgba(0, 0, 0, 0.3);
+
+    --el-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.4);
+    --el-box-shadow-light: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+    --el-box-shadow-lighter: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+    --el-box-shadow-dark: 0 2px 16px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Global Element Plus overrides for monochrome feel */
+
+/* Menu: remove colored backgrounds */
+.el-menu {
+    border-right: none !important;
+    background-color: transparent !important;
+}
+
+.el-menu-item,
+.el-sub-menu__title {
+    &:hover {
+        background-color: var(--el-fill-color) !important;
+    }
+
+    &.is-active {
+        color: var(--el-color-primary) !important;
+    }
+}
+
+/* Button plain variants for monochrome */
+.el-button--primary {
+    --el-button-bg-color: var(--el-color-primary);
+    --el-button-border-color: var(--el-color-primary);
+    --el-button-hover-bg-color: var(--el-color-primary-light-3);
+    --el-button-hover-border-color: var(--el-color-primary-light-3);
+    --el-button-active-bg-color: var(--el-color-primary-dark-2);
+    --el-button-active-border-color: var(--el-color-primary-dark-2);
+}
+
+.dark .el-button--primary {
+    color: #0a0a0a !important;
+
+    &:hover,
+    &:focus {
+        color: #0a0a0a !important;
+    }
+
+    &:active {
+        color: #0a0a0a !important;
+    }
+
+    &.is-disabled {
+        color: #666666 !important;
+        background-color: #444444 !important;
+        border-color: #444444 !important;
+    }
+}
+
+:root .el-button--primary {
+    --el-button-text-color: #ffffff;
+    --el-button-hover-text-color: #ffffff;
+    --el-button-active-text-color: #ffffff;
+}
+
+/* Card backgrounds */
+.el-card {
+    --el-card-bg-color: var(--el-bg-color);
+}
+
+/* Dialog backgrounds */
+.el-dialog {
+    --el-dialog-bg-color: var(--el-bg-color-overlay);
+}
+
+/* Table backgrounds */
+.el-table {
+    --el-table-bg-color: transparent;
+    --el-table-tr-bg-color: transparent;
+    --el-table-header-bg-color: transparent;
+}
+
+/* Input/Select remove focus highlight ring */
+.el-input__wrapper,
+.el-textarea__inner {
+    box-shadow: 0 0 0 1px var(--el-border-color) inset !important;
+
+    &:hover {
+        box-shadow: 0 0 0 1px var(--el-border-color-dark) inset !important;
+    }
+
+    &.is-focus,
+    &:focus {
+        box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
+    }
+}
+
+/* Radio button: dark mode checked state */
+.dark .el-radio-button__original-radio:checked + .el-radio-button__inner {
+    background-color: #ffffff;
+    border-color: #ffffff;
+    color: #0a0a0a !important;
+    box-shadow: -1px 0 0 0 #ffffff;
+}
+
+/* Pagination */
+.el-pagination {
+    --el-pagination-bg-color: transparent;
+    --el-pagination-hover-color: var(--el-color-primary);
+}

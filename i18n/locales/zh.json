@@ -1,0 +1,187 @@
+{
+    "app": {
+        "name": "CP OAuth"
+    },
+    "nav": {
+        "home": "首页",
+        "profile": "个人资料",
+        "my_profile": "我的资料",
+        "settings": "设置",
+        "developer": "开发者",
+        "about": "文档",
+        "login": "登录",
+        "logout": "退出登录",
+        "admin": "管理"
+    },
+    "home": {
+        "title": "欢迎",
+        "subtitle": "算法竞赛统一身份认证平台",
+        "recent_users": "最近加入的成员",
+        "loading": "加载中...",
+        "no_users": "暂无用户，快来注册成为第一位用户吧！"
+    },
+    "auth": {
+        "login": {
+            "title": "登录",
+            "email": "邮箱",
+            "password": "密码",
+            "submit": "登录",
+            "loading": "登录中...",
+            "footer": "还没有账号？",
+            "register_link": "注册",
+            "error": "登录失败"
+        },
+        "register": {
+            "title": "注册",
+            "username": "用户名",
+            "email": "邮箱",
+            "password": "密码",
+            "submit": "注册",
+            "loading": "正在创建账号...",
+            "footer": "已有账号？",
+            "login_link": "登录",
+            "error": "注册失败"
+        }
+    },
+    "profile": {
+        "title": "我的资料",
+        "loading": "加载中...",
+        "display_name": "显示名称",
+        "bio": "个人简介",
+        "homepage": "个人主页",
+        "homepage_hint": "（支持 Markdown）",
+        "avatar_url": "头像链接",
+        "avatar_url_hint": "https://example.com/avatar.png",
+        "view_public": "查看公开资料",
+        "save": "保存",
+        "saving": "保存中...",
+        "updated": "资料已更新",
+        "update_error": "更新失败"
+    },
+    "user": {
+        "loading": "加载中...",
+        "not_found": "未找到该用户。",
+        "joined": "加入时间",
+        "linked_accounts": "关联的竞赛账号",
+        "no_linked": "尚未关联任何竞赛编程账号。",
+        "homepage": "个人主页"
+    },
+    "settings": {
+        "title": "设置",
+        "theme": {
+            "label": "主题",
+            "system": "跟随系统",
+            "light": "浅色",
+            "dark": "深色"
+        },
+        "language": {
+            "label": "语言",
+            "en": "English",
+            "zh": "中文",
+            "ja": "日本語"
+        }
+    },
+    "oauth": {
+        "consent": {
+            "title": "授权请求",
+            "wants_access": "正在请求访问您的账号。",
+            "permissions": "该应用正在请求以下权限：",
+            "authorize": "授权",
+            "deny": "拒绝",
+            "loading": "加载中...",
+            "error": "授权请求失败"
+        },
+        "scopes": {
+            "openid": "基本身份 — 您的用户 ID",
+            "profile": "个人资料 — 用户名、头像和简介",
+            "cp_summary": "竞赛概要 — 汇总的竞赛编程统计数据",
+            "cp_details": "竞赛详情 — 完整的提交记录和评级趋势"
+        }
+    },
+    "developer": {
+        "title": "开发者设置",
+        "subtitle": "注册和管理与 CP OAuth 集成的 OAuth 应用。",
+        "register_app": "注册新应用",
+        "app_name": "应用名称",
+        "redirect_uris": "回调地址",
+        "redirect_uris_hint": "以逗号分隔的 URI（例如 https://myapp.com/callback）",
+        "create": "创建应用",
+        "creating": "创建中...",
+        "create_error": "创建应用失败",
+        "secret_warning": "请立即保存此客户端密钥 — 它将不会再次显示。",
+        "dismiss": "我已保存",
+        "your_apps": "我的应用",
+        "no_apps": "您还没有注册任何应用。",
+        "delete": "删除",
+        "delete_error": "删除应用失败"
+    },
+    "about": {
+        "title": "开发者文档",
+        "intro": "CP OAuth 实现了支持 PKCE 的 OAuth 2.0 授权码流程。第三方应用可以对用户进行身份验证，并请求细粒度的竞赛编程个人资料数据访问权限。",
+        "flow": {
+            "title": "授权码流程",
+            "description": "标准的 OAuth2 授权码流程如下：",
+            "step1": "您的应用将用户重定向到我们的 /oauth/authorize 端点，附带 client_id、redirect_uri 和请求的权限范围。",
+            "step2": "用户看到授权同意页面，并决定是否授予访问权限。",
+            "step3": "如果批准，用户将被重定向到您的 redirect_uri，并附带授权码。",
+            "step4": "您的服务器通过 POST /oauth/token 将授权码交换为访问令牌。",
+            "step5": "使用访问令牌调用 GET /oauth/userinfo 获取用户数据。"
+        },
+        "endpoints": {
+            "title": "API 端点",
+            "authorize_desc": "发起授权流程，将用户重定向到授权同意页面。",
+            "token_desc": "将授权码交换为访问令牌。支持 client_secret 和 PKCE（code_verifier）两种认证方式。",
+            "userinfo_desc": "返回根据授权期间授予的权限范围过滤的用户数据。"
+        },
+        "scopes": {
+            "title": "权限范围",
+            "description": "请仅请求您的应用所需的权限范围。/oauth/userinfo 的响应会根据授予的权限范围动态过滤。",
+            "scope_col": "权限范围",
+            "data_col": "返回的数据",
+            "openid": "用户 ID（sub 声明）",
+            "profile": "用户名、显示名称、头像链接和个人简介",
+            "cp_summary": "关联的 OJ 账号、解题总数、最高评级",
+            "cp_details": "完整的提交记录和评级趋势数据"
+        },
+        "pkce": {
+            "title": "PKCE（代码交换证明密钥）",
+            "description": "对于无法安全存储 client_secret 的公开客户端（如单页应用、移动应用），请改用 PKCE。生成 code_verifier，使用 SHA-256 推导 code_challenge，并将其包含在授权请求中。"
+        }
+    },
+    "admin": {
+        "title": "管理面板",
+        "error": "操作失败",
+        "users": {
+            "tab": "用户管理",
+            "search": "搜索用户名或邮箱...",
+            "username": "用户名",
+            "email": "邮箱",
+            "role": "角色",
+            "verified": "已验证",
+            "actions": "操作",
+            "verify": "验证",
+            "no_results": "未找到用户。"
+        },
+        "config": {
+            "tab": "系统配置",
+            "site": "站点设置",
+            "site_title": "站点标题",
+            "registration": "注册功能",
+            "enabled": "已启用",
+            "disabled": "已禁用",
+            "smtp": "SMTP 邮件",
+            "smtp_host": "SMTP 主机",
+            "smtp_port": "SMTP 端口",
+            "smtp_user": "SMTP 用户名",
+            "smtp_pass": "SMTP 密码",
+            "smtp_from": "发件人地址",
+            "turnstile": "Cloudflare Turnstile",
+            "turnstile_toggle": "Turnstile 验证",
+            "turnstile_site_key": "站点密钥",
+            "turnstile_secret": "密钥",
+            "save": "保存",
+            "saving": "保存中...",
+            "saved": "配置保存成功。"
+        }
+    }
+}

@@ -1,0 +1,187 @@
+{
+    "app": {
+        "name": "CP OAuth"
+    },
+    "nav": {
+        "home": "Home",
+        "profile": "Profile",
+        "my_profile": "My Profile",
+        "settings": "Settings",
+        "developer": "Developer",
+        "about": "Docs",
+        "login": "Login",
+        "logout": "Logout",
+        "admin": "Admin"
+    },
+    "home": {
+        "title": "Welcome",
+        "subtitle": "Algorithm Competition Unified Identity Platform",
+        "recent_users": "Recent Members",
+        "loading": "Loading...",
+        "no_users": "No users yet. Be the first to register!"
+    },
+    "auth": {
+        "login": {
+            "title": "Sign In",
+            "email": "Email",
+            "password": "Password",
+            "submit": "Sign In",
+            "loading": "Signing in...",
+            "footer": "Don't have an account?",
+            "register_link": "Register",
+            "error": "Login failed"
+        },
+        "register": {
+            "title": "Register",
+            "username": "Username",
+            "email": "Email",
+            "password": "Password",
+            "submit": "Register",
+            "loading": "Creating account...",
+            "footer": "Already have an account?",
+            "login_link": "Sign In",
+            "error": "Registration failed"
+        }
+    },
+    "profile": {
+        "title": "My Profile",
+        "loading": "Loading...",
+        "display_name": "Display Name",
+        "bio": "Bio",
+        "homepage": "Homepage",
+        "homepage_hint": "(Markdown supported)",
+        "avatar_url": "Avatar URL",
+        "avatar_url_hint": "https://example.com/avatar.png",
+        "view_public": "View public profile",
+        "save": "Save",
+        "saving": "Saving...",
+        "updated": "Profile updated",
+        "update_error": "Update failed"
+    },
+    "user": {
+        "loading": "Loading...",
+        "not_found": "User not found.",
+        "joined": "Joined",
+        "linked_accounts": "Linked CP Accounts",
+        "no_linked": "No competitive programming accounts linked yet.",
+        "homepage": "Homepage"
+    },
+    "settings": {
+        "title": "Settings",
+        "theme": {
+            "label": "Theme",
+            "system": "System Default",
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "language": {
+            "label": "Language",
+            "en": "English",
+            "zh": "中文",
+            "ja": "日本語"
+        }
+    },
+    "oauth": {
+        "consent": {
+            "title": "Authorization Request",
+            "wants_access": "is requesting access to your account.",
+            "permissions": "This application is requesting the following permissions:",
+            "authorize": "Authorize",
+            "deny": "Deny",
+            "loading": "Loading...",
+            "error": "Authorization request failed"
+        },
+        "scopes": {
+            "openid": "Base identity — your user ID",
+            "profile": "Profile — username, avatar, and bio",
+            "cp_summary": "CP Summary — aggregated competitive programming stats",
+            "cp_details": "CP Details — full submission history and rating trends"
+        }
+    },
+    "developer": {
+        "title": "Developer Settings",
+        "subtitle": "Register and manage OAuth applications that integrate with CP OAuth.",
+        "register_app": "Register New Application",
+        "app_name": "Application Name",
+        "redirect_uris": "Redirect URIs",
+        "redirect_uris_hint": "Comma-separated URIs (e.g. https://myapp.com/callback)",
+        "create": "Create Application",
+        "creating": "Creating...",
+        "create_error": "Failed to create application",
+        "secret_warning": "Save this client secret now — it will not be shown again.",
+        "dismiss": "I've saved it",
+        "your_apps": "Your Applications",
+        "no_apps": "You haven't registered any applications yet.",
+        "delete": "Delete",
+        "delete_error": "Failed to delete application"
+    },
+    "about": {
+        "title": "Developer Documentation",
+        "intro": "CP OAuth implements the OAuth 2.0 Authorization Code flow with PKCE support. Third-party applications can authenticate users and request granular access to their competitive programming profile data.",
+        "flow": {
+            "title": "Authorization Code Flow",
+            "description": "The standard OAuth2 Authorization Code flow works as follows:",
+            "step1": "Your application redirects the user to our /oauth/authorize endpoint with your client_id, redirect_uri, and requested scopes.",
+            "step2": "The user sees a consent screen and decides whether to grant access.",
+            "step3": "If approved, the user is redirected to your redirect_uri with an authorization code.",
+            "step4": "Your server exchanges the authorization code for an access token via POST /oauth/token.",
+            "step5": "Use the access token to call GET /oauth/userinfo and retrieve the user's data."
+        },
+        "endpoints": {
+            "title": "API Endpoints",
+            "authorize_desc": "Initiates the authorization flow. Redirects the user to the consent screen.",
+            "token_desc": "Exchanges an authorization code for an access token. Supports both client_secret and PKCE (code_verifier) authentication.",
+            "userinfo_desc": "Returns user data filtered by the scopes granted during authorization."
+        },
+        "scopes": {
+            "title": "Permission Scopes",
+            "description": "Request only the scopes your application needs. The /oauth/userinfo response is dynamically filtered based on the granted scopes.",
+            "scope_col": "Scope",
+            "data_col": "Data Returned",
+            "openid": "User ID (sub claim)",
+            "profile": "Username, display name, avatar URL, and bio",
+            "cp_summary": "Linked OJ accounts, total problems solved, highest rating",
+            "cp_details": "Full submission history and rating trend data"
+        },
+        "pkce": {
+            "title": "PKCE (Proof Key for Code Exchange)",
+            "description": "For public clients (e.g. SPAs, mobile apps) that cannot securely store a client_secret, use PKCE instead. Generate a code_verifier, derive a code_challenge using SHA-256, and include it in the authorization request."
+        }
+    },
+    "admin": {
+        "title": "Admin Panel",
+        "error": "Operation failed",
+        "users": {
+            "tab": "Users",
+            "search": "Search by username or email...",
+            "username": "Username",
+            "email": "Email",
+            "role": "Role",
+            "verified": "Verified",
+            "actions": "Actions",
+            "verify": "Verify",
+            "no_results": "No users found."
+        },
+        "config": {
+            "tab": "Configuration",
+            "site": "Site Settings",
+            "site_title": "Site Title",
+            "registration": "Registration",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "smtp": "SMTP Email",
+            "smtp_host": "SMTP Host",
+            "smtp_port": "SMTP Port",
+            "smtp_user": "SMTP Username",
+            "smtp_pass": "SMTP Password",
+            "smtp_from": "From Address",
+            "turnstile": "Cloudflare Turnstile",
+            "turnstile_toggle": "Turnstile Verification",
+            "turnstile_site_key": "Site Key",
+            "turnstile_secret": "Secret Key",
+            "save": "Save",
+            "saving": "Saving...",
+            "saved": "Configuration saved successfully."
+        }
+    }
+}

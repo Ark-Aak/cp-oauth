@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  username       String   @unique
+  passwordHash   String   @map("password_hash")
+  displayName    String?  @map("display_name")
+  bio            String?
+  homepage       String?  @db.Text
+  avatarUrl      String?  @map("avatar_url")
+  role           String   @default("user")
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  emailVerifyToken String? @unique @map("email_verify_token")
+  theme          String   @default("system")
+  locale         String   @default("en")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  oauthClients      OAuthClient[]
+  authorizationCodes OAuthAuthorizationCode[]
+  accessTokens      OAuthAccessToken[]
+
+  @@map("users")
+}
+
+model SystemConfig {
+  key   String @id
+  value String @db.Text
+
+  @@map("system_config")
+}
+
+model OAuthClient {
+  id              String   @id @default(uuid())
+  clientId        String   @unique @default(uuid()) @map("client_id")
+  clientSecretHash String  @map("client_secret_hash")
+  name            String
+  redirectUris    String[] @map("redirect_uris")
+  userId          String   @map("user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authorizationCodes OAuthAuthorizationCode[]
+  accessTokens       OAuthAccessToken[]
+
+  @@map("oauth_clients")
+}
+
+model OAuthAuthorizationCode {
+  id                  String   @id @default(uuid())
+  code                String   @unique
+  clientId            String   @map("client_id")
+  userId              String   @map("user_id")
+  scopes              String[]
+  redirectUri         String   @map("redirect_uri")
+  codeChallenge       String?  @map("code_challenge")
+  codeChallengeMethod String?  @map("code_challenge_method")
+  expiresAt           DateTime @map("expires_at")
+  used                Boolean  @default(false)
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_authorization_codes")
+}
+
+model OAuthAccessToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  clientId  String   @map("client_id")
+  userId    String   @map("user_id")
+  scopes    String[]
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_access_tokens")
+}
