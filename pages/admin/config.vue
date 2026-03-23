@@ -25,6 +25,14 @@
                     <el-option value="false" :label="$t('admin.config.disabled')" />
                 </el-select>
             </el-form-item>
+            <el-form-item :label="$t('admin.config.home_recent_users_count')">
+                <el-input-number
+                    v-model="homeRecentUsersCount"
+                    :min="1"
+                    :max="20"
+                    controls-position="right"
+                />
+            </el-form-item>
 
             <!-- SMTP -->
             <h2 class="admin__section-title">{{ $t('admin.config.smtp') }}</h2>
@@ -115,6 +123,7 @@ const formLoading = ref(false);
 const form = reactive({
     site_title: '',
     registration_enabled: 'true',
+    home_recent_users_count: '6',
     smtp_host: '',
     smtp_port: '587',
     smtp_user: '',
@@ -130,6 +139,19 @@ const form = reactive({
     google_client_id: '',
     google_client_secret: '',
     username_refresh_cooldown: '1440'
+});
+
+const homeRecentUsersCount = computed({
+    get: () => {
+        const parsed = Number.parseInt(form.home_recent_users_count, 10);
+        if (!Number.isFinite(parsed)) {
+            return 6;
+        }
+        return Math.min(20, Math.max(1, parsed));
+    },
+    set: value => {
+        form.home_recent_users_count = String(Math.min(20, Math.max(1, value)));
+    }
 });
 
 function handleTabChange(name: string | number) {

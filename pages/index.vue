@@ -35,9 +35,9 @@
         <section class="home__section">
             <h2 class="home__section-title">{{ $t('home.recent_users') }}</h2>
             <div v-loading="pending">
-                <div v-if="users && users.length" class="home__users">
+                <div v-if="recentUsers.length" class="home__users">
                     <NuxtLink
-                        v-for="u in users"
+                        v-for="u in recentUsers"
                         :key="u.id"
                         :to="`/user/${u.username}`"
                         class="home__user-card"
@@ -86,10 +86,30 @@ interface NoticeSummary {
     publishedAt: string;
 }
 
-const { data: users, pending } = await useFetch<UserSummary[]>('/api/users');
+interface PublicConfigResponse {
+    recentUsersCount?: number;
+}
+
+const DEFAULT_RECENT_USERS_LIMIT = 6;
+
+const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
+
+const recentUsersLimit = computed(() => {
+    const raw = publicConfig.value?.recentUsersCount;
+    if (typeof raw !== 'number' || Number.isNaN(raw)) {
+        return DEFAULT_RECENT_USERS_LIMIT;
+    }
+    return Math.min(20, Math.max(1, Math.trunc(raw)));
+});
+
+const { data: users, pending } = await useFetch<UserSummary[]>('/api/users', {
+    query: { limit: recentUsersLimit.value }
+});
 const { data: quote, pending: quotePending } = await useFetch<QuoteSummary>('/api/public/hitokoto');
 const { data: notices, pending: noticePending } =
     await useFetch<NoticeSummary[]>('/api/public/notices');
+
+const recentUsers = computed(() => (users.value ?? []).slice(0, recentUsersLimit.value));
 
 const quoteSource = computed(() => {
     if (!quote.value) {

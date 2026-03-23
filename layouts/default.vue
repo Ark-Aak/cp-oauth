@@ -13,7 +13,10 @@
             <button class="app-layout__menu-btn" @click="sidebarOpen = !sidebarOpen">
                 <Menu :size="20" :stroke-width="1.5" />
             </button>
-            <slot />
+            <div class="app-layout__content">
+                <slot />
+            </div>
+            <AppFooter />
         </el-main>
     </el-container>
 </template>
@@ -77,6 +80,10 @@ function handleLogout() {
         margin-left: 240px;
         padding: 28px 36px;
         background: var(--bg-primary);
+        min-height: 100vh;
+    }
+
+    &__content {
         min-height: 100vh;
     }
 }

@@ -7,6 +7,7 @@ const CACHE_TTL = 60; // seconds
 const DEFAULTS: Record<string, string> = {
     site_title: 'CP OAuth',
     registration_enabled: 'true',
+    home_recent_users_count: '6',
     smtp_host: '',
     smtp_port: '587',
     smtp_user: '',

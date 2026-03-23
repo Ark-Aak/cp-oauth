@@ -1,6 +1,10 @@
 {
     "app": {
-        "name": "CP OAuth"
+        "name": "CP OAuth",
+        "footer": {
+            "repo": "リポジトリ",
+            "developer": "開発者"
+        }
     },
     "nav": {
         "home": "ホーム",
@@ -25,7 +29,9 @@
         "quote_fallback": "競技プログラミングは問題を解くだけでなく、思考の境界を広げる営みです。",
         "quote_source": "出典",
         "loading": "読み込み中...",
-        "no_users": "まだユーザーがいません。最初の登録者になりましょう！"
+        "no_users": "まだユーザーがいません。最初の登録者になりましょう！",
+        "footer_repo": "リポジトリ",
+        "footer_developer": "開発者"
     },
     "auth": {
         "login": {
@@ -344,6 +350,7 @@
             "google_client_id": "Google Client ID",
             "google_client_secret": "Google Client Secret",
             "platform": "プラットフォーム設定",
+            "home_recent_users_count": "ホームの最近メンバー表示件数",
             "username_refresh_cooldown": "ユーザー名更新クールダウン（分）",
             "save": "保存",
             "saving": "保存中...",

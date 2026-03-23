@@ -1,6 +1,7 @@
 <template>
     <el-aside width="240px" class="app-sidebar" :class="{ 'is-open': open }">
         <div class="app-sidebar__logo">
+            <img src="/favicon.svg" alt="CP OAuth logo" class="app-sidebar__logo-image" />
             <span>{{ $t('app.name') }}</span>
         </div>
         <el-menu :default-active="activeRoute" router class="app-sidebar__menu" @select="handleNav">
@@ -75,11 +76,20 @@ function handleNav() {
     z-index: 20;
 
     &__logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         padding: 20px 20px 20px;
         font-size: 15px;
         font-weight: 600;
         color: var(--text-primary);
         letter-spacing: -0.01em;
+    }
+
+    &__logo-image {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
     }
 
     &__menu {

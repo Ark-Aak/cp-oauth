@@ -1,7 +1,10 @@
 <template>
     <el-container class="auth-layout">
         <el-main class="auth-layout__main">
-            <slot />
+            <div class="auth-layout__content">
+                <slot />
+            </div>
+            <AppFooter />
         </el-main>
     </el-container>
 </template>
@@ -11,18 +14,26 @@
     min-height: 100vh;
 
     &__main {
+        background: var(--bg-secondary);
+        min-height: 100vh;
+        padding: 28px 20px;
+    }
+
+    &__content {
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 100vh;
-        background: var(--bg-secondary);
     }
 }
 
 @media (max-width: 768px) {
     .auth-layout {
         &__main {
-            padding: 24px 16px;
+            padding: 16px;
+        }
+
+        &__content {
             align-items: flex-start;
             padding-top: 10vh;
         }

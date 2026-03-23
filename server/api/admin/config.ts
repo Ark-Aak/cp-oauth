@@ -16,6 +16,7 @@ export default defineEventHandler(async event => {
         const allowedKeys = [
             'site_title',
             'registration_enabled',
+            'home_recent_users_count',
             'smtp_host',
             'smtp_port',
             'smtp_user',
