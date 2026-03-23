@@ -13,7 +13,7 @@
             {{ $t('app.footer.developer') }}:
             <a
                 class="app-footer__link"
-                href="https://github.com/Federico2903"
+                href="https://www.luogu.com.cn/user/381949"
                 target="_blank"
                 rel="noopener noreferrer"
             >
