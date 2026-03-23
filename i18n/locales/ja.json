@@ -17,6 +17,10 @@
         "title": "ようこそ",
         "subtitle": "アルゴリズム競技向け統合認証プラットフォーム",
         "recent_users": "最近のメンバー",
+        "quote": "一言",
+        "quote_loading": "一言を読み込み中...",
+        "quote_fallback": "競技プログラミングは問題を解くだけでなく、思考の境界を広げる営みです。",
+        "quote_source": "出典",
         "loading": "読み込み中...",
         "no_users": "まだユーザーがいません。最初の登録者になりましょう！"
     },
@@ -29,6 +33,7 @@
             "loading": "サインイン中...",
             "oauth_divider": "または",
             "with_codeforces": "Codeforces でログイン",
+            "with_github": "GitHub でログイン",
             "with_luogu": "Luogu でログイン",
             "luogu_guide_title": "Luogu でログイン",
             "turnstile_required_for_thirdparty": "サードパーティログインを使う前に CAPTCHA 認証を完了してください",
@@ -45,9 +50,23 @@
             "codeforces_callback_loading": "Codeforces 認可を完了しています...",
             "codeforces_callback_success": "ログイン成功、リダイレクトしています...",
             "codeforces_callback_invalid": "認可コールバックのパラメータが無効です",
+            "github_callback_title": "GitHub ログイン",
+            "github_callback_loading": "GitHub 認可を完了しています...",
+            "github_callback_success": "ログイン成功、リダイレクトしています...",
+            "github_callback_invalid": "認可コールバックのパラメータが無効です",
+            "verified": "メール認証が完了しました。ログインしてください。",
             "footer": "アカウントをお持ちでないですか？",
             "register_link": "登録",
             "error": "ログインに失敗しました"
+        },
+        "verify_result": {
+            "success_title": "メール認証が完了しました",
+            "success_desc": "メール認証に成功しました。このタブを閉じるか、ログインへ進んでください。",
+            "error_title": "メール認証に失敗しました",
+            "error_desc": "認証リンクが無効または期限切れです。プロフィール画面から認証メールを再送してください。",
+            "go_login": "ログインへ",
+            "close_tab": "タブを閉じる",
+            "close_hint": "ブラウザで自動クローズがブロックされる場合は、手動でタブを閉じてください。"
         },
         "register": {
             "title": "登録",
@@ -57,6 +76,7 @@
             "submit": "登録",
             "loading": "アカウント作成中...",
             "with_codeforces": "Codeforces で登録",
+            "with_github": "GitHub で登録",
             "with_luogu": "Luogu で登録",
             "turnstile_required_for_thirdparty": "サードパーティ登録を使う前に CAPTCHA 認証を完了してください",
             "luogu_step1": "Luogu UID を入力して認証コードを取得してください。",
@@ -69,6 +89,13 @@
     "profile": {
         "title": "マイプロフィール",
         "loading": "読み込み中...",
+        "email": "メール",
+        "email_hint": "name{'@'}example.com",
+        "email_verified": "メール認証済み",
+        "email_unverified": "メール未認証",
+        "send_verify_email": "認証メールを送信",
+        "verify_email_sent": "認証メールを送信しました",
+        "verify_email_send_error": "認証メールの送信に失敗しました",
         "display_name": "表示名",
         "username": "ユーザー名",
         "username_hint": "3〜24文字、英数字とアンダースコアのみ",
@@ -118,6 +145,7 @@
         "verifying": "確認中...",
         "verify_success": "アカウントを連携しました！",
         "codeforces_bind_success": "Codeforces アカウントを連携しました！",
+        "github_bind_success": "GitHub アカウントを連携しました！",
         "already_linked_platform": "{platform} アカウントは既に連携されています",
         "luogu_login": {
             "title": "Luogu クリップボードログイン認証情報",
@@ -142,7 +170,8 @@
         "verify_error": "確認に失敗しました",
         "platforms": {
             "luogu": "洛谷",
-            "codeforces": "Codeforces"
+            "codeforces": "Codeforces",
+            "github": "GitHub"
         }
     },
     "settings": {
@@ -243,6 +272,9 @@
             "verified": "認証済み",
             "actions": "操作",
             "verify": "認証",
+            "delete": "削除",
+            "delete_confirm": "このユーザーを削除しますか？この操作は取り消せません。",
+            "deleted": "ユーザーを削除しました",
             "no_results": "ユーザーが見つかりません。"
         },
         "config": {
@@ -265,6 +297,9 @@
             "codeforces": "Codeforces OAuth",
             "codeforces_client_id": "Codeforces Client ID",
             "codeforces_client_secret": "Codeforces Client Secret",
+            "github": "GitHub OAuth",
+            "github_client_id": "GitHub Client ID",
+            "github_client_secret": "GitHub Client Secret",
             "save": "保存",
             "saving": "保存中...",
             "saved": "設定を保存しました。"

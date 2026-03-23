@@ -42,6 +42,30 @@
                 <el-form-item :label="$t('profile.username')">
                     <el-input v-model="form.username" :placeholder="$t('profile.username_hint')" />
                 </el-form-item>
+                <el-form-item :label="$t('profile.email')">
+                    <el-input
+                        v-model="form.email"
+                        type="email"
+                        :placeholder="$t('profile.email_hint')"
+                    />
+                    <div class="profile__email-meta">
+                        <el-tag v-if="emailVerified" type="success" size="small">
+                            {{ $t('profile.email_verified') }}
+                        </el-tag>
+                        <el-tag v-else type="warning" size="small">
+                            {{ $t('profile.email_unverified') }}
+                        </el-tag>
+                        <el-button
+                            v-if="!emailVerified"
+                            text
+                            size="small"
+                            :loading="sendingVerifyEmail"
+                            @click="handleSendVerifyEmail"
+                        >
+                            {{ $t('profile.send_verify_email') }}
+                        </el-button>
+                    </div>
+                </el-form-item>
                 <el-form-item :label="$t('profile.bio')">
                     <el-input v-model="form.bio" type="textarea" :rows="3" />
                 </el-form-item>
@@ -100,6 +124,9 @@
             </el-button>
             <el-button size="small" :disabled="codeforcesLinked" @click="handleBindCodeforcesOAuth">
                 {{ $t('binding.link_account') }} — {{ $t('binding.platforms.codeforces') }}
+            </el-button>
+            <el-button size="small" :disabled="githubLinked" @click="handleBindGitHubOAuth">
+                {{ $t('binding.link_account') }} — {{ $t('binding.platforms.github') }}
             </el-button>
 
             <div v-if="luoguLinked" class="profile__luogu-login">
@@ -282,6 +309,8 @@ function isLocaleCode(value: string): value is LocaleCode {
 }
 
 interface ProfileData {
+    email?: string;
+    emailVerified?: boolean;
     displayName?: string;
     username?: string;
     bio?: string;
@@ -298,6 +327,7 @@ useHead({ title: () => `${t('profile.title')} - CP OAuth` });
 const colorMode = useColorMode();
 const token = useCookie('auth_token');
 const saving = ref(false);
+const sendingVerifyEmail = ref(false);
 
 const { data: userData, pending } = await useFetch<ProfileData>('/api/auth/me', {
     headers: { Authorization: `Bearer ${token.value}` },
@@ -308,7 +338,10 @@ const { data: userData, pending } = await useFetch<ProfileData>('/api/auth/me', 
 
 const d = userData.value;
 const originalUsername = ref(d?.username || '');
+const originalEmail = ref(d?.email || '');
+const emailVerified = ref(Boolean(d?.emailVerified));
 const form = reactive({
+    email: d?.email || '',
     displayName: d?.displayName || '',
     username: d?.username || '',
     bio: d?.bio || '',
@@ -329,6 +362,11 @@ async function handleSave() {
         avatarUrl: form.avatarUrl
     };
 
+    const trimmedEmail = form.email.trim().toLowerCase();
+    if (trimmedEmail !== originalEmail.value) {
+        body.email = trimmedEmail;
+    }
+
     const trimmedUsername = normalizeUsername(form.username);
     if (trimmedUsername !== originalUsername.value) {
         if (!isValidUsername(trimmedUsername)) {
@@ -340,7 +378,7 @@ async function handleSave() {
 
     saving.value = true;
     try {
-        await $fetch('/api/auth/me', {
+        const updated = await $fetch<ProfileData>('/api/auth/me', {
             method: 'PATCH',
             headers: { Authorization: `Bearer ${token.value}` },
             body
@@ -349,12 +387,33 @@ async function handleSave() {
             originalUsername.value = body.username;
             form.username = body.username;
         }
+        if (body.email && updated.email) {
+            originalEmail.value = updated.email;
+            form.email = updated.email;
+        }
+        emailVerified.value = Boolean(updated.emailVerified);
         ElMessage.success(t('profile.updated'));
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('profile.update_error'));
     } finally {
         saving.value = false;
+    }
+}
+
+async function handleSendVerifyEmail() {
+    sendingVerifyEmail.value = true;
+    try {
+        await $fetch('/api/auth/verify', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
+        ElMessage.success(t('profile.verify_email_sent'));
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('profile.verify_email_send_error'));
+    } finally {
+        sendingVerifyEmail.value = false;
     }
 }
 
@@ -428,6 +487,7 @@ const luoguLinked = computed(() => bindings.value.some(account => account.platfo
 const codeforcesLinked = computed(() =>
     bindings.value.some(account => account.platform === 'codeforces')
 );
+const githubLinked = computed(() => bindings.value.some(account => account.platform === 'github'));
 
 async function fetchBindings() {
     try {
@@ -500,6 +560,34 @@ async function handleBindCodeforcesOAuth() {
     try {
         const result = await $fetch<{ authorizationUrl: string }>(
             '/api/auth/thirdparty/codeforces/start',
+            {
+                headers: { Authorization: `Bearer ${token.value}` },
+                query: {
+                    mode: 'bind',
+                    redirect: '/profile'
+                }
+            }
+        );
+        await navigateTo(result.authorizationUrl, { external: true });
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('binding.verify_error'));
+    }
+}
+
+async function handleBindGitHubOAuth() {
+    if (githubLinked.value) {
+        ElMessage.warning(
+            t('binding.already_linked_platform', {
+                platform: t('binding.platforms.github')
+            })
+        );
+        return;
+    }
+
+    try {
+        const result = await $fetch<{ authorizationUrl: string }>(
+            '/api/auth/thirdparty/github/start',
             {
                 headers: { Authorization: `Bearer ${token.value}` },
                 query: {
@@ -628,6 +716,13 @@ function copyLuoguCredential() {
         color: var(--text-muted);
         font-size: 12px;
         margin-left: 6px;
+    }
+
+    &__email-meta {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     &__editor {

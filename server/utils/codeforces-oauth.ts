@@ -26,8 +26,18 @@ interface CodeforcesIdentity {
     platformUid: string;
     platformUsername: string;
     email: string | null;
+    emailVerified: boolean;
     displayName: string | null;
     avatarUrl: string | null;
+}
+
+function toBoolean(value: unknown): boolean | null {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+        if (value.toLowerCase() === 'true') return true;
+        if (value.toLowerCase() === 'false') return false;
+    }
+    return null;
 }
 
 let discoveryCache: { value: CodeforcesDiscoveryMetadata; expiresAt: number } | null = null;
@@ -210,6 +220,7 @@ export async function resolveCodeforcesIdentity(params: {
         platformUid,
         platformUsername,
         email: toStringOrNull(claims.email),
+        emailVerified: toBoolean(claims.email_verified) ?? false,
         displayName: toStringOrNull(claims.name),
         avatarUrl: toStringOrNull(claims.picture)
     };

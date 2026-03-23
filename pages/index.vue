@@ -4,6 +4,16 @@
         <p class="home__subtitle">{{ $t('home.subtitle') }}</p>
 
         <section class="home__section">
+            <h2 class="home__section-title">{{ $t('home.quote') }}</h2>
+            <div v-loading="quotePending" class="home__quote-card">
+                <p class="home__quote-text">
+                    {{ quote?.text || $t('home.quote_fallback') }}
+                </p>
+                <p class="home__quote-source">{{ $t('home.quote_source') }}: {{ quoteSource }}</p>
+            </div>
+        </section>
+
+        <section class="home__section">
             <h2 class="home__section-title">{{ $t('home.recent_users') }}</h2>
             <div v-loading="pending">
                 <div v-if="users && users.length" class="home__users">
@@ -43,7 +53,24 @@ interface UserSummary {
     createdAt: string;
 }
 
+interface QuoteSummary {
+    text: string;
+    source: string;
+    fromWho: string | null;
+}
+
 const { data: users, pending } = await useFetch<UserSummary[]>('/api/users');
+const { data: quote, pending: quotePending } = await useFetch<QuoteSummary>('/api/public/hitokoto');
+
+const quoteSource = computed(() => {
+    if (!quote.value) {
+        return 'CP OAuth';
+    }
+
+    return quote.value.fromWho
+        ? `${quote.value.source} / ${quote.value.fromWho}`
+        : quote.value.source;
+});
 </script>
 
 <style scoped lang="scss">
@@ -69,6 +96,30 @@ const { data: users, pending } = await useFetch<UserSummary[]>('/api/users');
         font-weight: 600;
         color: var(--text-primary);
         margin-bottom: 16px;
+    }
+
+    &__section {
+        margin-bottom: 28px;
+    }
+
+    &__quote-card {
+        padding: 16px 18px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+        border: 1px solid var(--border-color);
+    }
+
+    &__quote-text {
+        font-size: 15px;
+        line-height: 1.7;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    &__quote-source {
+        margin-top: 10px;
+        color: var(--text-muted);
+        font-size: 12px;
     }
 
     &__users {

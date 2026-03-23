@@ -7,12 +7,14 @@ export default defineEventHandler(async () => {
     const siteTitle = await getConfig('site_title');
     const registrationEnabled = await getConfig('registration_enabled');
     const codeforcesClientId = await getConfig('codeforces_client_id');
+    const githubClientId = await getConfig('github_client_id');
 
     return {
         siteTitle,
         registrationEnabled: registrationEnabled !== 'false',
         turnstileEnabled: turnstileEnabled === 'true',
         turnstileSiteKey,
-        codeforcesLoginEnabled: codeforcesClientId.trim().length > 0
+        codeforcesLoginEnabled: codeforcesClientId.trim().length > 0,
+        githubLoginEnabled: githubClientId.trim().length > 0
     };
 });

@@ -8,13 +8,13 @@ export default defineEventHandler(async event => {
     const token = query.token as string;
 
     if (!token) {
-        throw createError({ statusCode: 400, message: 'Verification token required' });
+        return sendRedirect(event, '/email-verified?status=error');
     }
 
     const user = await prisma.user.findUnique({ where: { emailVerifyToken: token } });
     if (!user) {
         logger.warn('Email verification failed: invalid or expired token');
-        throw createError({ statusCode: 400, message: 'Invalid or expired verification token' });
+        return sendRedirect(event, '/email-verified?status=error');
     }
 
     await prisma.user.update({
@@ -24,5 +24,5 @@ export default defineEventHandler(async event => {
 
     logger.success(`Email verified: ${user.username} (${user.id})`);
 
-    return sendRedirect(event, '/login?verified=true');
+    return sendRedirect(event, '/email-verified?status=success');
 });

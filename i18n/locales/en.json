@@ -17,6 +17,10 @@
         "title": "Welcome",
         "subtitle": "Algorithm Competition Unified Identity Platform",
         "recent_users": "Recent Members",
+        "quote": "Quote",
+        "quote_loading": "Loading quote...",
+        "quote_fallback": "Competitive programming is not only about solving problems, but expanding the boundaries of thought.",
+        "quote_source": "Source",
         "loading": "Loading...",
         "no_users": "No users yet. Be the first to register!"
     },
@@ -29,6 +33,7 @@
             "loading": "Signing in...",
             "oauth_divider": "or",
             "with_codeforces": "Sign in with Codeforces",
+            "with_github": "Sign in with GitHub",
             "with_luogu": "Sign in with Luogu",
             "luogu_guide_title": "Sign in with Luogu",
             "turnstile_required_for_thirdparty": "Please complete captcha verification before using third-party sign in",
@@ -45,9 +50,23 @@
             "codeforces_callback_loading": "Finishing Codeforces authorization...",
             "codeforces_callback_success": "Sign in successful, redirecting...",
             "codeforces_callback_invalid": "Invalid authorization callback parameters",
+            "github_callback_title": "GitHub Sign In",
+            "github_callback_loading": "Finishing GitHub authorization...",
+            "github_callback_success": "Sign in successful, redirecting...",
+            "github_callback_invalid": "Invalid authorization callback parameters",
+            "verified": "Email verified successfully. Please sign in.",
             "footer": "Don't have an account?",
             "register_link": "Register",
             "error": "Login failed"
+        },
+        "verify_result": {
+            "success_title": "Email Verified",
+            "success_desc": "Your email has been verified. You can close this tab now, or go to sign in.",
+            "error_title": "Verification Failed",
+            "error_desc": "The verification link is invalid or expired. Please resend a verification email from your profile.",
+            "go_login": "Go to Sign In",
+            "close_tab": "Close Tab",
+            "close_hint": "If your browser blocks closing, please close this tab manually."
         },
         "register": {
             "title": "Register",
@@ -57,6 +76,7 @@
             "submit": "Register",
             "loading": "Creating account...",
             "with_codeforces": "Register with Codeforces",
+            "with_github": "Register with GitHub",
             "with_luogu": "Register with Luogu",
             "turnstile_required_for_thirdparty": "Please complete captcha verification before using third-party registration",
             "luogu_step1": "Enter your Luogu UID and get a verification code.",
@@ -69,6 +89,13 @@
     "profile": {
         "title": "My Profile",
         "loading": "Loading...",
+        "email": "Email",
+        "email_hint": "name{'@'}example.com",
+        "email_verified": "Email verified",
+        "email_unverified": "Email not verified",
+        "send_verify_email": "Send verification email",
+        "verify_email_sent": "Verification email sent",
+        "verify_email_send_error": "Failed to send verification email",
         "display_name": "Display Name",
         "username": "Username",
         "username_hint": "3-24 chars, letters/numbers/underscores only",
@@ -118,6 +145,7 @@
         "verifying": "Verifying...",
         "verify_success": "Account linked successfully!",
         "codeforces_bind_success": "Codeforces account linked successfully!",
+        "github_bind_success": "GitHub account linked successfully!",
         "already_linked_platform": "You have already linked a {platform} account",
         "luogu_login": {
             "title": "Luogu Clipboard Login Credential",
@@ -142,7 +170,8 @@
         "verify_error": "Verification failed",
         "platforms": {
             "luogu": "Luogu",
-            "codeforces": "Codeforces"
+            "codeforces": "Codeforces",
+            "github": "GitHub"
         }
     },
     "settings": {
@@ -243,6 +272,9 @@
             "verified": "Verified",
             "actions": "Actions",
             "verify": "Verify",
+            "delete": "Delete",
+            "delete_confirm": "Delete this user? This action cannot be undone.",
+            "deleted": "User deleted",
             "no_results": "No users found."
         },
         "config": {
@@ -265,6 +297,9 @@
             "codeforces": "Codeforces OAuth",
             "codeforces_client_id": "Codeforces Client ID",
             "codeforces_client_secret": "Codeforces Client Secret",
+            "github": "GitHub OAuth",
+            "github_client_id": "GitHub Client ID",
+            "github_client_secret": "GitHub Client Secret",
             "save": "Save",
             "saving": "Saving...",
             "saved": "Configuration saved successfully."

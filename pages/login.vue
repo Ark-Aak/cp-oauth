@@ -61,6 +61,17 @@
                     <span>{{ $t('auth.login.with_codeforces') }}</span>
                 </span>
             </el-button>
+            <el-button
+                v-if="githubLoginEnabled"
+                class="login-card__oauth-btn"
+                :loading="githubLoading"
+                @click="handleGitHubLogin"
+            >
+                <span class="login-card__oauth-btn-content">
+                    <AppPlatformIcon platform="github" />
+                    <span>{{ $t('auth.login.with_github') }}</span>
+                </span>
+            </el-button>
             <el-button class="login-card__oauth-btn" @click="handleLuoguGuideLogin">
                 <span class="login-card__oauth-btn-content">
                     <AppPlatformIcon platform="luogu" />
@@ -90,6 +101,7 @@ const route = useRoute();
 const formRef = ref<FormInstance>();
 const loading = ref(false);
 const codeforcesLoading = ref(false);
+const githubLoading = ref(false);
 const verified = computed(() => route.query.verified === 'true');
 const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
 
@@ -98,6 +110,7 @@ interface PublicConfigResponse {
     turnstileEnabled?: boolean;
     turnstileSiteKey?: string;
     codeforcesLoginEnabled?: boolean;
+    githubLoginEnabled?: boolean;
 }
 
 const form = reactive({
@@ -115,6 +128,7 @@ const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'))
 const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
 const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
 const codeforcesLoginEnabled = computed(() => publicConfig.value?.codeforcesLoginEnabled || false);
+const githubLoginEnabled = computed(() => publicConfig.value?.githubLoginEnabled || false);
 const { token: turnstileToken, el: turnstileEl } = useTurnstile(turnstileSiteKey);
 
 async function handleLogin() {
@@ -139,6 +153,27 @@ async function handleLogin() {
         ElMessage.error(err.data?.message || t('auth.login.error'));
     } finally {
         loading.value = false;
+    }
+}
+
+async function handleGitHubLogin() {
+    githubLoading.value = true;
+    try {
+        const result = await $fetch<{ authorizationUrl: string }>(
+            '/api/auth/thirdparty/github/start',
+            {
+                query: {
+                    redirect: redirectTarget.value,
+                    turnstileToken: turnstileToken.value || ''
+                }
+            }
+        );
+        await navigateTo(result.authorizationUrl, { external: true });
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('auth.login.error'));
+    } finally {
+        githubLoading.value = false;
     }
 }
 

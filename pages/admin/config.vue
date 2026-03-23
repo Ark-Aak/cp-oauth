@@ -67,6 +67,15 @@
                 <el-input v-model="form.codeforces_client_secret" type="password" show-password />
             </el-form-item>
 
+            <!-- GitHub OAuth -->
+            <h2 class="admin__section-title">{{ $t('admin.config.github') }}</h2>
+            <el-form-item :label="$t('admin.config.github_client_id')">
+                <el-input v-model="form.github_client_id" />
+            </el-form-item>
+            <el-form-item :label="$t('admin.config.github_client_secret')">
+                <el-input v-model="form.github_client_secret" type="password" show-password />
+            </el-form-item>
+
             <el-form-item>
                 <el-button type="primary" native-type="submit" :loading="saving">
                     {{ saving ? $t('admin.config.saving') : $t('admin.config.save') }}
@@ -99,7 +108,9 @@ const form = reactive({
     turnstile_site_key: '',
     turnstile_secret_key: '',
     codeforces_client_id: '',
-    codeforces_client_secret: ''
+    codeforces_client_secret: '',
+    github_client_id: '',
+    github_client_secret: ''
 });
 
 function handleTabChange(name: string | number) {

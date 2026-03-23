@@ -39,14 +39,26 @@
             </el-table-column>
             <el-table-column :label="$t('admin.users.actions')" width="120">
                 <template #default="{ row }">
-                    <el-button
-                        v-if="!row.emailVerified"
-                        text
-                        size="small"
-                        @click="verifyUser(row.id)"
-                    >
-                        {{ $t('admin.users.verify') }}
-                    </el-button>
+                    <div class="admin__actions">
+                        <el-button
+                            v-if="!row.emailVerified"
+                            text
+                            size="small"
+                            @click="verifyUser(row.id)"
+                        >
+                            {{ $t('admin.users.verify') }}
+                        </el-button>
+                        <el-popconfirm
+                            :title="$t('admin.users.delete_confirm')"
+                            @confirm="deleteUser(row.id)"
+                        >
+                            <template #reference>
+                                <el-button type="danger" text size="small">
+                                    {{ $t('admin.users.delete') }}
+                                </el-button>
+                            </template>
+                        </el-popconfirm>
+                    </div>
                 </template>
             </el-table-column>
         </el-table>
@@ -156,6 +168,20 @@ async function verifyUser(id: string) {
     }
 }
 
+async function deleteUser(id: string) {
+    try {
+        await $fetch(`/api/admin/users/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
+        ElMessage.success(t('admin.users.deleted'));
+        await loadUsers();
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('admin.error'));
+    }
+}
+
 await loadUsers();
 </script>
 
@@ -183,6 +209,12 @@ await loadUsers();
     &__pagination {
         margin-top: 16px;
         justify-content: center;
+    }
+
+    &__actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     }
 }
 </style>

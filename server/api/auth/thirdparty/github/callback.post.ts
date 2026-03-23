@@ -1,40 +1,34 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
-import { getRedis } from '~/server/utils/redis';
 import { getConfig } from '~/server/utils/config';
+import { getRedis } from '~/server/utils/redis';
 import {
-    exchangeCodeforcesAuthorizationCode,
-    getUniqueUsername,
-    resolveCodeforcesIdentity
-} from '~/server/utils/codeforces-oauth';
-
-const logger = consola.withTag('auth:codeforces:callback');
+    exchangeGitHubAuthorizationCode,
+    resolveGitHubIdentity
+} from '~/server/utils/github-oauth';
+import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
 
 interface CallbackBody {
     code?: string;
     state?: string;
 }
 
-type CodeforcesOAuthMode = 'login' | 'bind' | 'register';
+type GitHubOAuthMode = 'login' | 'bind' | 'register';
 
 async function allocateSyntheticEmail(platformUid: string): Promise<string> {
-    const base = `cf_${platformUid.replace(/[^A-Za-z0-9_]/g, '_')}`.slice(0, 40);
+    const base = `gh_${platformUid.replace(/[^A-Za-z0-9_]/g, '_')}`.slice(0, 40);
     for (let i = 0; i <= 9999; i += 1) {
         const suffix = i === 0 ? '' : `_${i}`;
-        const candidate = `${base}${suffix}@codeforces.local`;
+        const candidate = `${base}${suffix}@github.local`;
         const existing = await prisma.user.findUnique({
             where: { email: candidate },
             select: { id: true }
         });
-        if (!existing) {
-            return candidate;
-        }
+        if (!existing) return candidate;
     }
-
-    throw createError({ statusCode: 500, message: 'Unable to allocate email for Codeforces user' });
+    throw createError({ statusCode: 500, message: 'Unable to allocate email for GitHub user' });
 }
 
 async function findOrCreateLocalUser(identity: {
@@ -48,16 +42,14 @@ async function findOrCreateLocalUser(identity: {
     const linked = await prisma.linkedAccount.findUnique({
         where: {
             platform_platformUid: {
-                platform: 'codeforces',
+                platform: 'github',
                 platformUid: identity.platformUid
             }
         },
         include: { user: true }
     });
 
-    if (linked) {
-        return linked.user;
-    }
+    if (linked) return linked.user;
 
     let user = null;
     const normalizedEmail = identity.email?.toLowerCase().trim() || null;
@@ -67,7 +59,7 @@ async function findOrCreateLocalUser(identity: {
 
     if (!user) {
         const username = await getUniqueUsername(
-            identity.platformUsername || `cf_${identity.platformUid}`
+            identity.platformUsername || `gh_${identity.platformUid}`
         );
         const userCount = await prisma.user.count();
         const role = userCount === 0 ? 'admin' : 'user';
@@ -84,17 +76,13 @@ async function findOrCreateLocalUser(identity: {
                 role
             }
         });
-
-        logger.info(
-            `Created local user from Codeforces: user=${user.id}, username=${user.username}`
-        );
     }
 
     await prisma.linkedAccount.upsert({
         where: {
             userId_platform: {
                 userId: user.id,
-                platform: 'codeforces'
+                platform: 'github'
             }
         },
         update: {
@@ -103,7 +91,7 @@ async function findOrCreateLocalUser(identity: {
         },
         create: {
             userId: user.id,
-            platform: 'codeforces',
+            platform: 'github',
             platformUid: identity.platformUid,
             platformUsername: identity.platformUsername
         }
@@ -112,7 +100,7 @@ async function findOrCreateLocalUser(identity: {
     return user;
 }
 
-async function registerLocalUserFromCodeforces(identity: {
+async function registerLocalUserFromGitHub(identity: {
     platformUid: string;
     platformUsername: string;
     email: string | null;
@@ -123,7 +111,7 @@ async function registerLocalUserFromCodeforces(identity: {
     const linked = await prisma.linkedAccount.findUnique({
         where: {
             platform_platformUid: {
-                platform: 'codeforces',
+                platform: 'github',
                 platformUid: identity.platformUid
             }
         },
@@ -132,7 +120,7 @@ async function registerLocalUserFromCodeforces(identity: {
     if (linked) {
         throw createError({
             statusCode: 409,
-            message: 'This Codeforces account has already registered'
+            message: 'This GitHub account has already registered'
         });
     }
 
@@ -148,7 +136,7 @@ async function registerLocalUserFromCodeforces(identity: {
     }
 
     const username = await getUniqueUsername(
-        identity.platformUsername || `cf_${identity.platformUid}`
+        identity.platformUsername || `gh_${identity.platformUid}`
     );
     const userCount = await prisma.user.count();
     const role = userCount === 0 ? 'admin' : 'user';
@@ -164,17 +152,13 @@ async function registerLocalUserFromCodeforces(identity: {
             emailVerified: normalizedEmail ? identity.emailVerified : false,
             role
         },
-        select: {
-            id: true,
-            username: true,
-            email: true
-        }
+        select: { id: true, username: true, email: true }
     });
 
     await prisma.linkedAccount.create({
         data: {
             userId: user.id,
-            platform: 'codeforces',
+            platform: 'github',
             platformUid: identity.platformUid,
             platformUsername: identity.platformUsername
         }
@@ -183,7 +167,7 @@ async function registerLocalUserFromCodeforces(identity: {
     return user;
 }
 
-async function bindCodeforcesToExistingUser(params: {
+async function bindGitHubToExistingUser(params: {
     userId: string;
     platformUid: string;
     platformUsername: string;
@@ -192,27 +176,21 @@ async function bindCodeforcesToExistingUser(params: {
         where: { id: params.userId },
         select: { id: true, username: true, email: true }
     });
-    if (!targetUser) {
-        throw createError({ statusCode: 404, message: 'User not found' });
-    }
+    if (!targetUser) throw createError({ statusCode: 404, message: 'User not found' });
 
     const existingByPlatform = await prisma.linkedAccount.findUnique({
         where: {
             platform_platformUid: {
-                platform: 'codeforces',
+                platform: 'github',
                 platformUid: params.platformUid
             }
         },
-        select: {
-            id: true,
-            userId: true
-        }
+        select: { id: true, userId: true }
     });
-
     if (existingByPlatform && existingByPlatform.userId !== params.userId) {
         throw createError({
             statusCode: 409,
-            message: 'This Codeforces account is already linked by another user'
+            message: 'This GitHub account is already linked by another user'
         });
     }
 
@@ -220,27 +198,20 @@ async function bindCodeforcesToExistingUser(params: {
         where: {
             userId_platform: {
                 userId: params.userId,
-                platform: 'codeforces'
+                platform: 'github'
             }
         },
-        select: {
-            id: true,
-            platformUid: true
-        }
+        select: { id: true }
     });
-
     if (existingForUser) {
-        throw createError({
-            statusCode: 409,
-            message: 'You have already linked a Codeforces account'
-        });
+        throw createError({ statusCode: 409, message: 'You have already linked a GitHub account' });
     }
 
     await prisma.linkedAccount.upsert({
         where: {
             userId_platform: {
                 userId: params.userId,
-                platform: 'codeforces'
+                platform: 'github'
             }
         },
         update: {
@@ -249,7 +220,7 @@ async function bindCodeforcesToExistingUser(params: {
         },
         create: {
             userId: params.userId,
-            platform: 'codeforces',
+            platform: 'github',
             platformUid: params.platformUid,
             platformUsername: params.platformUsername
         }
@@ -264,7 +235,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Missing code or state' });
     }
 
-    const stateKey = `oauth:codeforces:state:${body.state}`;
+    const stateKey = `oauth:github:state:${body.state}`;
     const cachedState = await getRedis().get(stateKey);
     if (!cachedState) {
         throw createError({ statusCode: 400, message: 'Invalid or expired OAuth state' });
@@ -272,11 +243,12 @@ export default defineEventHandler(async event => {
     await getRedis().del(stateKey);
 
     const statePayload = JSON.parse(cachedState) as {
-        mode?: CodeforcesOAuthMode;
+        mode?: GitHubOAuthMode;
         bindUserId?: string | null;
         redirectAfterLogin?: string;
     };
-    const mode: CodeforcesOAuthMode =
+
+    const mode: GitHubOAuthMode =
         statePayload.mode === 'bind' || statePayload.mode === 'register'
             ? statePayload.mode
             : 'login';
@@ -286,33 +258,32 @@ export default defineEventHandler(async event => {
             ? statePayload.redirectAfterLogin
             : '/';
 
-    const clientId = (await getConfig('codeforces_client_id')).trim();
-    const clientSecret = (await getConfig('codeforces_client_secret')).trim();
+    const clientId = (await getConfig('github_client_id')).trim();
+    const clientSecret = (await getConfig('github_client_secret')).trim();
     if (!clientId || !clientSecret) {
-        throw createError({ statusCode: 503, message: 'Codeforces login is not configured' });
+        throw createError({ statusCode: 503, message: 'GitHub login is not configured' });
     }
 
-    const redirectUri = `${getRequestURL(event).origin}/oauth/thirdparty/codeforces`;
-    const { token, discovery } = await exchangeCodeforcesAuthorizationCode({
+    const redirectUri = `${getRequestURL(event).origin}/oauth/thirdparty/github`;
+    const token = await exchangeGitHubAuthorizationCode({
         code: body.code,
         clientId,
         clientSecret,
         redirectUri
     });
-    const identity = await resolveCodeforcesIdentity({ token, discovery });
+    const identity = await resolveGitHubIdentity(token.access_token);
 
     if (mode === 'bind') {
         const bindUserId = statePayload.bindUserId;
         if (!bindUserId) {
             throw createError({ statusCode: 400, message: 'Invalid bind state' });
         }
-        const user = await bindCodeforcesToExistingUser({
+
+        const user = await bindGitHubToExistingUser({
             userId: bindUserId,
             platformUid: identity.platformUid,
             platformUsername: identity.platformUsername
         });
-
-        logger.success(`Codeforces bind success: cf=${identity.platformUid}, user=${user.id}`);
 
         return {
             mode: 'bind',
@@ -326,11 +297,9 @@ export default defineEventHandler(async event => {
     }
 
     if (mode === 'register') {
-        const user = await registerLocalUserFromCodeforces(identity);
+        const user = await registerLocalUserFromGitHub(identity);
         const config = useRuntimeConfig();
         const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
-
-        logger.success(`Codeforces register success: cf=${identity.platformUid}, user=${user.id}`);
 
         return {
             mode: 'register',
@@ -345,11 +314,8 @@ export default defineEventHandler(async event => {
     }
 
     const user = await findOrCreateLocalUser(identity);
-
     const config = useRuntimeConfig();
     const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
-
-    logger.success(`Codeforces login success: cf=${identity.platformUid}, user=${user.id}`);
 
     return {
         mode: 'login',

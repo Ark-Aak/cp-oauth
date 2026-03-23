@@ -65,6 +65,18 @@
                 </span>
             </el-button>
             <el-button
+                v-if="githubLoginEnabled"
+                class="login-card__oauth-btn"
+                :loading="githubLoading"
+                :disabled="!thirdPartyCaptchaReady"
+                @click="handleGitHubRegister"
+            >
+                <span class="login-card__oauth-btn-content">
+                    <AppPlatformIcon platform="github" />
+                    <span>{{ $t('auth.register.with_github') }}</span>
+                </span>
+            </el-button>
+            <el-button
                 class="login-card__oauth-btn"
                 :loading="luoguDialogLoading"
                 :disabled="!thirdPartyCaptchaReady"
@@ -142,12 +154,14 @@ interface PublicConfigResponse {
     turnstileEnabled?: boolean;
     turnstileSiteKey?: string;
     codeforcesLoginEnabled?: boolean;
+    githubLoginEnabled?: boolean;
 }
 
 useHead({ title: () => `${t('auth.register.title')} - CP OAuth` });
 const formRef = ref<FormInstance>();
 const loading = ref(false);
 const codeforcesLoading = ref(false);
+const githubLoading = ref(false);
 const luoguDialogVisible = ref(false);
 const luoguDialogLoading = ref(false);
 const luoguRegisterStep = ref(1);
@@ -185,6 +199,7 @@ const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'))
 const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
 const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
 const codeforcesLoginEnabled = computed(() => publicConfig.value?.codeforcesLoginEnabled || false);
+const githubLoginEnabled = computed(() => publicConfig.value?.githubLoginEnabled || false);
 const { token: turnstileToken, el: turnstileEl } = useTurnstile(turnstileSiteKey);
 const thirdPartyCaptchaReady = computed(
     () => !turnstileEnabled.value || Boolean(turnstileToken.value)
@@ -213,6 +228,28 @@ async function handleRegister() {
         ElMessage.error(err.data?.message || t('auth.register.error'));
     } finally {
         loading.value = false;
+    }
+}
+
+async function handleGitHubRegister() {
+    githubLoading.value = true;
+    try {
+        const result = await $fetch<{ authorizationUrl: string }>(
+            '/api/auth/thirdparty/github/start',
+            {
+                query: {
+                    mode: 'register',
+                    redirect: '/',
+                    turnstileToken: turnstileToken.value || ''
+                }
+            }
+        );
+        await navigateTo(result.authorizationUrl, { external: true });
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('auth.register.error'));
+    } finally {
+        githubLoading.value = false;
     }
 }
 

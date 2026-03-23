@@ -25,7 +25,9 @@ export default defineEventHandler(async event => {
             'turnstile_site_key',
             'turnstile_secret_key',
             'codeforces_client_id',
-            'codeforces_client_secret'
+            'codeforces_client_secret',
+            'github_client_id',
+            'github_client_secret'
         ];
 
         const updatedKeys: string[] = [];
