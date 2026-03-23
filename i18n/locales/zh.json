@@ -16,6 +16,9 @@
     "home": {
         "title": "欢迎",
         "subtitle": "算法竞赛统一身份认证平台",
+        "announcements": "站点公告",
+        "pinned": "置顶",
+        "no_announcements": "暂无公告",
         "recent_users": "最近加入的成员",
         "quote": "一言",
         "quote_loading": "正在获取一言...",
@@ -299,6 +302,21 @@
             "delete_confirm": "确认删除该用户？此操作不可恢复。",
             "deleted": "用户已删除",
             "no_results": "未找到用户。"
+        },
+        "notices": {
+            "tab": "公告",
+            "create_title": "发布公告",
+            "notice_title": "标题",
+            "notice_content": "内容",
+            "pinned": "置顶公告",
+            "create": "发布",
+            "creating": "发布中...",
+            "created": "公告已发布",
+            "list_title": "已发布公告",
+            "delete": "删除",
+            "delete_confirm": "确定删除这条公告吗？",
+            "deleted": "公告已删除",
+            "empty": "还没有公告"
         },
         "config": {
             "tab": "系统配置",

@@ -110,3 +110,15 @@ model LinkedAccount {
   @@unique([platform, platformUid])
   @@map("linked_accounts")
 }
+
+model Notice {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  pinned      Boolean  @default(false)
+  publishedAt DateTime @default(now()) @map("published_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("notices")
+}

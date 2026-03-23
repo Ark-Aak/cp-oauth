@@ -16,6 +16,9 @@
     "home": {
         "title": "Welcome",
         "subtitle": "Algorithm Competition Unified Identity Platform",
+        "announcements": "Announcements",
+        "pinned": "Pinned",
+        "no_announcements": "No announcements yet",
         "recent_users": "Recent Members",
         "quote": "Quote",
         "quote_loading": "Loading quote...",
@@ -299,6 +302,21 @@
             "delete_confirm": "Delete this user? This action cannot be undone.",
             "deleted": "User deleted",
             "no_results": "No users found."
+        },
+        "notices": {
+            "tab": "Notices",
+            "create_title": "Publish Notice",
+            "notice_title": "Title",
+            "notice_content": "Content",
+            "pinned": "Pin notice",
+            "create": "Publish",
+            "creating": "Publishing...",
+            "created": "Notice published",
+            "list_title": "Published Notices",
+            "delete": "Delete",
+            "delete_confirm": "Delete this notice?",
+            "deleted": "Notice deleted",
+            "empty": "No notices yet"
         },
         "config": {
             "tab": "Configuration",

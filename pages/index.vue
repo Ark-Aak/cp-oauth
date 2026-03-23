@@ -4,6 +4,25 @@
         <p class="home__subtitle">{{ $t('home.subtitle') }}</p>
 
         <section class="home__section">
+            <h2 class="home__section-title">{{ $t('home.announcements') }}</h2>
+            <div v-loading="noticePending">
+                <div v-if="notices && notices.length" class="home__notices">
+                    <article v-for="notice in notices" :key="notice.id" class="home__notice-card">
+                        <header class="home__notice-header">
+                            <h3 class="home__notice-title">{{ notice.title }}</h3>
+                            <el-tag v-if="notice.pinned" size="small" type="warning">
+                                {{ $t('home.pinned') }}
+                            </el-tag>
+                        </header>
+                        <p class="home__notice-content">{{ notice.content }}</p>
+                        <p class="home__notice-time">{{ formatNoticeTime(notice.publishedAt) }}</p>
+                    </article>
+                </div>
+                <el-empty v-else-if="!noticePending" :description="$t('home.no_announcements')" />
+            </div>
+        </section>
+
+        <section class="home__section">
             <h2 class="home__section-title">{{ $t('home.quote') }}</h2>
             <div v-loading="quotePending" class="home__quote-card">
                 <p class="home__quote-text">
@@ -59,8 +78,18 @@ interface QuoteSummary {
     fromWho: string | null;
 }
 
+interface NoticeSummary {
+    id: string;
+    title: string;
+    content: string;
+    pinned: boolean;
+    publishedAt: string;
+}
+
 const { data: users, pending } = await useFetch<UserSummary[]>('/api/users');
 const { data: quote, pending: quotePending } = await useFetch<QuoteSummary>('/api/public/hitokoto');
+const { data: notices, pending: noticePending } =
+    await useFetch<NoticeSummary[]>('/api/public/notices');
 
 const quoteSource = computed(() => {
     if (!quote.value) {
@@ -71,6 +100,10 @@ const quoteSource = computed(() => {
         ? `${quote.value.source} / ${quote.value.fromWho}`
         : quote.value.source;
 });
+
+function formatNoticeTime(raw: string): string {
+    return new Date(raw).toLocaleString();
+}
 </script>
 
 <style scoped lang="scss">
@@ -100,6 +133,46 @@ const quoteSource = computed(() => {
 
     &__section {
         margin-bottom: 28px;
+    }
+
+    &__notices {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    &__notice-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 12px 14px;
+    }
+
+    &__notice-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    &__notice-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    &__notice-content {
+        margin: 8px 0 6px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.65;
+        white-space: pre-wrap;
+    }
+
+    &__notice-time {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-muted);
     }
 
     &__quote-card {
