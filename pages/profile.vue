@@ -104,6 +104,16 @@
                             <span v-if="account.platformUsername" class="profile__binding-uid-hint">
                                 (UID: {{ account.platformUid }})
                             </span>
+                            <el-button
+                                v-if="canRefresh(account.platform)"
+                                text
+                                size="small"
+                                :loading="refreshingPlatform === account.platform"
+                                :title="$t('binding.refresh_username')"
+                                @click="handleRefreshUsername(account)"
+                            >
+                                <RefreshCw :size="13" :stroke-width="1.5" />
+                            </el-button>
                         </span>
                     </div>
                     <el-popconfirm
@@ -349,7 +359,7 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus';
-import { Copy } from 'lucide-vue-next';
+import { Copy, RefreshCw } from 'lucide-vue-next';
 import { buildLoginPath } from '~/utils/auth-redirect';
 import {
     LUOGU_LOGIN_DURATION_OPTIONS,
@@ -527,6 +537,37 @@ interface LinkedAccount {
 }
 
 const bindings = ref<LinkedAccount[]>([]);
+const refreshingPlatform = ref('');
+const refreshablePlatforms = new Set(['luogu', 'codeforces']);
+
+function canRefresh(platform: string): boolean {
+    return refreshablePlatforms.has(platform);
+}
+
+async function handleRefreshUsername(account: LinkedAccount) {
+    refreshingPlatform.value = account.platform;
+    try {
+        const result = await $fetch<{ platformUsername: string }>('/api/account/refresh-username', {
+            method: 'POST',
+            body: { platform: account.platform, platformUid: account.platformUid }
+        });
+        const idx = bindings.value.findIndex(b => b.id === account.id);
+        if (idx !== -1) {
+            bindings.value[idx].platformUsername = result.platformUsername;
+        }
+        ElMessage.success(t('binding.refresh_success'));
+    } catch (e: unknown) {
+        const err = e as { statusCode?: number; data?: { message?: string } };
+        if (err.statusCode === 429) {
+            ElMessage.warning(err.data?.message || t('binding.refresh_cooldown'));
+        } else {
+            ElMessage.error(err.data?.message || t('binding.refresh_error'));
+        }
+    } finally {
+        refreshingPlatform.value = '';
+    }
+}
+
 const bindDialogVisible = ref(false);
 const bindPlatform = ref('luogu');
 const bindStep = ref(1);

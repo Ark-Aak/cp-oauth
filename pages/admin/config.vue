@@ -85,6 +85,12 @@
                 <el-input v-model="form.google_client_secret" type="password" show-password />
             </el-form-item>
 
+            <!-- Platform -->
+            <h2 class="admin__section-title">{{ $t('admin.config.platform') }}</h2>
+            <el-form-item :label="$t('admin.config.username_refresh_cooldown')">
+                <el-input v-model="form.username_refresh_cooldown" />
+            </el-form-item>
+
             <el-form-item>
                 <el-button type="primary" native-type="submit" :loading="saving">
                     {{ saving ? $t('admin.config.saving') : $t('admin.config.save') }}
@@ -121,7 +127,8 @@ const form = reactive({
     github_client_id: '',
     github_client_secret: '',
     google_client_id: '',
-    google_client_secret: ''
+    google_client_secret: '',
+    username_refresh_cooldown: '1440'
 });
 
 function handleTabChange(name: string | number) {

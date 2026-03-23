@@ -184,6 +184,10 @@
             }
         },
         "verify_error": "確認に失敗しました",
+        "refresh_username": "ユーザー名を更新",
+        "refresh_success": "ユーザー名を更新しました",
+        "refresh_cooldown": "しばらくしてからもう一度お試しください",
+        "refresh_error": "ユーザー名の更新に失敗しました",
         "platforms": {
             "luogu": "Luogu",
             "atcoder": "AtCoder",
@@ -321,6 +325,8 @@
             "google": "Google OAuth",
             "google_client_id": "Google Client ID",
             "google_client_secret": "Google Client Secret",
+            "platform": "プラットフォーム設定",
+            "username_refresh_cooldown": "ユーザー名更新クールダウン（分）",
             "save": "保存",
             "saving": "保存中...",
             "saved": "設定を保存しました。"

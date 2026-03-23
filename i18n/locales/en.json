@@ -184,6 +184,10 @@
             }
         },
         "verify_error": "Verification failed",
+        "refresh_username": "Refresh username",
+        "refresh_success": "Username refreshed successfully",
+        "refresh_cooldown": "Please wait before refreshing again",
+        "refresh_error": "Failed to refresh username",
         "platforms": {
             "luogu": "Luogu",
             "atcoder": "AtCoder",
@@ -321,6 +325,8 @@
             "google": "Google OAuth",
             "google_client_id": "Google Client ID",
             "google_client_secret": "Google Client Secret",
+            "platform": "Platform Settings",
+            "username_refresh_cooldown": "Username Refresh Cooldown (minutes)",
             "save": "Save",
             "saving": "Saving...",
             "saved": "Configuration saved successfully."

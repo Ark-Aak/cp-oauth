@@ -95,6 +95,12 @@ model LinkedAccount {
   platform         String
   platformUid      String   @map("platform_uid")
   platformUsername  String?  @map("platform_username")
+  oauthAccessToken String?  @map("oauth_access_token") @db.Text
+  oauthRefreshToken String? @map("oauth_refresh_token") @db.Text
+  oauthIdToken     String?  @map("oauth_id_token") @db.Text
+  oauthTokenType   String?  @map("oauth_token_type")
+  oauthExpiresAt   DateTime? @map("oauth_expires_at")
+  oauthScope       String?  @map("oauth_scope") @db.Text
   verifiedAt       DateTime @default(now()) @map("verified_at")
   createdAt        DateTime @default(now()) @map("created_at")
 

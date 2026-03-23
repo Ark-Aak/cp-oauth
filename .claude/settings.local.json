@@ -33,7 +33,8 @@
             "Bash(curl -sL \"https://0f-0b.github.io/luogu-api-docs/\")",
             "Bash(curl:*)",
             "Bash(npm ls:*)",
-            "Bash(grep -q '\"\"consola\"\"' package.json)"
+            "Bash(grep -q '\"\"consola\"\"' package.json)",
+            "Bash(python -m json.tool)"
         ]
     }
 }

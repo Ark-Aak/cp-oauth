@@ -20,6 +20,38 @@ interface CallbackBody {
 
 type CodeforcesOAuthMode = 'login' | 'bind' | 'register';
 
+interface CodeforcesOAuthCredentialSnapshot {
+    oauthAccessToken: string;
+    oauthRefreshToken: string | null;
+    oauthIdToken: string | null;
+    oauthTokenType: string | null;
+    oauthExpiresAt: Date | null;
+    oauthScope: string | null;
+}
+
+function buildCodeforcesOAuthCredentialSnapshot(token: {
+    access_token: string;
+    refresh_token?: string;
+    id_token?: string;
+    token_type?: string;
+    expires_in?: number;
+    scope?: string;
+}): CodeforcesOAuthCredentialSnapshot {
+    const expiresAt =
+        typeof token.expires_in === 'number' && Number.isFinite(token.expires_in)
+            ? new Date(Date.now() + token.expires_in * 1000)
+            : null;
+
+    return {
+        oauthAccessToken: token.access_token,
+        oauthRefreshToken: token.refresh_token || null,
+        oauthIdToken: token.id_token || null,
+        oauthTokenType: token.token_type || null,
+        oauthExpiresAt: expiresAt,
+        oauthScope: token.scope || null
+    };
+}
+
 async function allocateSyntheticEmail(platformUid: string): Promise<string> {
     const base = `cf_${platformUid.replace(/[^A-Za-z0-9_]/g, '_')}`.slice(0, 40);
     for (let i = 0; i <= 9999; i += 1) {
@@ -44,6 +76,7 @@ async function findOrCreateLocalUser(identity: {
     emailVerified: boolean;
     displayName: string | null;
     avatarUrl: string | null;
+    oauthCredentials: CodeforcesOAuthCredentialSnapshot;
 }) {
     const linked = await prisma.linkedAccount.findUnique({
         where: {
@@ -99,13 +132,25 @@ async function findOrCreateLocalUser(identity: {
         },
         update: {
             platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername
+            platformUsername: identity.platformUsername,
+            oauthAccessToken: identity.oauthCredentials.oauthAccessToken,
+            oauthRefreshToken: identity.oauthCredentials.oauthRefreshToken,
+            oauthIdToken: identity.oauthCredentials.oauthIdToken,
+            oauthTokenType: identity.oauthCredentials.oauthTokenType,
+            oauthExpiresAt: identity.oauthCredentials.oauthExpiresAt,
+            oauthScope: identity.oauthCredentials.oauthScope
         },
         create: {
             userId: user.id,
             platform: 'codeforces',
             platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername
+            platformUsername: identity.platformUsername,
+            oauthAccessToken: identity.oauthCredentials.oauthAccessToken,
+            oauthRefreshToken: identity.oauthCredentials.oauthRefreshToken,
+            oauthIdToken: identity.oauthCredentials.oauthIdToken,
+            oauthTokenType: identity.oauthCredentials.oauthTokenType,
+            oauthExpiresAt: identity.oauthCredentials.oauthExpiresAt,
+            oauthScope: identity.oauthCredentials.oauthScope
         }
     });
 
@@ -119,6 +164,7 @@ async function registerLocalUserFromCodeforces(identity: {
     emailVerified: boolean;
     displayName: string | null;
     avatarUrl: string | null;
+    oauthCredentials: CodeforcesOAuthCredentialSnapshot;
 }) {
     const linked = await prisma.linkedAccount.findUnique({
         where: {
@@ -176,7 +222,13 @@ async function registerLocalUserFromCodeforces(identity: {
             userId: user.id,
             platform: 'codeforces',
             platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername
+            platformUsername: identity.platformUsername,
+            oauthAccessToken: identity.oauthCredentials.oauthAccessToken,
+            oauthRefreshToken: identity.oauthCredentials.oauthRefreshToken,
+            oauthIdToken: identity.oauthCredentials.oauthIdToken,
+            oauthTokenType: identity.oauthCredentials.oauthTokenType,
+            oauthExpiresAt: identity.oauthCredentials.oauthExpiresAt,
+            oauthScope: identity.oauthCredentials.oauthScope
         }
     });
 
@@ -187,6 +239,7 @@ async function bindCodeforcesToExistingUser(params: {
     userId: string;
     platformUid: string;
     platformUsername: string;
+    oauthCredentials: CodeforcesOAuthCredentialSnapshot;
 }) {
     const targetUser = await prisma.user.findUnique({
         where: { id: params.userId },
@@ -245,13 +298,25 @@ async function bindCodeforcesToExistingUser(params: {
         },
         update: {
             platformUid: params.platformUid,
-            platformUsername: params.platformUsername
+            platformUsername: params.platformUsername,
+            oauthAccessToken: params.oauthCredentials.oauthAccessToken,
+            oauthRefreshToken: params.oauthCredentials.oauthRefreshToken,
+            oauthIdToken: params.oauthCredentials.oauthIdToken,
+            oauthTokenType: params.oauthCredentials.oauthTokenType,
+            oauthExpiresAt: params.oauthCredentials.oauthExpiresAt,
+            oauthScope: params.oauthCredentials.oauthScope
         },
         create: {
             userId: params.userId,
             platform: 'codeforces',
             platformUid: params.platformUid,
-            platformUsername: params.platformUsername
+            platformUsername: params.platformUsername,
+            oauthAccessToken: params.oauthCredentials.oauthAccessToken,
+            oauthRefreshToken: params.oauthCredentials.oauthRefreshToken,
+            oauthIdToken: params.oauthCredentials.oauthIdToken,
+            oauthTokenType: params.oauthCredentials.oauthTokenType,
+            oauthExpiresAt: params.oauthCredentials.oauthExpiresAt,
+            oauthScope: params.oauthCredentials.oauthScope
         }
     });
 
@@ -300,6 +365,7 @@ export default defineEventHandler(async event => {
         redirectUri
     });
     const identity = await resolveCodeforcesIdentity({ token, discovery });
+    const oauthCredentials = buildCodeforcesOAuthCredentialSnapshot(token);
 
     if (mode === 'bind') {
         const bindUserId = statePayload.bindUserId;
@@ -309,7 +375,8 @@ export default defineEventHandler(async event => {
         const user = await bindCodeforcesToExistingUser({
             userId: bindUserId,
             platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername
+            platformUsername: identity.platformUsername,
+            oauthCredentials
         });
 
         logger.success(`Codeforces bind success: cf=${identity.platformUid}, user=${user.id}`);
@@ -326,7 +393,10 @@ export default defineEventHandler(async event => {
     }
 
     if (mode === 'register') {
-        const user = await registerLocalUserFromCodeforces(identity);
+        const user = await registerLocalUserFromCodeforces({
+            ...identity,
+            oauthCredentials
+        });
         const config = useRuntimeConfig();
         const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
 
@@ -344,7 +414,7 @@ export default defineEventHandler(async event => {
         };
     }
 
-    const user = await findOrCreateLocalUser(identity);
+    const user = await findOrCreateLocalUser({ ...identity, oauthCredentials });
 
     const config = useRuntimeConfig();
     const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });

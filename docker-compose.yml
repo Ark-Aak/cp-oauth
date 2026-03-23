@@ -1,6 +1,7 @@
 services:
     db:
         image: postgres:16-alpine
+        restart: always
         ports:
             - '5432:5432'
         environment:
@@ -17,6 +18,7 @@ services:
 
     redis:
         image: redis:7-alpine
+        restart: always
         ports:
             - '6379:6379'
         volumes:

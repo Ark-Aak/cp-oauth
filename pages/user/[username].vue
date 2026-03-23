@@ -30,8 +30,33 @@
                         <AppPlatformIcon :platform="account.platform" />
                         <span>{{ $t(`binding.platforms.${account.platform}`) }}</span>
                     </span>
-                    <span class="user-profile__linked-uid">
-                        {{ account.platformUsername || account.platformUid }}
+                    <span class="user-profile__linked-uid-row">
+                        <a
+                            v-if="getProfileUrl(account)"
+                            :href="getProfileUrl(account)!"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="user-profile__linked-link"
+                        >
+                            {{ account.platformUsername || account.platformUid }}
+                            <ExternalLink :size="12" :stroke-width="1.5" />
+                        </a>
+                        <span v-else class="user-profile__linked-uid">
+                            {{ account.platformUsername || account.platformUid }}
+                        </span>
+                        <el-button
+                            v-if="canRefresh(account.platform)"
+                            text
+                            size="small"
+                            :loading="
+                                refreshingPlatformUid ===
+                                `${account.platform}:${account.platformUid}`
+                            "
+                            :title="$t('binding.refresh_username')"
+                            @click="handleRefreshUsername(account)"
+                        >
+                            <RefreshCw :size="13" :stroke-width="1.5" />
+                        </el-button>
                     </span>
                 </div>
             </div>
@@ -52,7 +77,17 @@
                         <AppPlatformIcon :platform="account.platform" />
                         <span>{{ $t(`binding.platforms.${account.platform}`) }}</span>
                     </span>
-                    <span class="user-profile__linked-uid">
+                    <a
+                        v-if="getProfileUrl(account)"
+                        :href="getProfileUrl(account)!"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="user-profile__linked-link"
+                    >
+                        {{ account.platformUsername || account.platformUid }}
+                        <ExternalLink :size="12" :stroke-width="1.5" />
+                    </a>
+                    <span v-else class="user-profile__linked-uid">
                         {{ account.platformUsername || account.platformUid }}
                     </span>
                 </div>
@@ -74,12 +109,31 @@
 </template>
 
 <script setup lang="ts">
+import { ExternalLink, RefreshCw } from 'lucide-vue-next';
+import { ElMessage } from 'element-plus';
 import { renderMarkdown } from '~/utils/markdown';
 
+const { t } = useI18n();
 const route = useRoute();
 const colorMode = useColorMode();
 
 const username = route.params.username as string;
+
+const platformProfileUrls: Record<string, (uid: string, uname: string | null) => string | null> = {
+    luogu: uid => `https://www.luogu.com.cn/user/${uid}`,
+    codeforces: (_uid, uname) => (uname ? `https://codeforces.com/profile/${uname}` : null),
+    atcoder: (_uid, uname) => (uname ? `https://atcoder.jp/users/${uname}` : null),
+    github: (_uid, uname) => (uname ? `https://github.com/${uname}` : null)
+};
+
+function getProfileUrl(account: {
+    platform: string;
+    platformUid: string;
+    platformUsername: string | null;
+}): string | null {
+    const fn = platformProfileUrls[account.platform];
+    return fn ? fn(account.platformUid, account.platformUsername) : null;
+}
 
 useHead({ title: () => `@${username} - CP OAuth` });
 
@@ -102,6 +156,38 @@ const { data: user, error } = await useFetch<UserProfile>(`/api/users/${username
 
 const renderedHtml = ref('');
 const cpPlatforms = new Set(['luogu', 'codeforces', 'atcoder']);
+const refreshablePlatforms = new Set(['luogu', 'codeforces']);
+const refreshingPlatformUid = ref('');
+
+function canRefresh(platform: string): boolean {
+    return refreshablePlatforms.has(platform);
+}
+
+async function handleRefreshUsername(account: {
+    platform: string;
+    platformUid: string;
+    platformUsername: string | null;
+}) {
+    const key = `${account.platform}:${account.platformUid}`;
+    refreshingPlatformUid.value = key;
+    try {
+        const result = await $fetch<{ platformUsername: string }>('/api/account/refresh-username', {
+            method: 'POST',
+            body: { platform: account.platform, platformUid: account.platformUid }
+        });
+        account.platformUsername = result.platformUsername;
+        ElMessage.success(t('binding.refresh_success'));
+    } catch (e: unknown) {
+        const err = e as { statusCode?: number; data?: { message?: string } };
+        if (err.statusCode === 429) {
+            ElMessage.warning(err.data?.message || t('binding.refresh_cooldown'));
+        } else {
+            ElMessage.error(err.data?.message || t('binding.refresh_error'));
+        }
+    } finally {
+        refreshingPlatformUid.value = '';
+    }
+}
 
 const cpLinkedAccounts = computed(
     () => user.value?.linkedAccounts?.filter(account => cpPlatforms.has(account.platform)) || []
@@ -217,6 +303,26 @@ await render();
     &__linked-uid {
         font-size: 12px;
         color: var(--text-secondary);
+    }
+
+    &__linked-uid-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    &__linked-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.15s ease;
+
+        &:hover {
+            color: var(--text-primary);
+        }
     }
 
     &__markdown {

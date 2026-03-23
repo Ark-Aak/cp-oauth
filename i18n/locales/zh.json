@@ -184,6 +184,10 @@
             }
         },
         "verify_error": "验证失败",
+        "refresh_username": "刷新用户名",
+        "refresh_success": "用户名刷新成功",
+        "refresh_cooldown": "请稍后再刷新",
+        "refresh_error": "刷新用户名失败",
         "platforms": {
             "luogu": "洛谷",
             "atcoder": "AtCoder",
@@ -321,6 +325,8 @@
             "google": "Google OAuth",
             "google_client_id": "Google Client ID",
             "google_client_secret": "Google Client Secret",
+            "platform": "平台设置",
+            "username_refresh_cooldown": "用户名刷新冷却时间（分钟）",
             "save": "保存",
             "saving": "保存中...",
             "saved": "配置保存成功。"

@@ -20,7 +20,8 @@ const DEFAULTS: Record<string, string> = {
     github_client_id: '',
     github_client_secret: '',
     google_client_id: '',
-    google_client_secret: ''
+    google_client_secret: '',
+    username_refresh_cooldown: '1440'
 };
 
 export async function getConfig(key: string): Promise<string> {

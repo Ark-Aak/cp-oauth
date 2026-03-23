@@ -46,6 +46,8 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 - **i18n**: `@nuxtjs/i18n` with `no_prefix` strategy — three locales: `en`, `zh`, `ja` in `i18n/locales/`
 - **Color mode**: `@nuxtjs/color-mode` with system preference, dark fallback, stored in `cp-oauth-color-mode`
 - **Layouts**: `default` (sidebar + main content) and `auth` (centered, no sidebar — used for login/register)
+- **Components**: `AppSidebar.vue` (navigation sidebar in default layout), `AppPlatformIcon.vue` (competitive programming platform icons)
+- **Pages**: Nuxt 4 file-based routing under `pages/` — admin pages under `pages/admin/`, OAuth flow under `pages/oauth/`, third-party callbacks under `pages/oauth/thirdparty/`
 - **Styling**: SCSS — global styles in `assets/scss/main.scss`, Element Plus overrides in `assets/scss/element-overrides.scss`
 - **Markdown**: `utils/markdown.ts` renders Markdown with remark/rehype pipeline and Shiki syntax highlighting (light/dark themes)
 
@@ -65,27 +67,50 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 - Core logic in `server/utils/oauth.ts`, endpoints in `server/api/oauth/`
 - Flow: `authorize.get` → `authorize.post` (user consent) → `token.post` (code exchange) → `userinfo.get`
 
-### Platform Verification System
+### Third-Party Authentication (Login/Register)
+
+Users can sign in via external OAuth providers, handled in `server/api/auth/thirdparty/`:
+
+- **GitHub** — standard OAuth 2.0 flow (`server/utils/github-oauth.ts`)
+- **Google** — standard OAuth 2.0 / OpenID Connect (`server/utils/google-oauth.ts`)
+- **Codeforces** — OpenID Connect with discovery document (`server/utils/codeforces-oauth.ts`); caches OIDC metadata in-memory with 10min TTL
+- **Luogu** — non-standard: paste-based login and challenge/verify flow (`server/utils/luogu-paste.ts`, `server/utils/luogu-login-credential.ts`)
+
+Each provider follows the pattern: `start.get` (redirect to provider) → `callback.post` (exchange code, resolve identity, create/login user). Provider client IDs/secrets are stored in `system_config`.
+
+### Platform Verification System (Account Linking)
 
 Extensible system for linking competitive programming accounts in `server/utils/platforms/`:
 
 - `types.ts` defines `PlatformVerifier` interface
 - Each platform implements `verify(params)` returning `VerifyResult`
-- Currently only Luogu is implemented (`luogu.ts`)
+- Currently implemented: Luogu (`luogu.ts`) and AtCoder (`atcoder.ts`)
 - To add a new platform: create a verifier file, register it in `index.ts`
+
+Platform username refresh (`server/utils/platform-username.ts`) supports fetching current usernames for Luogu and Codeforces linked accounts.
+
+### Shared Utils (utils/)
+
+Client/server shared code:
+
+- `username.ts` — username validation rules (`USERNAME_MIN_LENGTH`, `USERNAME_MAX_LENGTH`, `isValidUsername`)
+- `markdown.ts` — Markdown rendering with remark/rehype pipeline and Shiki syntax highlighting
+- `auth-redirect.ts` — post-login redirect helpers
+- `luogu-login-credential.ts` — Luogu credential type definitions
 
 ### API Route Organization (server/api/)
 
 - `auth/` — login, register, email verify, current user (`me`)
+- `auth/thirdparty/` — third-party login/register (GitHub, Google, Codeforces, Luogu)
 - `oauth/` — authorize, token, userinfo, client CRUD
-- `account/` — linked account bindings (bind/unbind/list)
+- `account/` — linked account bindings (bind/unbind/list), username refresh
 - `admin/` — system config, user management (requires admin role)
 - `users/` — public user profiles
-- `public/` — unauthenticated config endpoint
+- `public/` — unauthenticated config endpoint, hitokoto
 
 ### Data Model (prisma/schema.prisma)
 
-Five core models: `User`, `OAuthClient`, `OAuthAuthorizationCode`, `OAuthAccessToken`, `LinkedAccount`, plus `SystemConfig` for runtime settings. All use `@@map` to snake_case table names.
+Six models: `User`, `OAuthClient`, `OAuthAuthorizationCode`, `OAuthAccessToken`, `LinkedAccount`, `SystemConfig`. All use `@@map` to snake_case table names. Prisma field names are camelCase, mapped to snake_case columns via `@map`.
 
 ## Environment Variables
 
