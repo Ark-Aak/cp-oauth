@@ -66,7 +66,10 @@
                     :disabled="!form.email"
                     @click="handlePasskeyLogin"
                 >
-                    {{ $t('auth.login.with_passkey') }}
+                    <span class="login-card__oauth-btn-content">
+                        <Fingerprint :size="16" :stroke-width="1.5" />
+                        <span>{{ $t('auth.login.with_passkey') }}</span>
+                    </span>
                 </el-button>
                 <el-button
                     v-if="codeforcesLoginEnabled"
@@ -158,6 +161,7 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
+import { Fingerprint } from 'lucide-vue-next';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 definePageMeta({ layout: 'auth' });
