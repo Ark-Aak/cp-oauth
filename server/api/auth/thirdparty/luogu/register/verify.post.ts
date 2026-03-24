@@ -22,6 +22,10 @@ async function allocateSyntheticLuoguEmail(platformUid: string): Promise<string>
     throw createError({ statusCode: 500, message: 'Unable to allocate email for Luogu user' });
 }
 
+function getDefaultLuoguAvatarUrl(uid: string): string {
+    return `https://cdn.luogu.com.cn/upload/usericon/${encodeURIComponent(uid)}.png`;
+}
+
 export default defineEventHandler(async event => {
     const body = await readBody(event);
     const requestId = String(body.requestId || '').trim();
@@ -82,6 +86,7 @@ export default defineEventHandler(async event => {
             username,
             passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
             displayName: result.platformUsername || null,
+            avatarUrl: getDefaultLuoguAvatarUrl(result.platformUid),
             emailVerified: false,
             role
         },
