@@ -16,7 +16,14 @@ function getBaseUrl(event: Parameters<typeof getRequestURL>[0]): string {
 
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
-    const allowedPublicPlatforms = new Set(['luogu', 'atcoder', 'codeforces', 'github', 'google']);
+    const allowedPublicPlatforms = new Set([
+        'luogu',
+        'atcoder',
+        'codeforces',
+        'github',
+        'google',
+        'clist'
+    ]);
 
     if (event.method === 'GET') {
         const user = await prisma.user.findUnique({
