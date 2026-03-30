@@ -22,8 +22,9 @@
     &__content {
         min-height: 100vh;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
+        padding-top: 15vh;
     }
 }
 
@@ -34,8 +35,7 @@
         }
 
         &__content {
-            align-items: flex-start;
-            padding-top: 10vh;
+            padding-top: 8vh;
         }
     }
 }

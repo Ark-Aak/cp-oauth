@@ -37,14 +37,14 @@
             v-model="secretVisible"
             :title="$t('developer.secret_warning')"
             :close-on-click-modal="false"
-            width="440px"
+            width="520px"
         >
             <el-descriptions :column="1" border>
                 <el-descriptions-item label="Client ID">
-                    <code>{{ newSecret?.clientId }}</code>
+                    <code class="developer__secret-code">{{ newSecret?.clientId }}</code>
                 </el-descriptions-item>
                 <el-descriptions-item label="Client Secret">
-                    <code>{{ newSecret?.clientSecret }}</code>
+                    <code class="developer__secret-code">{{ newSecret?.clientSecret }}</code>
                 </el-descriptions-item>
             </el-descriptions>
             <template #footer>
@@ -202,6 +202,16 @@ await loadClients();
             font-size: 13px;
             word-break: break-all;
         }
+    }
+
+    &__secret-code {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 12px;
+        word-break: break-all;
+        overflow-wrap: anywhere;
+        display: block;
+        max-width: 100%;
+        user-select: all;
     }
 
     &__client {
