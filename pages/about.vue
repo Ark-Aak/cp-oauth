@@ -25,7 +25,7 @@
             </template>
 
             <div class="about__endpoint">
-                <h3>GET /oauth/authorize</h3>
+                <h3>GET /api/oauth/authorize</h3>
                 <p class="about__text">{{ $t('about.endpoints.authorize_desc') }}</p>
                 <div class="about__code" v-html="snippets.authorize" />
             </div>
@@ -33,7 +33,7 @@
             <el-divider />
 
             <div class="about__endpoint">
-                <h3>POST /oauth/token</h3>
+                <h3>POST /api/oauth/token</h3>
                 <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
                 <div class="about__code" v-html="snippets.token" />
             </div>
@@ -41,7 +41,7 @@
             <el-divider />
 
             <div class="about__endpoint">
-                <h3>GET /oauth/userinfo</h3>
+                <h3>GET /api/oauth/userinfo</h3>
                 <p class="about__text">{{ $t('about.endpoints.userinfo_desc') }}</p>
                 <div class="about__code" v-html="snippets.userinfo" />
             </div>

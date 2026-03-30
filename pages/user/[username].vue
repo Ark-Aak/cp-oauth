@@ -95,6 +95,53 @@
             <el-empty v-else :description="$t('user.no_other_accounts')" :image-size="48" />
         </el-card>
 
+        <!-- CP Stats -->
+        <el-card v-if="user.cpStats" shadow="never" class="user-profile__section">
+            <template #header>
+                <span class="user-profile__section-title">{{ $t('user.cp_stats') }}</span>
+            </template>
+            <div v-if="user.cpStats.accounts.length">
+                <div
+                    v-for="account in user.cpStats.accounts"
+                    :key="account.resource"
+                    class="user-profile__cp-stat-item"
+                >
+                    <span class="user-profile__cp-resource">
+                        <AppPlatformIcon :platform="account.resource" />
+                        {{ account.resource_name || account.resource }}
+                    </span>
+                    <span class="user-profile__cp-handle">{{ account.handle }}</span>
+                    <span v-if="account.rating != null" class="user-profile__cp-rating">
+                        {{ $t('user.rating') }}: <strong>{{ account.rating }}</strong>
+                    </span>
+                    <span v-else class="user-profile__cp-rating user-profile__cp-rating--unrated">
+                        {{ $t('user.rating') }}: {{ $t('user.unrated') }}
+                    </span>
+                    <span v-if="account.n_contests" class="user-profile__cp-contests">
+                        {{ $t('user.contests') }}: {{ account.n_contests }}
+                    </span>
+                    <span v-if="account.resource_rank != null" class="user-profile__cp-rank">
+                        {{ $t('user.rank') }}: #{{ account.resource_rank }}
+                    </span>
+                </div>
+            </div>
+            <el-empty v-else :description="$t('user.no_cp_stats')" :image-size="48" />
+        </el-card>
+
+        <!-- Rating History Chart -->
+        <el-card
+            v-if="user.ratingHistory && user.ratingHistory.length"
+            shadow="never"
+            class="user-profile__section"
+        >
+            <template #header>
+                <span class="user-profile__section-title">{{ $t('user.rating_history') }}</span>
+            </template>
+            <div v-loading="!chartReady" class="user-profile__chart-container">
+                <canvas ref="ratingChartCanvas" />
+            </div>
+        </el-card>
+
         <!-- Homepage (Markdown) -->
         <el-card v-if="user.homepage" shadow="never" class="user-profile__section">
             <template #header>
@@ -112,6 +159,7 @@
 import { ExternalLink, RefreshCw } from 'lucide-vue-next';
 import { ElMessage } from 'element-plus';
 import { renderMarkdown } from '~/utils/markdown';
+import type { Chart } from 'chart.js';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -138,6 +186,29 @@ function getProfileUrl(account: {
 
 useHead({ title: () => `@${username} - CP OAuth` });
 
+interface CpStatAccount {
+    resource: string;
+    resource_name?: string;
+    handle: string;
+    rating: number | null;
+    n_contests: number;
+    resource_rank: number | null;
+    last_activity: string | null;
+}
+
+interface RatingHistoryEntry {
+    resource: string;
+    resource_name?: string;
+    contest_id: number;
+    event: string;
+    date: string;
+    handle: string;
+    place: number | null;
+    old_rating: number | null;
+    new_rating: number | null;
+    rating_change: number | null;
+}
+
 interface UserProfile {
     id: string;
     username: string;
@@ -151,13 +222,19 @@ interface UserProfile {
         platformUid: string;
         platformUsername: string | null;
     }[];
+    cpStats?: {
+        accounts: CpStatAccount[];
+        highest_rating: { resource: string; handle: string; rating: number | null } | null;
+        total_contests: number;
+    };
+    ratingHistory?: RatingHistoryEntry[];
 }
 
 const { data: user, error } = await useFetch<UserProfile>(`/api/users/${username}`);
 
 const renderedHtml = ref('');
 const cpPlatforms = new Set(['luogu', 'codeforces', 'atcoder']);
-const refreshablePlatforms = new Set(['luogu', 'codeforces']);
+const refreshablePlatforms = new Set(['luogu', 'codeforces', 'github', 'clist']);
 const refreshingPlatformUid = ref('');
 
 function canRefresh(platform: string): boolean {
@@ -200,6 +277,217 @@ const otherLinkedAccounts = computed(
 );
 
 const currentTheme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'));
+
+// --- Rating History Chart (Chart.js) ---
+const ratingChartCanvas = ref<HTMLCanvasElement | null>(null);
+const chartReady = ref(false);
+
+const RESOURCE_COLORS: Record<string, string> = {
+    'codeforces.com': '#1890ff',
+    'atcoder.jp': '#52c41a',
+    'atcoder.jp/heuristic': '#a0d911',
+    'luogu.com.cn': '#fa541c'
+};
+
+let chartInstance: InstanceType<typeof Chart> | null = null;
+
+async function initRatingChart() {
+    chartReady.value = false;
+    const canvas = ratingChartCanvas.value;
+    const entries = user.value?.ratingHistory;
+    if (!canvas || !entries || entries.length === 0) return;
+
+    const {
+        Chart,
+        LineController,
+        LineElement,
+        PointElement,
+        LinearScale,
+        TimeScale,
+        Tooltip,
+        Legend,
+        Filler
+    } = await import('chart.js');
+    const { default: adapter } = await import('chart.js/auto');
+    // Register with a single auto import fallback
+    void adapter;
+
+    Chart.register(
+        LineController,
+        LineElement,
+        PointElement,
+        LinearScale,
+        TimeScale,
+        Tooltip,
+        Legend,
+        Filler
+    );
+
+    // Sort all entries by date
+    const sorted = [...entries].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Group by resource
+    const groups: Record<string, RatingHistoryEntry[]> = {};
+    const resourceDisplayNames: Record<string, string> = {};
+    for (const entry of sorted) {
+        const key = entry.resource;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(entry);
+        if (entry.resource_name) {
+            resourceDisplayNames[key] = entry.resource_name;
+        }
+    }
+
+    const isDark = currentTheme.value === 'dark';
+    const textColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+
+    const datasets = Object.keys(groups).map(resource => {
+        const data = groups[resource];
+        const color = RESOURCE_COLORS[resource] || '#888';
+        return {
+            label: resourceDisplayNames[resource] || resource,
+            data: data
+                .filter(e => e.new_rating !== null)
+                .map(e => ({
+                    x: new Date(e.date).getTime(),
+                    y: e.new_rating as number,
+                    _entry: e
+                })),
+            borderColor: color,
+            backgroundColor: color + '20',
+            pointBackgroundColor: color,
+            pointBorderColor: color,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            borderWidth: 2,
+            tension: 0.1,
+            fill: false
+        };
+    });
+
+    if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+    }
+
+    chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    ticks: {
+                        color: textColor,
+                        font: { size: 10 },
+                        callback(value) {
+                            const d = new Date(value as number);
+                            return d.toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short'
+                            });
+                        },
+                        maxTicksLimit: 8
+                    },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    ticks: {
+                        color: textColor,
+                        font: { size: 11 },
+                        callback(value) {
+                            return String(Math.round(value as number));
+                        }
+                    },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: textColor,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { size: 11 }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: isDark ? '#1f1f2e' : '#fff',
+                    titleColor: isDark ? '#e0e0e0' : '#333',
+                    bodyColor: isDark ? '#ccc' : '#555',
+                    borderColor: isDark ? '#444' : '#ddd',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    padding: 10,
+                    displayColors: true,
+                    callbacks: {
+                        title(items) {
+                            const raw = items[0]?.raw as {
+                                _entry?: RatingHistoryEntry;
+                            };
+                            return raw?._entry?.event || '';
+                        },
+                        afterTitle(items) {
+                            const raw = items[0]?.raw as {
+                                _entry?: RatingHistoryEntry;
+                            };
+                            if (!raw?._entry) return '';
+                            const d = new Date(raw._entry.date);
+                            return d.toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                        },
+                        label(item) {
+                            const raw = item.raw as { _entry?: RatingHistoryEntry };
+                            const e = raw?._entry;
+                            if (!e) return '';
+                            const parts = [`Rating: ${e.new_rating}`];
+                            if (e.rating_change !== null && e.rating_change !== undefined) {
+                                const sign = e.rating_change >= 0 ? '+' : '';
+                                parts.push(`(${sign}${e.rating_change})`);
+                            }
+                            return parts.join(' ');
+                        },
+                        afterLabel(item) {
+                            const raw = item.raw as { _entry?: RatingHistoryEntry };
+                            const e = raw?._entry;
+                            if (!e || !e.place) return '';
+                            return `#${e.place}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    chartReady.value = true;
+}
+
+onMounted(() => {
+    nextTick(() => initRatingChart());
+});
+
+watch(currentTheme, () => nextTick(() => initRatingChart()));
+
+onBeforeUnmount(() => {
+    if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+    }
+});
 
 async function render() {
     if (!user.value?.homepage) {
@@ -325,6 +613,64 @@ await render();
 
         &:hover {
             color: var(--text-primary);
+        }
+    }
+
+    &__cp-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 7px 0;
+        font-size: 13px;
+        flex-wrap: wrap;
+
+        & + & {
+            border-top: 1px solid var(--border-color);
+        }
+    }
+
+    &__cp-resource {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        color: var(--text-primary);
+        min-width: 120px;
+    }
+
+    &__cp-handle {
+        color: var(--text-secondary);
+        min-width: 80px;
+    }
+
+    &__cp-rating {
+        color: var(--text-primary);
+
+        strong {
+            font-weight: 700;
+        }
+
+        &--unrated {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    }
+
+    &__cp-contests,
+    &__cp-rank {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+
+    &__chart-container {
+        position: relative;
+        width: 100%;
+        height: 320px;
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
     }
 

@@ -21,6 +21,8 @@ model User {
   emailVerifyToken String? @unique @map("email_verify_token")
   publicLinkedPlatforms String[] @default([]) @map("public_linked_platforms")
   publicLinkedPlatformsConfigured Boolean @default(false) @map("public_linked_platforms_configured")
+  publicCpStats Boolean @default(false) @map("public_cp_stats")
+  publicRatingHistory Boolean @default(false) @map("public_rating_history")
   passwordResetToken String? @unique @map("password_reset_token")
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
   twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")

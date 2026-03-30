@@ -162,6 +162,10 @@
         "public_accounts": "Publicly Visible Accounts",
         "public_accounts_hint": "Checked accounts will be shown on your public profile page.",
         "no_accounts_to_show": "You have no linked accounts available to show yet.",
+        "public_cp_stats": "Show competitive programming stats on public profile",
+        "public_cp_stats_hint": "When enabled, rating, contest count, and ranking data from your linked platforms will be shown on your public profile (requires a linked Clist.by account). Only platforms whose accounts match between this site and Clist.by will be displayed.",
+        "public_rating_history": "Show rating history chart on public profile",
+        "public_rating_history_hint": "Requires a linked Clist.by account. Only platforms whose accounts match between this site and Clist.by will show rating trends.",
         "save": "Save",
         "saving": "Saving...",
         "updated": "Profile updated",
@@ -204,6 +208,13 @@
         "other_accounts": "Other Platform Accounts",
         "no_linked": "No competitive programming accounts linked yet.",
         "no_other_accounts": "No other platform accounts linked yet.",
+        "cp_stats": "Competitive Programming Stats",
+        "rating": "Rating",
+        "contests": "Contests",
+        "rank": "Rank",
+        "no_cp_stats": "No competitive programming stats available.",
+        "rating_history": "Rating History",
+        "unrated": "Unrated",
         "homepage": "Homepage"
     },
     "binding": {
@@ -314,8 +325,8 @@
             "link_github": "GitHub — read your linked GitHub account info",
             "link_google": "Google — read your linked Google account info",
             "link_clist": "Clist.by — read your linked Clist.by account info",
-            "cp_summary": "CP Summary — aggregated competitive programming stats",
-            "cp_details": "CP Details — full submission history and rating trends"
+            "cp_summary": "CP Summary — rating, contest count, and ranking per platform via Clist.by",
+            "cp_details": "CP Details — rating change history via Clist.by"
         }
     },
     "developer": {
@@ -368,8 +379,8 @@
             "link_github": "Read linked GitHub account info (UID, username)",
             "link_google": "Read linked Google account info (UID, username)",
             "link_clist": "Read linked Clist.by account info (UID, username)",
-            "cp_summary": "Linked OJ accounts, total problems solved, highest rating (not fully implemented yet; currently returns placeholder data)",
-            "cp_details": "Full submission history and rating trend data (not fully implemented yet; currently returns placeholder data)"
+            "cp_summary": "CP Summary — rating, contest count, and ranking per platform via Clist.by (requires linked Clist.by account; platforms must match)",
+            "cp_details": "CP Details — rating change history via Clist.by (requires linked Clist.by account; platforms must match)"
         },
         "pkce": {
             "title": "PKCE (Proof Key for Code Exchange)",

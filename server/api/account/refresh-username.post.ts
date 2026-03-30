@@ -2,6 +2,7 @@ import prisma from '~/server/utils/prisma';
 import { getRedis } from '~/server/utils/redis';
 import { getConfig } from '~/server/utils/config';
 import { canRefreshUsername, fetchPlatformUsername } from '~/server/utils/platform-username';
+import { getValidClistAccessToken } from '~/server/utils/clist-oauth';
 
 interface RefreshBody {
     platform?: string;
@@ -58,9 +59,18 @@ export default defineEventHandler(async event => {
         if (err.statusCode === 429) throw e;
     }
 
+    // For Clist platform, use refresh-aware token getter
+    let effectiveAccessToken = account.oauthAccessToken;
+    if (platform === 'clist') {
+        const refreshed = await getValidClistAccessToken(account.id);
+        if (refreshed) {
+            effectiveAccessToken = refreshed;
+        }
+    }
+
     const newUsername = await fetchPlatformUsername(platform, {
         platformUid,
-        oauthAccessToken: account.oauthAccessToken,
+        oauthAccessToken: effectiveAccessToken,
         oauthIdToken: account.oauthIdToken,
         oauthTokenType: account.oauthTokenType
     });

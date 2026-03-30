@@ -162,6 +162,10 @@
         "public_accounts": "公開する連携アカウント",
         "public_accounts_hint": "チェックしたアカウントが公開プロフィールページに表示されます。",
         "no_accounts_to_show": "表示できる連携アカウントはまだありません。",
+        "public_cp_stats": "公開プロフィールに競技データを表示",
+        "public_cp_stats_hint": "有効にすると、連携プラットフォームの Rating・参加コンテスト数・順位が公開プロフィールに表示されます（Clist.by アカウントの連携が必要です）。本サイトで連携したアカウントと Clist.by で連携したアカウントが一致するプラットフォームのみ表示されます。",
+        "public_rating_history": "公開プロフィールに Rating 推移グラフを表示",
+        "public_rating_history_hint": "Clist.by アカウントの連携が必要です。本サイトと Clist.by で連携したアカウントが一致するプラットフォームのみ表示されます。",
         "save": "保存",
         "saving": "保存中...",
         "updated": "プロフィールを更新しました",
@@ -203,6 +207,13 @@
         "other_accounts": "その他プラットフォームアカウント",
         "no_linked": "まだ競技プログラミングのアカウントが連携されていません。",
         "no_other_accounts": "その他プラットフォームアカウントはまだ連携されていません。",
+        "cp_stats": "競技プログラミングデータ",
+        "rating": "Rating",
+        "contests": "コンテスト数",
+        "rank": "順位",
+        "no_cp_stats": "競技データはありません。",
+        "rating_history": "Rating 推移",
+        "unrated": "Unrated",
         "homepage": "ホームページ"
     },
     "binding": {
@@ -313,8 +324,8 @@
             "link_github": "GitHub — 連携済みの GitHub アカウント情報を読み取り",
             "link_google": "Google — 連携済みの Google アカウント情報を読み取り",
             "link_clist": "Clist.by — 連携済みの Clist.by アカウント情報を読み取り",
-            "cp_summary": "CP概要 — 競技プログラミング統計の集計データ",
-            "cp_details": "CP詳細 — 完全な提出履歴とレーティング推移"
+            "cp_summary": "競技概要 — Clist.by 経由で各プラットフォームの Rating・コンテスト数・順位を取得",
+            "cp_details": "競技詳細 — Clist.by 経由で Rating 推移履歴を取得"
         }
     },
     "developer": {
@@ -367,8 +378,8 @@
             "link_github": "連携済みの GitHub アカウント情報を読み取り（UID、ユーザー名）",
             "link_google": "連携済みの Google アカウント情報を読み取り（UID、ユーザー名）",
             "link_clist": "連携済みの Clist.by アカウント情報を読み取り（UID、ユーザー名）",
-            "cp_summary": "連携されたOJアカウント、解いた問題数の合計、最高レーティング（未完成。現在はプレースホルダーデータを返します）",
-            "cp_details": "完全な提出履歴とレーティング推移データ（未完成。現在はプレースホルダーデータを返します）"
+            "cp_summary": "競技概要 — Clist.by 経由で各プラットフォームの Rating・コンテスト数・順位を取得（Clist.by 連携が必要、アカウントの一致が必要）",
+            "cp_details": "競技詳細 — Clist.by 経由で Rating 推移履歴を取得（Clist.by 連携が必要、アカウントの一致が必要）"
         },
         "pkce": {
             "title": "PKCE（Proof Key for Code Exchange）",

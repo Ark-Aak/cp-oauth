@@ -173,6 +173,114 @@ docker compose up -d     # Start PostgreSQL + Redis
 | `link:github`     | Linked GitHub account info.                                     |
 | `link:google`     | Linked Google account info.                                     |
 | `link:clist`      | Linked Clist account info.                                      |
+| `cp:summary`      | Aggregated CP stats (rating, contests, ranking) from Clist.by.  |
+| `cp:details`      | Full rating history from Clist.by.                              |
+
+> **Note on `cp:summary` and `cp:details`:** These scopes require the user to have a linked Clist.by account. Data is only returned for platforms where the user's account on this site matches the one linked on Clist.by. If no Clist.by account is linked, the response will include `{ "available": false, "message": "..." }`.
+
+### Userinfo Response Format
+
+`GET /api/oauth/userinfo` returns a JSON object filtered by the granted scopes. Below is the full response when all scopes are granted:
+
+```jsonc
+{
+    // openid
+    "sub": "a1b2c3d4-uuid",
+
+    // profile
+    "username": "tourist",
+    "display_name": "Gennady Korotkevich",
+    "avatar_url": "https://example.com/avatar.png",
+    "bio": "Competitive programmer",
+
+    // email
+    "email": "user@example.com",
+    "email_verified": true,
+
+    // cp:linked (or individual link:* scopes)
+    "linked_accounts": [
+        { "platform": "codeforces", "platformUid": "tourist", "platformUsername": "tourist" },
+        { "platform": "atcoder", "platformUid": "tourist", "platformUsername": "tourist" },
+        { "platform": "luogu", "platformUid": "123456", "platformUsername": "tourist" }
+    ],
+    "link_scopes": ["link:codeforces", "link:atcoder"], // only present if individual link:* scopes are granted
+
+    // cp:summary — requires Clist.by linked account
+    "cp_summary": {
+        "available": true,
+        "accounts": [
+            {
+                "resource": "codeforces.com",
+                "resource_name": "Codeforces",
+                "handle": "tourist",
+                "rating": 3800,
+                "n_contests": 150,
+                "resource_rank": 1,
+                "last_activity": "2026-03-20T15:00:00"
+            },
+            {
+                "resource": "atcoder.jp",
+                "resource_name": "AtCoder",
+                "handle": "tourist",
+                "rating": 4229,
+                "n_contests": 80,
+                "resource_rank": 1,
+                "last_activity": "2026-03-15T12:00:00"
+            }
+        ],
+        "highest_rating": {
+            "resource": "atcoder.jp",
+            "resource_name": "AtCoder",
+            "handle": "tourist",
+            "rating": 4229
+        },
+        "total_contests": 230
+    },
+    // If Clist.by is not linked:
+    // "cp_summary": { "available": false, "message": "Link a Clist.by account to enable CP stats" }
+
+    // cp:details — requires Clist.by linked account
+    "cp_details": {
+        "available": true,
+        "rating_history": [
+            {
+                "resource": "codeforces.com",
+                "resource_name": "Codeforces",
+                "contest_id": 2001,
+                "event": "Codeforces Round #900 (Div. 1)",
+                "date": "2026-03-15T15:35:00",
+                "handle": "tourist",
+                "place": 1,
+                "score": 7000,
+                "old_rating": 3780,
+                "new_rating": 3800,
+                "rating_change": 20
+            },
+            {
+                "resource": "atcoder.jp/heuristic",
+                "resource_name": "AtCoder Heuristic",
+                "contest_id": 500,
+                "event": "AtCoder Heuristic Contest 030",
+                "date": "2026-03-10T12:00:00",
+                "handle": "tourist",
+                "place": 3,
+                "score": 1500000,
+                "old_rating": 2800,
+                "new_rating": 2850,
+                "rating_change": 50
+            }
+        ]
+    }
+    // If Clist.by is not linked:
+    // "cp_details": { "available": false, "message": "Link a Clist.by account to enable CP details" }
+}
+```
+
+**Notes:**
+
+- AtCoder Heuristic Contests are automatically separated from regular AtCoder contests. Their `resource` is `"atcoder.jp/heuristic"` and `resource_name` is `"AtCoder Heuristic"`.
+- `resource_name` is a human-readable display name mapped from the domain (e.g. `"codeforces.com"` → `"Codeforces"`).
+- When Clist.by API is unreachable, `cp_summary` / `cp_details` return `{ "available": false, "message": "Failed to fetch data from Clist.by" }` instead of causing the entire request to fail.
 
 ### Token Exchange Example
 

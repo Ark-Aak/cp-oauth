@@ -40,6 +40,8 @@ export default defineEventHandler(async event => {
                 emailVerified: true,
                 publicLinkedPlatforms: true,
                 publicLinkedPlatformsConfigured: true,
+                publicCpStats: true,
+                publicRatingHistory: true,
                 theme: true,
                 locale: true
             }
@@ -138,6 +140,12 @@ export default defineEventHandler(async event => {
             data.publicLinkedPlatforms = normalized;
             data.publicLinkedPlatformsConfigured = true;
         }
+        if (body.publicCpStats !== undefined) {
+            data.publicCpStats = Boolean(body.publicCpStats);
+        }
+        if (body.publicRatingHistory !== undefined) {
+            data.publicRatingHistory = Boolean(body.publicRatingHistory);
+        }
 
         const user = await prisma.user.update({
             where: { id: userId },
@@ -154,6 +162,8 @@ export default defineEventHandler(async event => {
                 emailVerified: true,
                 publicLinkedPlatforms: true,
                 publicLinkedPlatformsConfigured: true,
+                publicCpStats: true,
+                publicRatingHistory: true,
                 theme: true,
                 locale: true
             }

@@ -140,7 +140,32 @@
                             {{ $t('profile.no_accounts_to_show') }}
                         </p>
 
-                        <el-form-item>
+                        <div
+                            v-if="clistLinked"
+                            class="profile__section-title"
+                            style="margin-top: 18px"
+                        >
+                            {{ $t('profile.public_cp_stats') }}
+                        </div>
+                        <p v-if="clistLinked" class="profile__section-desc">
+                            {{ $t('profile.public_cp_stats_hint') }}
+                        </p>
+                        <el-checkbox v-if="clistLinked" v-model="publicCpStats" border>
+                            {{ $t('profile.public_cp_stats') }}
+                        </el-checkbox>
+                        <el-checkbox
+                            v-if="clistLinked"
+                            v-model="publicRatingHistory"
+                            border
+                            style="margin-top: 8px"
+                        >
+                            {{ $t('profile.public_rating_history') }}
+                        </el-checkbox>
+                        <p v-if="clistLinked" class="profile__section-desc" style="margin-top: 8px">
+                            {{ $t('profile.public_rating_history_hint') }}
+                        </p>
+
+                        <el-form-item style="margin-top: 18px">
                             <el-button type="primary" native-type="submit" :loading="saving">
                                 {{ saving ? $t('profile.saving') : $t('profile.save') }}
                             </el-button>
@@ -631,6 +656,8 @@ interface ProfileData {
     avatarUrl?: string;
     publicLinkedPlatforms?: LinkedPlatform[];
     publicLinkedPlatformsConfigured?: boolean;
+    publicCpStats?: boolean;
+    publicRatingHistory?: boolean;
     theme?: string;
     locale?: string;
 }
@@ -671,6 +698,8 @@ const publicLinkedPlatformsFromServer = ref<LinkedPlatform[]>(
     Array.isArray(d?.publicLinkedPlatforms) ? d.publicLinkedPlatforms : []
 );
 const publicLinkedPlatformsConfigured = ref(Boolean(d?.publicLinkedPlatformsConfigured));
+const publicCpStats = ref(Boolean(d?.publicCpStats));
+const publicRatingHistory = ref(Boolean(d?.publicRatingHistory));
 colorMode.preference = selectedTheme.value;
 if (d?.locale && isLocaleCode(d.locale) && d.locale !== locale.value) {
     setLocale(d.locale);
@@ -715,6 +744,9 @@ async function handleSave() {
     ) {
         body.publicLinkedPlatforms = normalizedVisiblePlatforms;
     }
+
+    body.publicCpStats = publicCpStats.value;
+    body.publicRatingHistory = publicRatingHistory.value;
 
     saving.value = true;
     try {

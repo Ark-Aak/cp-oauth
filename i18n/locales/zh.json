@@ -162,6 +162,10 @@
         "public_accounts": "公开展示账号",
         "public_accounts_hint": "勾选后，这些账号会显示在你的公开资料页中。",
         "no_accounts_to_show": "你还没有可展示的已绑定账号。",
+        "public_cp_stats": "在公开主页展示竞赛数据",
+        "public_cp_stats_hint": "开启后，绑定平台的 Rating、参赛次数等数据将显示在你的公开资料页中（需绑定 Clist.by 账号）。仅当本站绑定的平台账号与 Clist.by 上关联的账号一致时才会显示对应平台的数据。",
+        "public_rating_history": "在公开主页展示 Rating 变化趋势图",
+        "public_rating_history_hint": "需绑定 Clist.by 账号，且 Clist.by 上关联的平台账号需与本站绑定的账号一致。",
         "save": "保存",
         "saving": "保存中...",
         "updated": "资料已更新",
@@ -204,6 +208,13 @@
         "other_accounts": "其他平台账号",
         "no_linked": "尚未关联任何竞赛编程账号。",
         "no_other_accounts": "尚未关联其他平台账号。",
+        "cp_stats": "竞赛数据",
+        "rating": "Rating",
+        "contests": "参赛次数",
+        "rank": "排名",
+        "no_cp_stats": "暂无竞赛数据。",
+        "rating_history": "Rating 变化趋势",
+        "unrated": "Unrated",
         "homepage": "个人主页"
     },
     "binding": {
@@ -314,8 +325,8 @@
             "link_github": "GitHub — 读取您关联的 GitHub 账号信息",
             "link_google": "Google — 读取您关联的 Google 账号信息",
             "link_clist": "Clist.by — 读取您关联的 Clist.by 账号信息",
-            "cp_summary": "竞赛概要 — 汇总的竞赛编程统计数据",
-            "cp_details": "竞赛详情 — 完整的提交记录和评级趋势"
+            "cp_summary": "竞赛概要 — 通过 Clist.by 获取各平台 Rating、参赛次数、排名",
+            "cp_details": "竞赛详情 — 通过 Clist.by 获取 Rating 变化历史记录"
         }
     },
     "developer": {
@@ -368,8 +379,8 @@
             "link_github": "读取关联的 GitHub 账号信息（UID、用户名）",
             "link_google": "读取关联的 Google 账号信息（UID、用户名）",
             "link_clist": "读取关联的 Clist.by 账号信息（UID、用户名）",
-            "cp_summary": "关联的 OJ 账号、解题总数、最高评级（未完成，当前返回占位数据）",
-            "cp_details": "完整的提交记录和评级趋势数据（未完成，当前返回占位数据）"
+            "cp_summary": "竞赛概要 — 通过 Clist.by 获取各平台 Rating、参赛次数、排名（需绑定 Clist.by，且平台账号需一致）",
+            "cp_details": "竞赛详情 — 通过 Clist.by 获取 Rating 变化历史记录（需绑定 Clist.by，且平台账号需一致）"
         },
         "pkce": {
             "title": "PKCE（代码交换证明密钥）",
