@@ -148,3 +148,17 @@ model Notice {
 
   @@map("notices")
 }
+
+model ShowcaseItem {
+  id          String   @id @default(uuid())
+  category    String
+  name        String
+  description String   @db.Text
+  url         String
+  iconUrl     String?  @map("icon_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("showcase_items")
+}

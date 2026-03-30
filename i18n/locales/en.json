@@ -12,6 +12,7 @@
         "my_profile": "My Profile",
         "settings": "Settings",
         "developer": "Developer",
+        "showcase": "Showcase",
         "about": "Docs",
         "login": "Login",
         "logout": "Logout",
@@ -454,6 +455,35 @@
             "save": "Save",
             "saving": "Saving...",
             "saved": "Configuration saved successfully."
+        },
+        "showcase": {
+            "tab": "Showcase",
+            "create_title": "Add Showcase Item",
+            "category": "Category",
+            "category_site": "Integrated Site",
+            "category_project": "Community Project",
+            "name": "Name",
+            "url": "URL",
+            "description": "Description",
+            "icon_url": "Icon URL",
+            "icon_url_hint": "Leave empty to auto-fetch favicon",
+            "sort_order": "Sort Order",
+            "create": "Add",
+            "creating": "Adding...",
+            "created": "Showcase item added",
+            "list_title": "Showcase Items",
+            "delete": "Delete",
+            "delete_confirm": "Delete this showcase item?",
+            "deleted": "Showcase item deleted",
+            "empty": "No showcase items yet"
         }
+    },
+    "showcase": {
+        "title": "Showcase",
+        "subtitle": "Sites integrated with CP OAuth and related community projects.",
+        "sites_tab": "Integrated Sites",
+        "projects_tab": "Community Projects",
+        "no_sites": "No integrated sites yet.",
+        "no_projects": "No community projects yet."
     }
 }

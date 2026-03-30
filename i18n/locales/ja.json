@@ -12,6 +12,7 @@
         "my_profile": "マイプロフィール",
         "settings": "設定",
         "developer": "開発者",
+        "showcase": "ショーケース",
         "about": "ドキュメント",
         "login": "ログイン",
         "logout": "ログアウト",
@@ -453,6 +454,35 @@
             "save": "保存",
             "saving": "保存中...",
             "saved": "設定を保存しました。"
+        },
+        "showcase": {
+            "tab": "ショーケース",
+            "create_title": "ショーケース項目を追加",
+            "category": "カテゴリ",
+            "category_site": "連携サイト",
+            "category_project": "コミュニティプロジェクト",
+            "name": "名前",
+            "url": "URL",
+            "description": "説明",
+            "icon_url": "アイコンURL",
+            "icon_url_hint": "空欄の場合、faviconを自動取得します",
+            "sort_order": "並び順",
+            "create": "追加",
+            "creating": "追加中...",
+            "created": "ショーケース項目を追加しました",
+            "list_title": "ショーケース項目",
+            "delete": "削除",
+            "delete_confirm": "このショーケース項目を削除しますか？",
+            "deleted": "ショーケース項目を削除しました",
+            "empty": "ショーケース項目はまだありません"
         }
+    },
+    "showcase": {
+        "title": "ショーケース",
+        "subtitle": "CP OAuth を導入したサイトと関連コミュニティプロジェクト。",
+        "sites_tab": "連携サイト",
+        "projects_tab": "コミュニティプロジェクト",
+        "no_sites": "連携サイトはまだありません。",
+        "no_projects": "コミュニティプロジェクトはまだありません。"
     }
 }

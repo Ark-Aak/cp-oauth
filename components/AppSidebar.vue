@@ -13,6 +13,10 @@
                 <Code :size="17" :stroke-width="1.5" />
                 <span>{{ $t('nav.developer') }}</span>
             </el-menu-item>
+            <el-menu-item index="/showcase">
+                <Globe :size="17" :stroke-width="1.5" />
+                <span>{{ $t('nav.showcase') }}</span>
+            </el-menu-item>
             <el-menu-item index="/about">
                 <BookOpen :size="17" :stroke-width="1.5" />
                 <span>{{ $t('nav.about') }}</span>
@@ -58,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { Home, LogOut, LogIn, Code, BookOpen, UserCircle, Shield } from 'lucide-vue-next';
+import { Home, LogOut, LogIn, Code, BookOpen, UserCircle, Shield, Globe } from 'lucide-vue-next';
 
 defineProps<{
     isLoggedIn: boolean;

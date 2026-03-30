@@ -4,6 +4,7 @@
         <el-tabs v-model="activeTab" @tab-change="handleTabChange">
             <el-tab-pane :label="$t('admin.users.tab')" name="users" />
             <el-tab-pane :label="$t('admin.notices.tab')" name="notices" />
+            <el-tab-pane :label="$t('admin.showcase.tab')" name="showcase" />
             <el-tab-pane :label="$t('admin.config.tab')" name="config" />
         </el-tabs>
 
@@ -171,6 +172,9 @@ function handleTabChange(name: string | number) {
     }
     if (name === 'notices') {
         navigateTo('/admin/notices');
+    }
+    if (name === 'showcase') {
+        navigateTo('/admin/showcase');
     }
 }
 

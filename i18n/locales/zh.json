@@ -12,6 +12,7 @@
         "my_profile": "我的资料",
         "settings": "设置",
         "developer": "开发者",
+        "showcase": "展示",
         "about": "文档",
         "login": "登录",
         "logout": "退出登录",
@@ -454,6 +455,35 @@
             "save": "保存",
             "saving": "保存中...",
             "saved": "配置保存成功。"
+        },
+        "showcase": {
+            "tab": "展示",
+            "create_title": "添加展示项",
+            "category": "类别",
+            "category_site": "已接入网站",
+            "category_project": "社区项目",
+            "name": "名称",
+            "url": "链接",
+            "description": "描述",
+            "icon_url": "图标链接",
+            "icon_url_hint": "留空则自动获取 favicon",
+            "sort_order": "排序权重",
+            "create": "添加",
+            "creating": "添加中...",
+            "created": "展示项已添加",
+            "list_title": "已添加的展示项",
+            "delete": "删除",
+            "delete_confirm": "确定删除这个展示项吗？",
+            "deleted": "展示项已删除",
+            "empty": "还没有展示项"
         }
+    },
+    "showcase": {
+        "title": "展示",
+        "subtitle": "已接入 CP OAuth 的网站和相关社区项目。",
+        "sites_tab": "已接入网站",
+        "projects_tab": "社区项目",
+        "no_sites": "暂无已接入的网站。",
+        "no_projects": "暂无社区项目。"
     }
 }
