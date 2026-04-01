@@ -161,7 +161,7 @@ async function handleLuoguCredentialLogin() {
                 turnstileToken: turnstileToken.value || ''
             }
         });
-        useCookie('auth_token').value = result.token;
+        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
         await navigateTo(redirectTarget);
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
@@ -209,7 +209,7 @@ async function handleChallengeVerify() {
                 }
             }
         );
-        useCookie('auth_token').value = result.token;
+        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
         await navigateTo(redirectTarget);
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };

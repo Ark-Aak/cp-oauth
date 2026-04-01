@@ -90,7 +90,7 @@ async function finishCodeforcesLogin() {
         }
 
         if (result.token) {
-            useCookie('auth_token').value = result.token;
+            useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
         }
         await navigateTo(result.redirect || '/');
     } catch (e: unknown) {

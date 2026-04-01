@@ -119,7 +119,7 @@ async function handleRegister() {
                 turnstileToken: turnstileToken.value || undefined
             }
         });
-        useCookie('auth_token').value = data.token;
+        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = data.token;
         await navigateTo('/');
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };

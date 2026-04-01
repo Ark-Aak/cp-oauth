@@ -266,7 +266,7 @@ async function completeLoginResponse(data: LoginResponse) {
     }
 
     if (data.token) {
-        useCookie('auth_token').value = data.token;
+        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = data.token;
         await navigateTo(redirectTarget.value);
         return;
     }
@@ -309,7 +309,7 @@ async function handleVerifyTwoFactor() {
                 code: twoFactorForm.code
             }
         });
-        useCookie('auth_token').value = result.token;
+        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
         await navigateTo(redirectTarget.value);
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
