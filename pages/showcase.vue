@@ -103,8 +103,8 @@ const projects = computed(() => data.value?.projects || []);
 
 function getFavicon(url: string): string {
     try {
-        const host = new URL(url).hostname;
-        return `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+        const target = new URL(url);
+        return `${target.protocol}//${target.host}/favicon.ico`;
     } catch {
         return '';
     }
