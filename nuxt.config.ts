@@ -5,7 +5,11 @@ export default defineNuxtConfig({
     app: {
         head: {
             title: 'CP OAuth'
-        }
+        },
+        cdnURL:
+            process.env.NODE_ENV === 'production'
+                ? process.env.NUXT_APP_CDN_URL || process.env.CDN_URL || ''
+                : ''
     },
     modules: [
         '@nuxt/eslint',

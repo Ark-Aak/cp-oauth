@@ -92,6 +92,15 @@ npx prisma generate
 npm run build
 ```
 
+If S3 upload is enabled, `npm run build` will also upload static assets from `.output/public`.
+Set `S3_UPLOAD_ENABLED=true` and the required S3 env vars before building.
+
+You can run upload separately with:
+
+```bash
+npm run upload:s3
+```
+
 ### Run
 
 ```bash
@@ -118,6 +127,8 @@ docker run -p 3000:3000 \
 npm run dev              # Start Nuxt dev server
 npm run build            # Production build
 npm run preview          # Preview production build
+npm run upload:s3         # Upload .output/public to S3-compatible storage
+npm run upload:oss        # Alias of upload:s3
 
 # Code quality
 npm run lint             # ESLint check
@@ -134,12 +145,26 @@ docker compose up -d     # Start PostgreSQL + Redis
 
 ## Environment Variables
 
-| Variable       | Required | Description                               |
-| -------------- | -------- | ----------------------------------------- |
-| `DATABASE_URL` | Yes      | PostgreSQL connection string              |
-| `REDIS_URL`    | Yes      | Redis connection string                   |
-| `JWT_SECRET`   | Yes      | Secret for signing JWT tokens             |
-| `PYTHON_PATH`  | No       | Path to Python binary (default: `python`) |
+| Variable                | Required | Description                                                    |
+| ----------------------- | -------- | -------------------------------------------------------------- |
+| `DATABASE_URL`          | Yes      | PostgreSQL connection string                                   |
+| `REDIS_URL`             | Yes      | Redis connection string                                        |
+| `JWT_SECRET`            | Yes      | Secret for signing JWT tokens                                  |
+| `NUXT_APP_CDN_URL`      | No       | CDN base URL for Nuxt `_nuxt` assets                           |
+| `PYTHON_PATH`           | No       | Path to Python binary (default: `python`)                      |
+| `S3_UPLOAD_ENABLED`     | No       | Set `true` to upload static files to S3-compatible storage     |
+| `S3_REGION`             | No       | S3 region (required when upload is enabled)                    |
+| `S3_BUCKET`             | No       | S3 bucket name (required when upload is enabled)               |
+| `S3_ACCESS_KEY_ID`      | No       | Access key ID (required when upload is enabled)                |
+| `S3_SECRET_ACCESS_KEY`  | No       | Secret access key (required when upload is enabled)            |
+| `S3_ENDPOINT`           | No       | Custom S3 endpoint (for OSS/COS/MinIO etc.)                    |
+| `S3_SESSION_TOKEN`      | No       | Optional temporary session token                               |
+| `S3_PREFIX`             | No       | Remote prefix for uploaded files                               |
+| `S3_BUILD_DIR`          | No       | Local static directory to upload (default `.output/public`)    |
+| `S3_UPLOAD_CONCURRENCY` | No       | Upload concurrency (default `8`)                               |
+| `S3_FORCE_PATH_STYLE`   | No       | Force path-style URLs (default auto-enabled when endpoint set) |
+
+> Backward compatibility: `OSS_*` environment variables are still supported as aliases.
 
 ## OAuth 2.0 API
 

@@ -3,16 +3,19 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "nuxt build",
+        "build": "nuxt build && npm run upload:s3",
         "dev": "nuxt dev",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
+        "upload:s3": "node scripts/upload-oss.mjs",
+        "upload:oss": "npm run upload:s3",
         "postinstall": "nuxt prepare",
         "lint": "eslint . --ignore-pattern generated/**",
         "format": "prettier --write .",
         "prepare": "husky"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1024.0",
         "@element-plus/nuxt": "^1.1.5",
         "@nuxtjs/color-mode": "^4.0.0",
         "@nuxtjs/i18n": "^10.2.3",
@@ -23,6 +26,7 @@
         "bcrypt": "^5.1.1",
         "bcryptjs": "^3.0.3",
         "chart.js": "^4.5.1",
+        "dotenv": "^17.4.0",
         "element-plus": "^2.9.1",
         "ioredis": "^5.10.1",
         "jsonwebtoken": "^9.0.3",
