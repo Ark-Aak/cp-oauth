@@ -1,5 +1,11 @@
 <template>
     <div>
+        <NuxtLoadingIndicator
+            :color="loadingIndicatorColor"
+            :error-color="loadingIndicatorColor"
+            :height="2"
+            :throttle="0"
+        />
         <NuxtLayout>
             <NuxtPage />
         </NuxtLayout>
@@ -7,6 +13,12 @@
 </template>
 
 <script setup lang="ts">
+const colorMode = useColorMode();
+
+const loadingIndicatorColor = computed(() =>
+    colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(0, 0, 0, 0.92)'
+);
+
 useHead({
     script: [
         {
