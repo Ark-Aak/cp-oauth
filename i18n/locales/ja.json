@@ -386,6 +386,13 @@
         "pkce": {
             "title": "PKCE（Proof Key for Code Exchange）",
             "description": "client_secret を安全に保存できない公開クライアント（例：SPA、モバイルアプリ）では、代わりに PKCE を使用してください。code_verifier を生成し、SHA-256 で code_challenge を導出して、認可リクエストに含めます。"
+        },
+        "card": {
+            "title": "ユーザープロフィールカード",
+            "description": "ユーザーの連携プラットフォーム情報を表示する SVG カード画像を生成します。GitHub README やブログなど、画像をサポートする場所に埋め込めます。公開設定のプラットフォームのみ表示されます。",
+            "endpoint": "エンドポイント",
+            "params": "パラメータ: width（幅、デフォルト 480、範囲 300-800）、theme（テーマ、light または dark、デフォルト light）、lang（言語、en/zh/ja、デフォルト en）",
+            "example": "使用例（Markdown）"
         }
     },
     "admin": {

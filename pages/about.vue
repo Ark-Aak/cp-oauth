@@ -71,6 +71,23 @@
             <p class="about__text">{{ $t('about.pkce.description') }}</p>
             <div class="about__code" v-html="snippets.pkce" />
         </el-card>
+
+        <!-- User Card -->
+        <el-card shadow="never" class="about__card">
+            <template #header>
+                <span class="about__card-title">{{ $t('about.card.title') }}</span>
+            </template>
+            <p class="about__text">{{ $t('about.card.description') }}</p>
+            <p class="about__text">
+                <strong>{{ $t('about.card.endpoint') }}:</strong>
+                <code>GET /api/users/{username}/card.svg</code>
+            </p>
+            <p class="about__text">{{ $t('about.card.params') }}</p>
+            <p class="about__text">
+                <strong>{{ $t('about.card.example') }}:</strong>
+            </p>
+            <div class="about__code" v-html="snippets.card" />
+        </el-card>
     </div>
 </template>
 
@@ -155,25 +172,38 @@ const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
 // code_verifier=codeVerifier (instead of client_secret)
 \`\`\``;
 
+const cardSnippet = `\`\`\`markdown
+![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg)
+
+<!-- Dark theme -->
+![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?theme=dark)
+
+<!-- Custom width -->
+![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?width=600&theme=dark)
+\`\`\``;
+
 const snippets = reactive({
     authorize: '',
     token: '',
     userinfo: '',
-    pkce: ''
+    pkce: '',
+    card: ''
 });
 
 async function renderAll() {
     const theme = currentTheme.value;
-    const [a, tok, u, p] = await Promise.all([
+    const [a, tok, u, p, c] = await Promise.all([
         renderMarkdown(authorizeSnippet, theme),
         renderMarkdown(tokenSnippet, theme),
         renderMarkdown(userinfoSnippet, theme),
-        renderMarkdown(pkceSnippet, theme)
+        renderMarkdown(pkceSnippet, theme),
+        renderMarkdown(cardSnippet, theme)
     ]);
     snippets.authorize = a;
     snippets.token = tok;
     snippets.userinfo = u;
     snippets.pkce = p;
+    snippets.card = c;
 }
 
 watch(currentTheme, renderAll);

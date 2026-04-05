@@ -387,6 +387,13 @@
         "pkce": {
             "title": "PKCE (Proof Key for Code Exchange)",
             "description": "For public clients (e.g. SPAs, mobile apps) that cannot securely store a client_secret, use PKCE instead. Generate a code_verifier, derive a code_challenge using SHA-256, and include it in the authorization request."
+        },
+        "card": {
+            "title": "User Profile Card",
+            "description": "Generate an SVG card image showing a user's linked platform accounts. Embed it in GitHub READMEs, blogs, or anywhere that supports images. Only publicly visible platforms are shown.",
+            "endpoint": "Endpoint",
+            "params": "Parameters: width (default 480, range 300-800), theme (light or dark, default light), lang (en/zh/ja, default en)",
+            "example": "Example (Markdown)"
         }
     },
     "admin": {

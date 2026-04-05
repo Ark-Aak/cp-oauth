@@ -39,13 +39,13 @@ const iconSrc = computed(() => {
         return `${baseUrl.value}icons/clist.svg`;
     }
     if (p === 'github') {
-        return 'https://cdn.simpleicons.org/github/24292f';
+        return `${baseUrl.value}icons/github.svg`;
     }
     if (p === 'google') {
         return `${baseUrl.value}icons/google.svg`;
     }
     if (p === 'luogu') {
-        return 'https://cdn.simpleicons.org/luogu/24A0ED';
+        return `${baseUrl.value}icons/luogu.svg`;
     }
     // Fallback: try simpleicons by domain name (strip TLD)
     const name = props.platform.replace(/\..+$/, '');

@@ -387,6 +387,13 @@
         "pkce": {
             "title": "PKCE（代码交换证明密钥）",
             "description": "对于无法安全存储 client_secret 的公开客户端（如单页应用、移动应用），请改用 PKCE。生成 code_verifier，使用 SHA-256 推导 code_challenge，并将其包含在授权请求中。"
+        },
+        "card": {
+            "title": "用户资料卡片",
+            "description": "生成一张 SVG 卡片图，展示用户的关联平台信息。可嵌入 GitHub README、博客等任何支持图片的地方。仅显示用户设为公开的平台。",
+            "endpoint": "接口",
+            "params": "参数：width（宽度，默认 480，范围 300-800）、theme（主题，light 或 dark，默认 light）、lang（语言，en/zh/ja，默认 en）",
+            "example": "示例（Markdown）"
         }
     },
     "admin": {

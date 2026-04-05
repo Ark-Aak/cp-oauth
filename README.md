@@ -354,6 +354,53 @@ await fetch('/api/oauth/token', {
 });
 ```
 
+## User Profile Card
+
+Generate an SVG card image showing a user's linked platform accounts. Useful for embedding in GitHub READMEs, blogs, or any place that supports images.
+
+### Endpoint
+
+```
+GET /api/users/{username}/card.svg
+```
+
+### Parameters
+
+| Parameter | Type   | Default | Description                    |
+| --------- | ------ | ------- | ------------------------------ |
+| `width`   | number | 480     | Card width in pixels (300-800) |
+| `theme`   | string | `light` | Color theme: `light` or `dark` |
+| `lang`    | string | `en`    | Language: `en`, `zh`, or `ja`  |
+
+### Usage
+
+**Markdown:**
+
+```markdown
+![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg)
+```
+
+**Markdown (dark theme):**
+
+```markdown
+![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?theme=dark)
+```
+
+**HTML:**
+
+```html
+<img
+    src="https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?theme=dark&width=600"
+    alt="CP OAuth Profile"
+/>
+```
+
+### Notes
+
+- The card respects the user's privacy settings — only platforms marked as public in profile settings will be displayed.
+- The card is cached for 1 hour (via `Cache-Control`).
+- Platform icons are embedded inline in the SVG, so the card works everywhere without external dependencies.
+
 ## Third-Party Login Providers
 
 Users can sign in or register via external OAuth providers. Configure credentials in the admin panel (`/admin/config`):
