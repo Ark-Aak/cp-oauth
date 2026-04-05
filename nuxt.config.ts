@@ -78,6 +78,12 @@ export default defineNuxtConfig({
     nitro: {
         externals: {
             external: ['@prisma/client', '.prisma/client']
+        },
+        prerender: {
+            routes: ['/about']
         }
+    },
+    routeRules: {
+        '/about': { prerender: true }
     }
 });
