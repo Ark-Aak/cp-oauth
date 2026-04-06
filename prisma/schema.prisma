@@ -36,6 +36,7 @@ model User {
   oauthClients      OAuthClient[]
   authorizationCodes OAuthAuthorizationCode[]
   accessTokens      OAuthAccessToken[]
+  refreshTokens     OAuthRefreshToken[]
   linkedAccounts    LinkedAccount[]
   passkeyCredentials PasskeyCredential[]
 
@@ -77,6 +78,7 @@ model OAuthClient {
   user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   authorizationCodes OAuthAuthorizationCode[]
   accessTokens       OAuthAccessToken[]
+  refreshTokens      OAuthRefreshToken[]
 
   @@map("oauth_clients")
 }
@@ -113,6 +115,22 @@ model OAuthAccessToken {
   user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("oauth_access_tokens")
+}
+
+model OAuthRefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  clientId  String   @map("client_id")
+  userId    String   @map("user_id")
+  scopes    String[]
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_refresh_tokens")
 }
 
 model LinkedAccount {

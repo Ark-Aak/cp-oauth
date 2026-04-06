@@ -63,9 +63,13 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 ### OAuth 2.0 Implementation
 
 - Authorization code flow with PKCE support (S256 and plain)
+- Refresh token support with rotation (old refresh token revoked on each use)
 - Scopes: `openid`, `profile`, `email`, `cp:linked`, `cp:summary`, `cp:details`
 - Core logic in `server/utils/oauth.ts`, endpoints in `server/api/oauth/`
-- Flow: `authorize.get` → `authorize.post` (user consent) → `token.post` (code exchange) → `userinfo.get`
+- Flow: `authorize.get` → `authorize.post` (user consent) → `token.post` (code exchange, returns access + refresh token) → `userinfo.get`
+- Token refresh: `token.post` with `grant_type=refresh_token` (rotation: new access + refresh token)
+- Token revocation: `revoke.post` (RFC 7009, supports both access and refresh tokens)
+- Authorized apps management: `authorized-apps.get` (list), `authorized-apps/[clientId].delete` (revoke all tokens for an app)
 
 ### Third-Party Authentication (Login/Register)
 
@@ -102,7 +106,7 @@ Client/server shared code:
 
 - `auth/` — login, register, email verify, current user (`me`)
 - `auth/thirdparty/` — third-party login/register (GitHub, Google, Codeforces, Luogu)
-- `oauth/` — authorize, token, userinfo, client CRUD
+- `oauth/` — authorize, token, userinfo, revoke, client CRUD, authorized apps management
 - `account/` — linked account bindings (bind/unbind/list), username refresh
 - `admin/` — system config, user management (requires admin role)
 - `users/` — public user profiles
@@ -110,7 +114,7 @@ Client/server shared code:
 
 ### Data Model (prisma/schema.prisma)
 
-Six models: `User`, `OAuthClient`, `OAuthAuthorizationCode`, `OAuthAccessToken`, `LinkedAccount`, `SystemConfig`. All use `@@map` to snake_case table names. Prisma field names are camelCase, mapped to snake_case columns via `@map`.
+Six models: `User`, `OAuthClient`, `OAuthAuthorizationCode`, `OAuthAccessToken`, `OAuthRefreshToken`, `LinkedAccount`. All use `@@map` to snake_case table names. Prisma field names are camelCase, mapped to snake_case columns via `@map`.
 
 ## Environment Variables
 

@@ -140,6 +140,7 @@
             "basic": "基础资料",
             "public": "公开展示",
             "bindings": "账号绑定",
+            "authorized_apps": "已授权应用",
             "preferences": "偏好设置",
             "security": "安全"
         },
@@ -329,6 +330,19 @@
             "link_clist": "Clist.by — 读取您关联的 Clist.by 账号信息",
             "cp_summary": "竞赛概要 — 通过 Clist.by 获取各平台 Rating、参赛次数、排名",
             "cp_details": "竞赛详情 — 通过 Clist.by 获取 Rating 变化历史记录"
+        },
+        "authorized_apps": {
+            "title": "已授权应用",
+            "description": "您已授权访问您账号的应用。",
+            "no_apps": "您还没有授权任何应用。",
+            "scopes": "权限",
+            "authorized_at": "授权时间",
+            "access_tokens": "活跃访问令牌：{count} 个",
+            "refresh_tokens": "活跃刷新令牌：{count} 个",
+            "revoke": "撤销授权",
+            "revoke_confirm": "确定要撤销该应用的授权吗？所有相关令牌将被作废。",
+            "revoke_success": "已撤销应用授权",
+            "revoke_error": "撤销授权失败"
         }
     },
     "developer": {
@@ -357,14 +371,16 @@
             "step1": "您的应用将用户重定向到我们的 /oauth/authorize 端点，附带 client_id、redirect_uri 和请求的权限范围。",
             "step2": "用户看到授权同意页面，并决定是否授予访问权限。",
             "step3": "如果批准，用户将被重定向到您的 redirect_uri，并附带授权码。",
-            "step4": "您的服务器通过 POST /oauth/token 将授权码交换为访问令牌。",
-            "step5": "使用访问令牌调用 GET /oauth/userinfo 获取用户数据。"
+            "step4": "您的服务器通过 POST /oauth/token 将授权码交换为访问令牌和刷新令牌。",
+            "step5": "使用访问令牌调用 GET /oauth/userinfo 获取用户数据。",
+            "step6": "访问令牌过期后，使用刷新令牌通过 POST /oauth/token（grant_type=refresh_token）获取新的访问令牌。"
         },
         "endpoints": {
             "title": "API 端点",
             "authorize_desc": "发起授权流程，将用户重定向到授权同意页面。",
-            "token_desc": "将授权码交换为访问令牌。支持 client_secret 和 PKCE（code_verifier）两种认证方式。",
-            "userinfo_desc": "返回根据授权期间授予的权限范围过滤的用户数据。"
+            "token_desc": "将授权码交换为访问令牌和刷新令牌。也支持通过 grant_type=refresh_token 刷新令牌。",
+            "userinfo_desc": "返回根据授权期间授予的权限范围过滤的用户数据。",
+            "revoke_desc": "撤销访问令牌或刷新令牌（RFC 7009）。撤销刷新令牌时会同时作废所有关联的访问令牌。"
         },
         "scopes": {
             "title": "权限范围",

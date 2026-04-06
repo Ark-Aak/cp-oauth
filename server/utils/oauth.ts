@@ -29,6 +29,10 @@ export function generateToken(): string {
     return crypto.randomBytes(48).toString('hex');
 }
 
+export function generateRefreshToken(): string {
+    return crypto.randomBytes(64).toString('hex');
+}
+
 export function generateClientSecret(): string {
     return crypto.randomBytes(32).toString('base64url');
 }

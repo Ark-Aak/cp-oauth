@@ -140,6 +140,7 @@
             "basic": "基本情報",
             "public": "公開表示",
             "bindings": "アカウント連携",
+            "authorized_apps": "認可済みアプリ",
             "preferences": "環境設定",
             "security": "セキュリティ"
         },
@@ -328,6 +329,19 @@
             "link_clist": "Clist.by — 連携済みの Clist.by アカウント情報を読み取り",
             "cp_summary": "競技概要 — Clist.by 経由で各プラットフォームの Rating・コンテスト数・順位を取得",
             "cp_details": "競技詳細 — Clist.by 経由で Rating 推移履歴を取得"
+        },
+        "authorized_apps": {
+            "title": "認可済みアプリケーション",
+            "description": "あなたのアカウントへのアクセスを認可したアプリケーション。",
+            "no_apps": "まだアプリケーションを認可していません。",
+            "scopes": "権限",
+            "authorized_at": "認可日時",
+            "access_tokens": "有効なアクセストークン: {count}",
+            "refresh_tokens": "有効なリフレッシュトークン: {count}",
+            "revoke": "アクセスを取り消す",
+            "revoke_confirm": "このアプリケーションのアクセスを取り消しますか？すべてのトークンが無効になります。",
+            "revoke_success": "アプリケーションのアクセスを取り消しました",
+            "revoke_error": "アクセスの取り消しに失敗しました"
         }
     },
     "developer": {
@@ -356,14 +370,16 @@
             "step1": "アプリケーションは、client_id・redirect_uri・要求スコープを付けてユーザーを /oauth/authorize エンドポイントへリダイレクトします。",
             "step2": "ユーザーは同意画面でアクセスを許可するかどうかを選択します。",
             "step3": "承認されると、ユーザーは認可コード付きで redirect_uri にリダイレクトされます。",
-            "step4": "サーバーは POST /oauth/token を使って認可コードをアクセストークンに交換します。",
-            "step5": "アクセストークンで GET /oauth/userinfo を呼び出し、ユーザーデータを取得します。"
+            "step4": "サーバーは POST /oauth/token を使って認可コードをアクセストークンとリフレッシュトークンに交換します。",
+            "step5": "アクセストークンで GET /oauth/userinfo を呼び出し、ユーザーデータを取得します。",
+            "step6": "アクセストークンが期限切れになったら、リフレッシュトークンを使用して POST /oauth/token（grant_type=refresh_token）で新しいアクセストークンを取得します。"
         },
         "endpoints": {
             "title": "APIエンドポイント",
             "authorize_desc": "認可フローを開始します。ユーザーを同意画面へリダイレクトします。",
-            "token_desc": "認可コードをアクセストークンに交換します。client_secret と PKCE（code_verifier）の両方をサポートします。",
-            "userinfo_desc": "認可時に付与されたスコープに基づいてフィルタされたユーザーデータを返します。"
+            "token_desc": "認可コードをアクセストークンとリフレッシュトークンに交換します。grant_type=refresh_token によるトークン更新もサポートします。",
+            "userinfo_desc": "認可時に付与されたスコープに基づいてフィルタされたユーザーデータを返します。",
+            "revoke_desc": "アクセストークンまたはリフレッシュトークンを取り消します（RFC 7009）。リフレッシュトークンを取り消すと、関連するすべてのアクセストークンも無効になります。"
         },
         "scopes": {
             "title": "権限スコープ",

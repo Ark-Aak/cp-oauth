@@ -15,6 +15,7 @@
                 <li>{{ $t('about.flow.step3') }}</li>
                 <li>{{ $t('about.flow.step4') }}</li>
                 <li>{{ $t('about.flow.step5') }}</li>
+                <li>{{ $t('about.flow.step6') }}</li>
             </ol>
         </el-card>
 
@@ -41,9 +42,30 @@
             <el-divider />
 
             <div class="about__endpoint">
+                <h3>
+                    POST /api/oauth/token
+                    <span style="font-weight: 400; font-size: 12px; color: var(--text-muted)"
+                        >(refresh)</span
+                    >
+                </h3>
+                <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
+                <div class="about__code" v-html="snippets.refresh" />
+            </div>
+
+            <el-divider />
+
+            <div class="about__endpoint">
                 <h3>GET /api/oauth/userinfo</h3>
                 <p class="about__text">{{ $t('about.endpoints.userinfo_desc') }}</p>
                 <div class="about__code" v-html="snippets.userinfo" />
+            </div>
+
+            <el-divider />
+
+            <div class="about__endpoint">
+                <h3>POST /api/oauth/revoke</h3>
+                <p class="about__text">{{ $t('about.endpoints.revoke_desc') }}</p>
+                <div class="about__code" v-html="snippets.revoke" />
             </div>
         </el-card>
 
@@ -126,7 +148,7 @@ GET /oauth/authorize?
 \`\`\``;
 
 const tokenSnippet = `\`\`\`javascript
-// Exchange authorization code for access token
+// Exchange authorization code for access token + refresh token
 const response = await fetch('/api/oauth/token', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -141,7 +163,30 @@ const response = await fetch('/api/oauth/token', {
   })
 })
 
-const { access_token, token_type, expires_in, scope } = await response.json()
+const {
+  access_token,   // JWT, expires in 1 hour
+  refresh_token,  // opaque, expires in 30 days
+  token_type,
+  expires_in,
+  scope
+} = await response.json()
+\`\`\``;
+
+const refreshSnippet = `\`\`\`javascript
+// Refresh an expired access token
+const response = await fetch('/api/oauth/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    grant_type: 'refresh_token',
+    refresh_token: 'YOUR_REFRESH_TOKEN',
+    client_id: 'YOUR_CLIENT_ID',
+    client_secret: 'YOUR_CLIENT_SECRET' // optional for PKCE clients
+  })
+})
+
+// Returns new access_token + new refresh_token (rotation)
+const { access_token, refresh_token, expires_in } = await response.json()
 \`\`\``;
 
 const userinfoSnippet = `\`\`\`javascript
@@ -182,28 +227,47 @@ const cardSnippet = `\`\`\`markdown
 ![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?width=600&theme=dark)
 \`\`\``;
 
+const revokeSnippet = `\`\`\`javascript
+// Revoke a token (RFC 7009)
+await fetch('/api/oauth/revoke', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    token: 'TOKEN_TO_REVOKE',
+    token_type_hint: 'refresh_token' // or 'access_token'
+  })
+})
+// Always returns 200, even if the token was already invalid
+\`\`\``;
+
 const snippets = reactive({
     authorize: '',
     token: '',
+    refresh: '',
     userinfo: '',
     pkce: '',
-    card: ''
+    card: '',
+    revoke: ''
 });
 
 async function renderAll() {
     const theme = currentTheme.value;
-    const [a, tok, u, p, c] = await Promise.all([
+    const [a, tok, ref, u, p, c, rev] = await Promise.all([
         renderMarkdown(authorizeSnippet, theme),
         renderMarkdown(tokenSnippet, theme),
+        renderMarkdown(refreshSnippet, theme),
         renderMarkdown(userinfoSnippet, theme),
         renderMarkdown(pkceSnippet, theme),
-        renderMarkdown(cardSnippet, theme)
+        renderMarkdown(cardSnippet, theme),
+        renderMarkdown(revokeSnippet, theme)
     ]);
     snippets.authorize = a;
     snippets.token = tok;
+    snippets.refresh = ref;
     snippets.userinfo = u;
     snippets.pkce = p;
     snippets.card = c;
+    snippets.revoke = rev;
 }
 
 watch(currentTheme, renderAll);

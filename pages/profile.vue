@@ -338,6 +338,76 @@
                     </div>
                 </el-tab-pane>
 
+                <el-tab-pane :label="$t('profile.tabs.authorized_apps')" name="authorized_apps">
+                    <h2 class="profile__section-title">
+                        {{ $t('oauth.authorized_apps.title') }}
+                    </h2>
+                    <p class="profile__section-desc">
+                        {{ $t('oauth.authorized_apps.description') }}
+                    </p>
+
+                    <div
+                        v-if="authorizedApps.length"
+                        class="profile__bindings profile__authorized-apps"
+                    >
+                        <div
+                            v-for="app in authorizedApps"
+                            :key="app.clientId"
+                            class="profile__binding-item profile__authorized-app-item"
+                        >
+                            <div class="profile__binding-info">
+                                <span class="profile__binding-platform">{{ app.name }}</span>
+                                <span class="profile__binding-uid">
+                                    {{
+                                        app.scopes
+                                            .map(s => $t(`oauth.scopes.${s.replace(':', '_')}`, s))
+                                            .join(', ')
+                                    }}
+                                </span>
+                                <span class="profile__binding-uid profile__binding-uid-hint">
+                                    {{ $t('oauth.authorized_apps.authorized_at') }}:
+                                    {{
+                                        formatCSTTime(app.latestAuthorizedAt, {
+                                            withTimezone: true
+                                        })
+                                    }}
+                                </span>
+                                <span class="profile__binding-uid profile__binding-uid-hint">
+                                    {{
+                                        $t('oauth.authorized_apps.access_tokens', {
+                                            count: app.accessTokenCount
+                                        })
+                                    }}
+                                    &middot;
+                                    {{
+                                        $t('oauth.authorized_apps.refresh_tokens', {
+                                            count: app.refreshTokenCount
+                                        })
+                                    }}
+                                </span>
+                            </div>
+                            <el-popconfirm
+                                :title="$t('oauth.authorized_apps.revoke_confirm')"
+                                @confirm="handleRevokeApp(app.clientId)"
+                            >
+                                <template #reference>
+                                    <el-button
+                                        size="small"
+                                        type="danger"
+                                        text
+                                        :loading="revokingClientId === app.clientId"
+                                    >
+                                        {{ $t('oauth.authorized_apps.revoke') }}
+                                    </el-button>
+                                </template>
+                            </el-popconfirm>
+                        </div>
+                    </div>
+                    <p v-else class="profile__no-bindings">
+                        {{ $t('oauth.authorized_apps.no_apps') }}
+                    </p>
+                </el-tab-pane>
+
                 <el-tab-pane :label="$t('profile.tabs.preferences')" name="preferences">
                     <h2 class="profile__section-title">{{ $t('settings.title') }}</h2>
 
@@ -1252,6 +1322,48 @@ async function fetchBindings() {
 
 fetchBindings();
 
+// --- Authorized Apps ---
+interface AuthorizedApp {
+    clientId: string;
+    name: string;
+    scopes: string[];
+    latestAuthorizedAt: string;
+    accessTokenCount: number;
+    refreshTokenCount: number;
+}
+
+const authorizedApps = ref<AuthorizedApp[]>([]);
+const revokingClientId = ref('');
+
+async function fetchAuthorizedApps() {
+    try {
+        authorizedApps.value = await $fetch<AuthorizedApp[]>('/api/oauth/authorized-apps', {
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
+    } catch {
+        // silent
+    }
+}
+
+fetchAuthorizedApps();
+
+async function handleRevokeApp(clientId: string) {
+    revokingClientId.value = clientId;
+    try {
+        await $fetch(`/api/oauth/authorized-apps/${clientId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
+        ElMessage.success(t('oauth.authorized_apps.revoke_success'));
+        await fetchAuthorizedApps();
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('oauth.authorized_apps.revoke_error'));
+    } finally {
+        revokingClientId.value = '';
+    }
+}
+
 function openBindDialog(platform: string) {
     bindPlatform.value = platform;
     bindStep.value = 1;
@@ -1623,6 +1735,16 @@ function copyLuoguCredential() {
 
     &__passkey-list {
         margin-top: 12px;
+    }
+
+    &__authorized-apps {
+        margin-bottom: 14px;
+    }
+
+    &__authorized-app-item {
+        .profile__binding-info {
+            gap: 3px;
+        }
     }
 
     &__visibility-panel {

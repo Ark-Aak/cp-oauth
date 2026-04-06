@@ -173,16 +173,18 @@ docker compose up -d     # Start PostgreSQL + Redis
 1. Redirect user to `/oauth/authorize` with `client_id`, `redirect_uri`, `scope`, and PKCE parameters.
 2. User consents on the authorization page.
 3. User is redirected back to your `redirect_uri` with an authorization `code`.
-4. Exchange `code` for `access_token` via POST `/api/oauth/token`.
+4. Exchange `code` for `access_token` and `refresh_token` via POST `/api/oauth/token`.
 5. Use `access_token` to call `/api/oauth/userinfo`.
+6. When the `access_token` expires, use the `refresh_token` to obtain a new one via POST `/api/oauth/token` with `grant_type=refresh_token`.
 
 ### Endpoints
 
-| Endpoint              | Method | Description                                      |
-| --------------------- | ------ | ------------------------------------------------ |
-| `/oauth/authorize`    | GET    | Initiate authorization, redirect to consent page |
-| `/api/oauth/token`    | POST   | Exchange authorization code for access token     |
-| `/api/oauth/userinfo` | GET    | Get user profile (filtered by granted scopes)    |
+| Endpoint              | Method | Description                                                        |
+| --------------------- | ------ | ------------------------------------------------------------------ |
+| `/oauth/authorize`    | GET    | Initiate authorization, redirect to consent page                   |
+| `/api/oauth/token`    | POST   | Exchange authorization code for tokens, or refresh an access token |
+| `/api/oauth/userinfo` | GET    | Get user profile (filtered by granted scopes)                      |
+| `/api/oauth/revoke`   | POST   | Revoke an access token or refresh token (RFC 7009)                 |
 
 ### Scopes
 
@@ -322,8 +324,46 @@ const response = await fetch('/api/oauth/token', {
     })
 });
 
-const { access_token, token_type, expires_in, scope } = await response.json();
+const { access_token, refresh_token, token_type, expires_in, scope } = await response.json();
+// access_token: JWT, expires in 1 hour
+// refresh_token: opaque token, expires in 30 days
 ```
+
+### Refresh Token Example
+
+```javascript
+const response = await fetch('/api/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: 'YOUR_REFRESH_TOKEN',
+        client_id: 'YOUR_CLIENT_ID',
+        client_secret: 'YOUR_CLIENT_SECRET' // optional for PKCE clients
+    })
+});
+
+// Returns new access_token + new refresh_token (rotation)
+const { access_token, refresh_token, expires_in } = await response.json();
+```
+
+> **Note:** Refresh token rotation is enforced — each refresh request invalidates the old refresh token and issues a new one.
+
+### Token Revocation (RFC 7009)
+
+```javascript
+await fetch('/api/oauth/revoke', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        token: 'TOKEN_TO_REVOKE',
+        token_type_hint: 'refresh_token' // or 'access_token'
+    })
+});
+// Always returns 200, even if the token was already invalid
+```
+
+Revoking a refresh token also invalidates all access tokens issued to the same client and user. Users can also manage authorized applications and revoke access from their profile page.
 
 ### PKCE Example (Public Clients)
 

@@ -140,6 +140,7 @@
             "basic": "Basic",
             "public": "Public",
             "bindings": "Bindings",
+            "authorized_apps": "Authorized Apps",
             "preferences": "Preferences",
             "security": "Security"
         },
@@ -329,6 +330,19 @@
             "link_clist": "Clist.by — read your linked Clist.by account info",
             "cp_summary": "CP Summary — rating, contest count, and ranking per platform via Clist.by",
             "cp_details": "CP Details — rating change history via Clist.by"
+        },
+        "authorized_apps": {
+            "title": "Authorized Applications",
+            "description": "Applications you have authorized to access your account.",
+            "no_apps": "You haven't authorized any applications yet.",
+            "scopes": "Permissions",
+            "authorized_at": "Authorized at",
+            "access_tokens": "Active access tokens: {count}",
+            "refresh_tokens": "Active refresh tokens: {count}",
+            "revoke": "Revoke Access",
+            "revoke_confirm": "Revoke access for this application? All its tokens will be invalidated.",
+            "revoke_success": "Application access revoked",
+            "revoke_error": "Failed to revoke access"
         }
     },
     "developer": {
@@ -357,14 +371,16 @@
             "step1": "Your application redirects the user to our /oauth/authorize endpoint with your client_id, redirect_uri, and requested scopes.",
             "step2": "The user sees a consent screen and decides whether to grant access.",
             "step3": "If approved, the user is redirected to your redirect_uri with an authorization code.",
-            "step4": "Your server exchanges the authorization code for an access token via POST /oauth/token.",
-            "step5": "Use the access token to call GET /oauth/userinfo and retrieve the user's data."
+            "step4": "Your server exchanges the authorization code for an access token and refresh token via POST /oauth/token.",
+            "step5": "Use the access token to call GET /oauth/userinfo and retrieve the user's data.",
+            "step6": "When the access token expires, use the refresh token to obtain a new access token via POST /oauth/token with grant_type=refresh_token."
         },
         "endpoints": {
             "title": "API Endpoints",
             "authorize_desc": "Initiates the authorization flow. Redirects the user to the consent screen.",
-            "token_desc": "Exchanges an authorization code for an access token. Supports both client_secret and PKCE (code_verifier) authentication.",
-            "userinfo_desc": "Returns user data filtered by the scopes granted during authorization."
+            "token_desc": "Exchanges an authorization code for an access token and refresh token. Also supports refreshing tokens via grant_type=refresh_token.",
+            "userinfo_desc": "Returns user data filtered by the scopes granted during authorization.",
+            "revoke_desc": "Revokes an access token or refresh token (RFC 7009). Revoking a refresh token also invalidates all associated access tokens."
         },
         "scopes": {
             "title": "Permission Scopes",
