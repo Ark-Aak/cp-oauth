@@ -3,26 +3,30 @@ import prisma from '~/server/utils/prisma';
 
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
+    const now = new Date();
 
-    // Get all active access tokens grouped by client
+    // Get ALL access tokens for this user (including expired ones)
     const accessTokens = await prisma.oAuthAccessToken.findMany({
-        where: { userId, expiresAt: { gt: new Date() } },
+        where: { userId },
         select: {
             clientId: true,
             scopes: true,
             createdAt: true,
+            expiresAt: true,
             client: { select: { name: true } }
         },
         orderBy: { createdAt: 'desc' }
     });
 
-    // Get all active (non-revoked, non-expired) refresh tokens grouped by client
+    // Get ALL refresh tokens for this user (including revoked/expired)
     const refreshTokens = await prisma.oAuthRefreshToken.findMany({
-        where: { userId, revoked: false, expiresAt: { gt: new Date() } },
+        where: { userId },
         select: {
             clientId: true,
             scopes: true,
             createdAt: true,
+            expiresAt: true,
+            revoked: true,
             client: { select: { name: true } }
         },
         orderBy: { createdAt: 'desc' }
@@ -42,33 +46,35 @@ export default defineEventHandler(async event => {
     >();
 
     for (const t of accessTokens) {
+        const isActive = t.expiresAt > now;
         const existing = appMap.get(t.clientId);
         if (existing) {
             t.scopes.forEach(s => existing.scopes.add(s));
             if (t.createdAt > existing.latestAuthorizedAt) {
                 existing.latestAuthorizedAt = t.createdAt;
             }
-            existing.accessTokenCount++;
+            if (isActive) existing.accessTokenCount++;
         } else {
             appMap.set(t.clientId, {
                 clientId: t.clientId,
                 name: t.client.name,
                 scopes: new Set(t.scopes),
                 latestAuthorizedAt: t.createdAt,
-                accessTokenCount: 1,
+                accessTokenCount: isActive ? 1 : 0,
                 refreshTokenCount: 0
             });
         }
     }
 
     for (const t of refreshTokens) {
+        const isActive = !t.revoked && t.expiresAt > now;
         const existing = appMap.get(t.clientId);
         if (existing) {
             t.scopes.forEach(s => existing.scopes.add(s));
             if (t.createdAt > existing.latestAuthorizedAt) {
                 existing.latestAuthorizedAt = t.createdAt;
             }
-            existing.refreshTokenCount++;
+            if (isActive) existing.refreshTokenCount++;
         } else {
             appMap.set(t.clientId, {
                 clientId: t.clientId,
@@ -76,7 +82,7 @@ export default defineEventHandler(async event => {
                 scopes: new Set(t.scopes),
                 latestAuthorizedAt: t.createdAt,
                 accessTokenCount: 0,
-                refreshTokenCount: 1
+                refreshTokenCount: isActive ? 1 : 0
             });
         }
     }
