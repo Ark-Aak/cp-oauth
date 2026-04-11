@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import prisma from '~/server/utils/prisma';
+import { normalizeUsername } from '~/utils/username';
 
 // --- Platform display names (subset used in card) ---
 
@@ -54,15 +55,17 @@ interface ThemeColors {
     accent: string;
 }
 
+const LIGHT_THEME: ThemeColors = {
+    bg: '#ffffff',
+    text: '#24292f',
+    muted: '#656d76',
+    border: '#d0d7de',
+    cardBg: '#f6f8fa',
+    accent: '#0969da'
+};
+
 const THEMES: Record<string, ThemeColors> = {
-    light: {
-        bg: '#ffffff',
-        text: '#24292f',
-        muted: '#656d76',
-        border: '#d0d7de',
-        cardBg: '#f6f8fa',
-        accent: '#0969da'
-    },
+    light: LIGHT_THEME,
     dark: {
         bg: '#0d1117',
         text: '#e6edf3',
@@ -80,11 +83,13 @@ interface CardStrings {
     platformInfo: string; // "{name}'s platforms" — {name} is a placeholder
 }
 
+const DEFAULT_CARD_STRINGS: CardStrings = {
+    noPublicAccounts: 'No public accounts',
+    platformInfo: "{name}'s Platforms"
+};
+
 const I18N: Record<string, CardStrings> = {
-    en: {
-        noPublicAccounts: 'No public accounts',
-        platformInfo: "{name}'s Platforms"
-    },
+    en: DEFAULT_CARD_STRINGS,
     zh: {
         noPublicAccounts: '暂无公开账号',
         platformInfo: '{name} 的平台信息'
@@ -96,7 +101,7 @@ const I18N: Record<string, CardStrings> = {
 };
 
 function getStrings(lang: string): CardStrings {
-    return I18N[lang] || I18N['en'];
+    return I18N[lang] ?? DEFAULT_CARD_STRINGS;
 }
 
 // --- SVG builder ---
@@ -220,14 +225,22 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Username required' });
     }
 
+    const normalizedUsername = normalizeUsername(username);
+
     const query = getQuery(event);
     const width = Math.min(800, Math.max(300, Number(query.width) || 480));
     const themeName = query.theme === 'dark' ? 'dark' : 'light';
     const lang = ['zh', 'ja', 'en'].includes(String(query.lang || '')) ? String(query.lang) : 'en';
-    const colors = THEMES[themeName];
+    const colors = THEMES[themeName] ?? LIGHT_THEME;
 
-    const user = await prisma.user.findUnique({
-        where: { username },
+    const users = await prisma.user.findMany({
+        where: {
+            username: {
+                equals: normalizedUsername,
+                mode: 'insensitive'
+            }
+        },
+        take: 2,
         select: {
             username: true,
             displayName: true,
@@ -244,9 +257,18 @@ export default defineEventHandler(async event => {
         }
     });
 
-    if (!user) {
+    if (users.length === 0) {
         throw createError({ statusCode: 404, message: 'User not found' });
     }
+
+    if (users.length > 1) {
+        throw createError({
+            statusCode: 409,
+            message: 'Username lookup is ambiguous. Please contact an administrator'
+        });
+    }
+
+    const user = users[0]!;
 
     const accounts = user.publicLinkedPlatformsConfigured
         ? user.linkedAccounts.filter(a => user.publicLinkedPlatforms.includes(a.platform))

@@ -9,6 +9,7 @@
         "preview": "nuxt preview",
         "upload:s3": "node scripts/upload-oss.mjs",
         "upload:oss": "npm run upload:s3",
+        "migrate:usernames-lowercase": "node scripts/migrate-usernames-lowercase.mjs",
         "postinstall": "nuxt prepare",
         "lint": "eslint . --ignore-pattern generated/**",
         "format": "prettier --write .",

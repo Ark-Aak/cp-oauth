@@ -47,7 +47,9 @@ export default defineEventHandler(async event => {
     }
 
     const existing = await prisma.user.findFirst({
-        where: { OR: [{ email }, { username: normalizedUsername }] }
+        where: {
+            OR: [{ email }, { username: { equals: normalizedUsername, mode: 'insensitive' } }]
+        }
     });
 
     if (existing) {

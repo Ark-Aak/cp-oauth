@@ -396,6 +396,7 @@ export async function resolveClistIdentity(accessToken: string): Promise<ClistId
 function sanitizeUsername(candidate: string): string {
     const normalized = candidate
         .trim()
+        .toLowerCase()
         .replace(/[^A-Za-z0-9_]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_+|_+$/g, '');
@@ -411,8 +412,13 @@ function sanitizeUsername(candidate: string): string {
 export async function getClistUniqueUsername(base: string): Promise<string> {
     const sanitized = sanitizeUsername(base);
     if (isValidUsername(sanitized)) {
-        const exists = await prisma.user.findUnique({
-            where: { username: sanitized },
+        const exists = await prisma.user.findFirst({
+            where: {
+                username: {
+                    equals: sanitized,
+                    mode: 'insensitive'
+                }
+            },
             select: { id: true }
         });
         if (!exists) {
@@ -427,8 +433,13 @@ export async function getClistUniqueUsername(base: string): Promise<string> {
         if (!isValidUsername(candidate)) {
             continue;
         }
-        const exists = await prisma.user.findUnique({
-            where: { username: candidate },
+        const exists = await prisma.user.findFirst({
+            where: {
+                username: {
+                    equals: candidate,
+                    mode: 'insensitive'
+                }
+            },
             select: { id: true }
         });
         if (!exists) {

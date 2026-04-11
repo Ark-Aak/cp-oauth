@@ -66,7 +66,7 @@ export default defineEventHandler(async event => {
 
             const existing = await prisma.user.findFirst({
                 where: {
-                    username,
+                    username: { equals: username, mode: 'insensitive' },
                     id: { not: userId }
                 },
                 select: { id: true }
@@ -133,8 +133,8 @@ export default defineEventHandler(async event => {
             const normalized = Array.from(
                 new Set(
                     body.publicLinkedPlatforms
-                        .map(item => String(item).trim().toLowerCase())
-                        .filter(item => allowedPublicPlatforms.has(item))
+                        .map((item: unknown) => String(item).trim().toLowerCase())
+                        .filter((item: string) => allowedPublicPlatforms.has(item))
                 )
             );
             data.publicLinkedPlatforms = normalized;

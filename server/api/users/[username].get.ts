@@ -1,4 +1,6 @@
+import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
+import { normalizeUsername } from '~/utils/username';
 import {
     fetchClistAccounts,
     fetchClistStatistics,
@@ -16,8 +18,16 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Username required' });
     }
 
-    const user = await prisma.user.findUnique({
-        where: { username },
+    const normalizedUsername = normalizeUsername(username);
+
+    const users = await prisma.user.findMany({
+        where: {
+            username: {
+                equals: normalizedUsername,
+                mode: 'insensitive'
+            }
+        },
+        take: 2,
         select: {
             id: true,
             username: true,
@@ -43,9 +53,18 @@ export default defineEventHandler(async event => {
         }
     });
 
-    if (!user) {
+    if (users.length === 0) {
         throw createError({ statusCode: 404, message: 'User not found' });
     }
+
+    if (users.length > 1) {
+        throw createError({
+            statusCode: 409,
+            message: 'Username lookup is ambiguous. Please contact an administrator'
+        });
+    }
+
+    const user = users[0]!;
 
     const linkedAccounts = user.publicLinkedPlatformsConfigured
         ? user.linkedAccounts.filter(account => {
@@ -117,7 +136,6 @@ export default defineEventHandler(async event => {
             const allStats = await fetchClistStatistics(clistToken, { limit: 500 });
 
             // Debug: log raw stats info
-            const { consola } = await import('consola');
             const dbgLogger = consola.withTag('user-profile:rating');
             dbgLogger.info(
                 `ratingHistory debug: publicRatingHistory=${user.publicRatingHistory}, ` +
