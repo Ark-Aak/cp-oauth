@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
-import { fetchLuoguPaste } from '~/server/utils/luogu-paste';
+import { fetchLuoguPaste } from '~/server/utils/fetch-luogu';
 import { verifyTurnstileToken } from '~/server/utils/turnstile';
 import {
     extractLuoguCredentialTokens,

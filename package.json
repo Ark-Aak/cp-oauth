@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1024.0",
+        "@ctrl/ts-base32": "^4.2.2",
         "@element-plus/nuxt": "^1.1.5",
         "@nuxtjs/color-mode": "^4.0.0",
         "@nuxtjs/i18n": "^10.2.3",
@@ -31,6 +32,7 @@
         "ioredis": "^5.10.1",
         "jsonwebtoken": "^9.0.3",
         "lucide-vue-next": "^0.469.0",
+        "nid-webauthn-emulator": "^0.2.11",
         "nodemailer": "^8.0.3",
         "nuxt": "^4.4.2",
         "otplib": "^13.4.0",
