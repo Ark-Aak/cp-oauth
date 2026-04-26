@@ -604,6 +604,89 @@
                             {{ $t('profile.security.no_passkeys') }}
                         </p>
                     </div>
+
+                    <div class="profile__security-block">
+                        <h3 class="profile__security-subtitle">
+                            {{ t('profile.security.luoguapi') }}
+                        </h3>
+
+                        <div v-if="luoguApiKeys" class="profile__bindings">
+                            <p class="profile__section-desc profile__section-desc--normal">
+                                {{
+                                    t('profile.security.luoguapi_uid', {
+                                        uid: luoguApiKeys.luoguUid
+                                    })
+                                }}
+                            </p>
+                            <div class="profile__luogu-api-actions">
+                                <el-button type="primary" @click="openLuoguApiCreateKeyDialog">
+                                    {{ t('profile.security.luoguapi_create_key') }}
+                                </el-button>
+                            </div>
+
+                            <p v-if="!luoguApiKeys.decryptReady" class="profile__bind-code-hint">
+                                {{ t('profile.security.luoguapi_unlock_required') }}
+                            </p>
+
+                            <div v-if="luoguApiKeys.apiTokens.length" class="profile__bindings">
+                                <div
+                                    v-for="item in luoguApiKeys.apiTokens"
+                                    :key="item.keyId"
+                                    class="profile__binding-item"
+                                >
+                                    <div class="profile__binding-info">
+                                        <span class="profile__binding-platform">
+                                            {{
+                                                item.note ||
+                                                t('profile.security.luoguapi_default_note')
+                                            }}
+                                        </span>
+                                        <span
+                                            class="profile__binding-uid profile__binding-uid-hint"
+                                        >
+                                            {{ t('profile.security.luoguapi_key_base32') }}:
+                                            {{ item.keyId }}
+                                        </span>
+                                        <span
+                                            class="profile__binding-uid profile__binding-uid-hint"
+                                        >
+                                            {{
+                                                formatCSTTime(item.createdAt, {
+                                                    withSeconds: true,
+                                                    withTimezone: true
+                                                })
+                                            }}
+                                        </span>
+                                    </div>
+                                    <el-popconfirm
+                                        :title="t('profile.security.luoguapi_delete_confirm')"
+                                        @confirm="handleDeleteLuoguApiKey(item.keyId)"
+                                    >
+                                        <template #reference>
+                                            <el-button
+                                                text
+                                                type="danger"
+                                                :loading="luoguApiDeletingKeyId === item.keyId"
+                                            >
+                                                {{ t('binding.unlink') }}
+                                            </el-button>
+                                        </template>
+                                    </el-popconfirm>
+                                </div>
+                            </div>
+                            <p v-else class="profile__no-bindings">
+                                {{ t('profile.security.luoguapi_no_keys') }}
+                            </p>
+                        </div>
+                        <template v-else>
+                            <p class="profile__no-bindings">
+                                {{ t('profile.security.not_setup_luoguapi') }}
+                            </p>
+                            <el-button type="primary" @click="luoguApiDialogVisible = true">
+                                {{ t('profile.security.setup_luoguapi') }}
+                            </el-button>
+                        </template>
+                    </div>
                 </el-tab-pane>
             </el-tabs>
 
@@ -699,6 +782,16 @@
                     </div>
                 </div>
             </el-dialog>
+
+            <luogu-api-setup-dialog
+                v-model="luoguApiDialogVisible"
+                @success="handleLuoguApiSetupSuccess"
+            />
+            <luogu-api-key-dialog
+                v-model="luoguApiKeyDialogVisible"
+                :decrypt-ready="Boolean(luoguApiKeys?.decryptReady)"
+                @success="handleLuoguApiKeyDialogSuccess"
+            />
         </template>
     </div>
 </template>
@@ -713,6 +806,8 @@ import {
     type LuoguLoginDuration
 } from '~/utils/luogu-login-credential';
 import { isValidUsername, normalizeUsername } from '~/utils/username';
+import LuoguApiSetupDialog from '~/components/LuoguApiSetupDialog.vue';
+import LuoguApiKeyDialog from '~/components/LuoguApiKeyDialog.vue';
 
 type LocaleCode = 'en' | 'zh' | 'ja';
 const localeCodes: LocaleCode[] = ['en', 'zh', 'ja'];
@@ -942,10 +1037,24 @@ interface PasskeyItem {
     createdAt: string;
 }
 
+type LuoguApiKeyData = {
+    luoguUid: number;
+    decryptReady: boolean;
+    apiTokens: {
+        createdAt: string;
+        keyId: string;
+        note: string;
+    }[];
+} | null;
+
 const passkeys = ref<PasskeyItem[]>([]);
 const newPasskeyName = ref('My Passkey');
 const registeringPasskey = ref(false);
 const removingPasskeyId = ref('');
+const luoguApiKeys = ref<LuoguApiKeyData>(null);
+const luoguApiDialogVisible = ref(false);
+const luoguApiDeletingKeyId = ref('');
+const luoguApiKeyDialogVisible = ref(false);
 
 const twoFactorMethodLabel = computed(() => {
     if (twoFactorMethod.value === 'email_otp') return t('profile.security.method_email_otp');
@@ -995,7 +1104,46 @@ async function fetchPasskeys() {
     }
 }
 
-await Promise.all([fetchSecurityStatus(), fetchPasskeys()]);
+async function fetchLuoguApiKeys() {
+    try {
+        luoguApiKeys.value = await $fetch<LuoguApiKeyData>('/api/luoguOpenApi/keys', {
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
+    } catch {
+        // silent
+    }
+}
+
+async function handleLuoguApiSetupSuccess() {
+    await fetchLuoguApiKeys();
+}
+
+function openLuoguApiCreateKeyDialog() {
+    luoguApiKeyDialogVisible.value = true;
+}
+
+async function handleLuoguApiKeyDialogSuccess() {
+    await fetchLuoguApiKeys();
+}
+
+async function handleDeleteLuoguApiKey(keyId: string) {
+    luoguApiDeletingKeyId.value = keyId;
+    try {
+        await $fetch(`/api/luoguOpenApi/keys/${encodeURIComponent(keyId)}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
+        ElMessage.success(t('binding.unlink_success'));
+        await fetchLuoguApiKeys();
+    } catch (e: unknown) {
+        const err = e as { data?: { message?: string } };
+        ElMessage.error(err.data?.message || t('binding.unlink_error'));
+    } finally {
+        luoguApiDeletingKeyId.value = '';
+    }
+}
+
+await Promise.all([fetchSecurityStatus(), fetchPasskeys(), fetchLuoguApiKeys()]);
 
 async function handleChangePassword() {
     if (!passwordForm.currentPassword || !passwordForm.newPassword) return;
@@ -1675,6 +1823,10 @@ function copyLuoguCredential() {
         margin: -8px 0 14px;
     }
 
+    &__section-desc--normal {
+        margin: 0 0 10px;
+    }
+
     &__setting-row {
         margin-bottom: 18px;
     }
@@ -1898,6 +2050,7 @@ function copyLuoguCredential() {
             font-weight: 600;
             color: var(--text-primary);
             letter-spacing: 0.05em;
+            line-break: anywhere;
         }
     }
 
@@ -1943,6 +2096,13 @@ function copyLuoguCredential() {
 
     &__luogu-login-select {
         width: 160px;
+    }
+
+    &__luogu-api-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
     }
 }
 </style>
