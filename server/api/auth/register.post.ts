@@ -6,6 +6,7 @@ import prisma from '~/server/utils/prisma';
 import { getConfig } from '~/server/utils/config';
 import { sendVerificationEmail } from '~/server/utils/mailer';
 import { hashToken } from '~/server/utils/token-hash';
+import { getPublicBaseUrl } from '~/server/utils/base-url';
 import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
 
 const logger = consola.withTag('auth:register');
@@ -80,10 +81,7 @@ export default defineEventHandler(async event => {
     logger.success(`User registered: ${normalizedUsername} (${user.id}), role=${role}`);
 
     // Attempt to send verification email
-    const host = getHeader(event, 'host') || 'localhost:3000';
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
-    await sendVerificationEmail(email, emailVerifyToken, baseUrl);
+    await sendVerificationEmail(email, emailVerifyToken, getPublicBaseUrl());
 
     const config = useRuntimeConfig();
     const token = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });

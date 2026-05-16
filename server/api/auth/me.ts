@@ -4,15 +4,10 @@ import { sendVerificationEmail } from '~/server/utils/mailer';
 import crypto from 'crypto';
 import { hashToken } from '~/server/utils/token-hash';
 import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
+import { getPublicBaseUrl } from '~/server/utils/base-url';
 
 function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function getBaseUrl(event: Parameters<typeof getRequestURL>[0]): string {
-    const host = getHeader(event, 'host') || 'localhost:3000';
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    return `${protocol}://${host}`;
 }
 
 export default defineEventHandler(async event => {
@@ -115,7 +110,7 @@ export default defineEventHandler(async event => {
                 const sent = await sendVerificationEmail(
                     email,
                     emailVerifyToken,
-                    getBaseUrl(event)
+                    getPublicBaseUrl()
                 );
                 if (!sent) {
                     throw createError({ statusCode: 503, message: 'SMTP is not configured' });
