@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { getUserIdFromEvent } from '~/server/utils/auth';
 import prisma from '~/server/utils/prisma';
 import { sendVerificationEmail } from '~/server/utils/mailer';
+import { hashToken } from '~/server/utils/token-hash';
 import { isOAuthGeneratedLocalEmail } from '~/server/utils/email';
 import { getPublicBaseUrl } from '~/server/utils/base-url';
 
@@ -35,7 +36,7 @@ export default defineEventHandler(async event => {
     const emailVerifyToken = crypto.randomBytes(32).toString('hex');
     await prisma.user.update({
         where: { id: userId },
-        data: { emailVerifyToken }
+        data: { emailVerifyToken: hashToken(emailVerifyToken) }
     });
 
     const sent = await sendVerificationEmail(user.email, emailVerifyToken, getPublicBaseUrl());

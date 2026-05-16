@@ -27,7 +27,7 @@ export default defineEventHandler(async event => {
     await prisma.user.update({
         where: { id: user.id },
         data: {
-            passwordResetToken: token,
+            passwordResetToken: hashToken(token),
             passwordResetExpiresAt: expiresAt
         }
     });
