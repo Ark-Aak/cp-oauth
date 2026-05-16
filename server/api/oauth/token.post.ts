@@ -2,7 +2,7 @@ import { consola } from 'consola';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
-import { verifyPKCE, generateRefreshToken } from '~/server/utils/oauth';
+import { verifyPKCE, generateRefreshToken, authenticateOAuthClient } from '~/server/utils/oauth';
 
 const logger = consola.withTag('oauth:token');
 
@@ -190,23 +190,8 @@ async function handleRefreshToken(body: Record<string, string>) {
         throw createError({ statusCode: 400, message: 'client_id mismatch' });
     }
 
-    // Verify client_secret for confidential clients
-    // Check if the original authorization used PKCE (no secret needed)
-    const client = await prisma.oAuthClient.findUnique({ where: { clientId } });
-    if (!client) {
-        throw createError({ statusCode: 400, message: 'Unknown client' });
-    }
-
-    // If client_secret is provided, verify it; otherwise we allow PKCE public clients through
-    if (clientSecret) {
-        const valid = await bcrypt.compare(clientSecret, client.clientSecretHash);
-        if (!valid) {
-            logger.warn(
-                `Rejected: invalid client_secret for "${client.name}" (${clientId}) during refresh`
-            );
-            throw createError({ statusCode: 401, message: 'Invalid client_secret' });
-        }
-    }
+    // Authenticate the client (RFC 6749 §2.3.1)
+    await authenticateOAuthClient(clientId, clientSecret);
 
     // Rotation: revoke old refresh token and issue new ones
     const newAccessToken = issueAccessToken(

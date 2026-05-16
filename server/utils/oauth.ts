@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import prisma from '~/server/utils/prisma';
 
 export const SCOPES = {
     openid: 'Base identity (user ID)',
@@ -50,4 +52,37 @@ export function verifyPKCE(
         return hash === codeChallenge;
     }
     return false;
+}
+/**
+ * Authenticates an OAuth client by verifying client_id and client_secret.
+ *
+ * Per OAuth 2.0 (RFC 6749 §2.3.1) and RFC 7009 §2.1, confidential clients
+ * MUST be authenticated when calling token / revoke endpoints. cp-oauth's
+ * data model requires every client to have a secret (clientSecretHash is
+ * non-nullable), so all clients are treated as confidential.
+ *
+ * Returns the client record on success; throws on any failure.
+ *
+ * Error responses intentionally don't distinguish "unknown client" from
+ * "wrong secret" to prevent client_id enumeration.
+ */
+export async function authenticateOAuthClient(
+    clientId: string | undefined,
+    clientSecret: string | undefined
+) {
+    if (!clientId) {
+        throw createError({ statusCode: 400, message: 'client_id required' });
+    }
+    if (!clientSecret) {
+        throw createError({ statusCode: 400, message: 'client_secret required' });
+    }
+    const client = await prisma.oAuthClient.findUnique({ where: { clientId } });
+    if (!client) {
+        throw createError({ statusCode: 401, message: 'Invalid client credentials' });
+    }
+    const valid = await bcrypt.compare(clientSecret, client.clientSecretHash);
+    if (!valid) {
+        throw createError({ statusCode: 401, message: 'Invalid client credentials' });
+    }
+    return client;
 }
