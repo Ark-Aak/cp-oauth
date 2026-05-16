@@ -1,4 +1,5 @@
 import prisma from '~/server/utils/prisma';
+import { getUserIdFromEvent } from '~/server/utils/auth';
 import { getRedis } from '~/server/utils/redis';
 import { getConfig } from '~/server/utils/config';
 import { canRefreshUsername, fetchPlatformUsername } from '~/server/utils/platform-username';
@@ -10,6 +11,8 @@ interface RefreshBody {
 }
 
 export default defineEventHandler(async event => {
+    const userId = getUserIdFromEvent(event);
+
     const body = await readBody<RefreshBody>(event);
 
     if (!body.platform || !body.platformUid) {
@@ -31,6 +34,7 @@ export default defineEventHandler(async event => {
         },
         select: {
             id: true,
+            userId: true,
             platformUsername: true,
             oauthAccessToken: true,
             oauthIdToken: true,
@@ -40,6 +44,10 @@ export default defineEventHandler(async event => {
 
     if (!account) {
         throw createError({ statusCode: 404, message: 'Linked account not found' });
+    }
+
+    if (account.userId !== userId) {
+        throw createError({ statusCode: 403, message: 'Forbidden' });
     }
 
     const redis = getRedis();
