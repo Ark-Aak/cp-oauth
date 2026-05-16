@@ -22,6 +22,16 @@ const loadingIndicatorColor = computed(() =>
 useHead({
     script: [
         {
+            key: 'website-json-ld',
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: 'CP OAuth',
+                url: 'https://www.cpoauth.com/'
+            })
+        },
+        {
             key: 'cloudflare-web-analytics',
             defer: true,
             src: 'https://static.cloudflareinsights.com/beacon.min.js',
