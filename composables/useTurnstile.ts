@@ -95,7 +95,7 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
     function reset() {
         token.value = '';
 
-        if (!import.meta.client) return;
+        // if (!import.meta.client) return;
 
         const ts = (window as any).turnstile;
         if (ts?.reset) {
