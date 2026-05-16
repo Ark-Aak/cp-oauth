@@ -3,12 +3,7 @@ import { getUserIdFromEvent } from '~/server/utils/auth';
 import prisma from '~/server/utils/prisma';
 import { sendVerificationEmail } from '~/server/utils/mailer';
 import { isOAuthGeneratedLocalEmail } from '~/server/utils/email';
-
-function getBaseUrl(event: Parameters<typeof getRequestURL>[0]): string {
-    const host = getHeader(event, 'host') || 'localhost:3000';
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    return `${protocol}://${host}`;
-}
+import { getPublicBaseUrl } from '~/server/utils/base-url';
 
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
@@ -43,7 +38,7 @@ export default defineEventHandler(async event => {
         data: { emailVerifyToken }
     });
 
-    const sent = await sendVerificationEmail(user.email, emailVerifyToken, getBaseUrl(event));
+    const sent = await sendVerificationEmail(user.email, emailVerifyToken, getPublicBaseUrl());
     if (!sent) {
         throw createError({ statusCode: 503, message: 'SMTP is not configured' });
     }

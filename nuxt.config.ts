@@ -74,6 +74,7 @@ export default defineNuxtConfig({
         jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
         databaseUrl: process.env.DATABASE_URL || '',
         redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+        publicBaseUrl: process.env.PUBLIC_BASE_URL || '',
         public: {
             appName: 'CP OAuth',
             i18n: {

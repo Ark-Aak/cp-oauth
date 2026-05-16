@@ -1,12 +1,7 @@
 import crypto from 'crypto';
 import prisma from '~/server/utils/prisma';
 import { sendPasswordResetEmail } from '~/server/utils/mailer';
-
-function getBaseUrl(event: Parameters<typeof getRequestURL>[0]): string {
-    const host = getHeader(event, 'host') || 'localhost:3000';
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    return `${protocol}://${host}`;
-}
+import { getPublicBaseUrl } from '~/server/utils/base-url';
 
 export default defineEventHandler(async event => {
     const body = await readBody(event);
@@ -37,7 +32,7 @@ export default defineEventHandler(async event => {
         }
     });
 
-    await sendPasswordResetEmail(user.email, token, getBaseUrl(event));
+    await sendPasswordResetEmail(user.email, token, getPublicBaseUrl());
 
     return { success: true };
 });
