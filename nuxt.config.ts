@@ -1,3 +1,8 @@
+const cdnUrl =
+    process.env.NODE_ENV === 'production'
+        ? process.env.NUXT_APP_CDN_URL || process.env.CDN_URL || ''
+        : '';
+
 export default defineNuxtConfig({
     compatibilityDate: '2025-03-21',
     devtools: { enabled: true },
@@ -6,10 +11,7 @@ export default defineNuxtConfig({
         head: {
             title: 'CP OAuth'
         },
-        cdnURL:
-            process.env.NODE_ENV === 'production'
-                ? process.env.NUXT_APP_CDN_URL || process.env.CDN_URL || ''
-                : ''
+        cdnURL: cdnUrl
     },
     modules: [
         '@nuxt/eslint',
@@ -31,7 +33,8 @@ export default defineNuxtConfig({
         ],
         defaultLocale: 'en',
         langDir: 'locales/',
-        strategy: 'no_prefix'
+        strategy: 'no_prefix',
+        baseUrl: cdnUrl || undefined
     },
     colorMode: {
         preference: 'system',
@@ -72,7 +75,10 @@ export default defineNuxtConfig({
         databaseUrl: process.env.DATABASE_URL || '',
         redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
         public: {
-            appName: 'CP OAuth'
+            appName: 'CP OAuth',
+            i18n: {
+                baseUrl: cdnUrl || undefined
+            }
         }
     },
     nitro: {
