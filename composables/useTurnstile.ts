@@ -35,11 +35,31 @@ function ensureScript(): Promise<void> {
 
 export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
     const token = ref('');
-    const el = ref<HTMLElement>();
+    const el = ref<HTMLElement | null>(null);
     let widgetId: string | null = null;
 
+    function removeWidget() {
+        token.value = '';
+
+        if (widgetId !== null && (window as any).turnstile) {
+            try {
+                (window as any).turnstile.remove(widgetId);
+            } catch {
+                // ignore
+            }
+        }
+
+        widgetId = null;
+    }
+
     async function render() {
-        if (!el.value || !siteKey.value) return;
+        if (!el.value || !siteKey.value) {
+            removeWidget();
+            return;
+        }
+
+        const target = el.value;
+        const currentSiteKey = siteKey.value;
 
         try {
             await ensureScript();
@@ -50,18 +70,13 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
         const ts = (window as any).turnstile;
         if (!ts) return;
 
-        // Remove previous widget if exists
-        if (widgetId !== null) {
-            try {
-                ts.remove(widgetId);
-            } catch {
-                // ignore
-            }
-            widgetId = null;
-        }
+        if (el.value !== target || siteKey.value !== currentSiteKey) return;
 
-        widgetId = ts.render(el.value, {
-            sitekey: siteKey.value,
+        // Remove previous widget if exists
+        removeWidget();
+
+        widgetId = ts.render(target, {
+            sitekey: currentSiteKey,
             callback: (t: string) => {
                 token.value = t;
             },
@@ -74,20 +89,27 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
         });
     }
 
-    onMounted(() => {
-        render();
-    });
+    function reset() {
+        token.value = '';
+
+        const ts = (window as any).turnstile;
+        if (widgetId !== null && ts?.reset) {
+            try {
+                ts.reset(widgetId);
+                return;
+            } catch {
+                // Fall back to rendering a fresh widget
+            }
+        }
+
+        void render();
+    }
+
+    watch([el, siteKey], () => void render(), { flush: 'post' });
 
     onBeforeUnmount(() => {
-        if (widgetId !== null && (window as any).turnstile) {
-            try {
-                (window as any).turnstile.remove(widgetId);
-            } catch {
-                // ignore
-            }
-            widgetId = null;
-        }
+        removeWidget();
     });
 
-    return { token, el };
+    return { token, el, reset };
 }

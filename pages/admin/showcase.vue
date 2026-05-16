@@ -68,7 +68,7 @@
                             <div class="admin-showcase__item-header">
                                 <el-tag
                                     size="small"
-                                    :type="item.category === 'site' ? '' : 'success'"
+                                    :type="item.category === 'site' ? undefined : 'success'"
                                 >
                                     {{
                                         item.category === 'site'

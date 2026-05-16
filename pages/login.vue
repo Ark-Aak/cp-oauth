@@ -228,7 +228,11 @@ const codeforcesLoginEnabled = computed(() => publicConfig.value?.codeforcesLogi
 const githubLoginEnabled = computed(() => publicConfig.value?.githubLoginEnabled || false);
 const googleLoginEnabled = computed(() => publicConfig.value?.googleLoginEnabled || false);
 const clistLoginEnabled = computed(() => publicConfig.value?.clistLoginEnabled || false);
-const { token: turnstileToken, el: turnstileEl } = useTurnstile(turnstileSiteKey);
+const {
+    token: turnstileToken,
+    el: turnstileEl,
+    reset: resetTurnstile
+} = useTurnstile(turnstileSiteKey);
 
 interface LoginResponse {
     token?: string;
@@ -293,6 +297,7 @@ async function handleLogin() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         loading.value = false;
     }
