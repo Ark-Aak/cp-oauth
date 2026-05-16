@@ -136,15 +136,6 @@ export async function exchangeClistAuthorizationCode(params: {
             message: 'Clist token response missing access_token'
         });
     }
-
-    logger.info(
-        `Clist token exchange result: access_token=${token.access_token.slice(0, 8)}..., ` +
-            `refresh_token=${token.refresh_token ? token.refresh_token.slice(0, 8) + '...' : 'NONE'}, ` +
-            `expires_in=${token.expires_in ?? 'NONE'}, ` +
-            `token_type=${token.token_type ?? 'NONE'}, ` +
-            `scope=${token.scope ?? 'NONE'}`
-    );
-
     return token;
 }
 
@@ -227,13 +218,6 @@ export async function refreshClistAccessToken(refreshToken: string): Promise<Cli
             message: 'Clist token refresh response missing access_token'
         });
     }
-
-    logger.info(
-        `Clist token refreshed: access_token=${token.access_token.slice(0, 8)}..., ` +
-            `refresh_token=${token.refresh_token ? token.refresh_token.slice(0, 8) + '...' : 'NONE'}, ` +
-            `expires_in=${token.expires_in ?? 'NONE'}`
-    );
-
     return token;
 }
 
