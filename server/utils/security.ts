@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { generateSecret, generateURI, verify } from 'otplib';
 import { getRedis } from '~/server/utils/redis';
+import { randomInt } from 'node:crypto';
 
 const TWO_FACTOR_LOGIN_CHALLENGE_PREFIX = '2fa:login:';
 const TWO_FACTOR_SETUP_EMAIL_PREFIX = '2fa:setup:email:';
@@ -11,7 +12,7 @@ const PASSKEY_LOGIN_CHALLENGE_PREFIX = 'passkey:login:';
 export type TwoFactorMethod = 'email_otp' | 'totp';
 
 export function generateSixDigitCode(): string {
-    return String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+    return String(randomInt(0, 1_000_000)).padStart(6, '0');
 }
 
 export async function hashCode(code: string): Promise<string> {
