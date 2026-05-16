@@ -12,50 +12,48 @@
         />
 
         <template v-if="!twoFactorPending">
-            <ClientOnly>
-                <el-form
-                    ref="formRef"
-                    :model="form"
-                    :rules="rules"
-                    label-position="top"
-                    @submit.prevent="handleLogin"
-                >
-                    <el-form-item prop="email">
-                        <el-input
-                            v-model="form.email"
-                            type="email"
-                            :placeholder="$t('auth.login.email')"
-                            size="large"
-                        />
-                    </el-form-item>
-                    <el-form-item prop="password">
-                        <el-input
-                            v-model="form.password"
-                            type="password"
-                            :placeholder="$t('auth.login.password')"
-                            size="large"
-                            show-password
-                        />
-                    </el-form-item>
-                    <div class="login-card__forgot-wrap">
-                        <NuxtLink to="/forgot-password" class="login-card__forgot-link">
-                            {{ $t('auth.login.forgot_password') }}
-                        </NuxtLink>
-                    </div>
-                    <div v-if="turnstileEnabled" ref="turnstileEl" class="login-card__turnstile" />
-                    <el-form-item>
-                        <el-button
-                            type="primary"
-                            native-type="submit"
-                            :loading="loading"
-                            size="large"
-                            class="login-card__btn"
-                        >
-                            {{ loading ? $t('auth.login.loading') : $t('auth.login.submit') }}
-                        </el-button>
-                    </el-form-item>
-                </el-form>
-            </ClientOnly>
+            <el-form
+                ref="formRef"
+                :model="form"
+                :rules="rules"
+                label-position="top"
+                @submit.prevent="handleLogin"
+            >
+                <el-form-item prop="email">
+                    <el-input
+                        v-model="form.email"
+                        type="email"
+                        :placeholder="$t('auth.login.email')"
+                        size="large"
+                    />
+                </el-form-item>
+                <el-form-item prop="password">
+                    <el-input
+                        v-model="form.password"
+                        type="password"
+                        :placeholder="$t('auth.login.password')"
+                        size="large"
+                        show-password
+                    />
+                </el-form-item>
+                <div class="login-card__forgot-wrap">
+                    <NuxtLink to="/forgot-password" class="login-card__forgot-link">
+                        {{ $t('auth.login.forgot_password') }}
+                    </NuxtLink>
+                </div>
+                <div v-if="turnstileEnabled" ref="turnstileEl" class="login-card__turnstile" />
+                <el-form-item>
+                    <el-button
+                        type="primary"
+                        native-type="submit"
+                        :loading="loading"
+                        size="large"
+                        class="login-card__btn"
+                    >
+                        {{ loading ? $t('auth.login.loading') : $t('auth.login.submit') }}
+                    </el-button>
+                </el-form-item>
+            </el-form>
 
             <div class="login-card__oauth">
                 <el-divider>{{ $t('auth.login.oauth_divider') }}</el-divider>
