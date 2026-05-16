@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
+import { hashToken } from '~/server/utils/token-hash';
 
 export default defineEventHandler(async event => {
     const body = await readBody(event);
@@ -15,7 +16,7 @@ export default defineEventHandler(async event => {
     }
 
     const user = await prisma.user.findUnique({
-        where: { passwordResetToken: token },
+        where: { passwordResetToken: hashToken(token) },
         select: { id: true, passwordResetExpiresAt: true }
     });
 

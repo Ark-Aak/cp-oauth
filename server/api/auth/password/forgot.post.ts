@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import prisma from '~/server/utils/prisma';
 import { sendPasswordResetEmail } from '~/server/utils/mailer';
+import { hashToken } from '~/server/utils/token-hash';
 
 function getBaseUrl(event: Parameters<typeof getRequestURL>[0]): string {
     const host = getHeader(event, 'host') || 'localhost:3000';
@@ -32,7 +33,7 @@ export default defineEventHandler(async event => {
     await prisma.user.update({
         where: { id: user.id },
         data: {
-            passwordResetToken: token,
+            passwordResetToken: hashToken(token),
             passwordResetExpiresAt: expiresAt
         }
     });

@@ -1,6 +1,7 @@
 import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
 import { isOAuthGeneratedLocalEmail } from '~/server/utils/email';
+import { hashToken } from '~/server/utils/token-hash';
 
 const logger = consola.withTag('auth:verify');
 
@@ -12,7 +13,7 @@ export default defineEventHandler(async event => {
         return sendRedirect(event, '/email-verified?status=error');
     }
 
-    const user = await prisma.user.findUnique({ where: { emailVerifyToken: token } });
+    const user = await prisma.user.findUnique({ where: { emailVerifyToken: hashToken(token) } });
     if (!user) {
         logger.warn('Email verification failed: invalid or expired token');
         return sendRedirect(event, '/email-verified?status=error');

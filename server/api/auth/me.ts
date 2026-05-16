@@ -2,6 +2,7 @@ import prisma from '~/server/utils/prisma';
 import { getUserIdFromEvent } from '~/server/utils/auth';
 import { sendVerificationEmail } from '~/server/utils/mailer';
 import crypto from 'crypto';
+import { hashToken } from '~/server/utils/token-hash';
 import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
 
 function isValidEmail(email: string): boolean {
@@ -110,7 +111,7 @@ export default defineEventHandler(async event => {
                 const emailVerifyToken = crypto.randomBytes(32).toString('hex');
                 data.email = email;
                 data.emailVerified = false;
-                data.emailVerifyToken = emailVerifyToken;
+                data.emailVerifyToken = hashToken(emailVerifyToken);
                 const sent = await sendVerificationEmail(
                     email,
                     emailVerifyToken,

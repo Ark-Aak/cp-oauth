@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
 import { getConfig } from '~/server/utils/config';
 import { sendVerificationEmail } from '~/server/utils/mailer';
+import { hashToken } from '~/server/utils/token-hash';
 import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
 
 const logger = consola.withTag('auth:register');
@@ -67,7 +68,13 @@ export default defineEventHandler(async event => {
     const role = userCount === 0 ? 'admin' : 'user';
 
     const user = await prisma.user.create({
-        data: { username: normalizedUsername, email, passwordHash, emailVerifyToken, role }
+        data: {
+            username: normalizedUsername,
+            email,
+            passwordHash,
+            emailVerifyToken: hashToken(emailVerifyToken),
+            role
+        }
     });
 
     logger.success(`User registered: ${normalizedUsername} (${user.id}), role=${role}`);
