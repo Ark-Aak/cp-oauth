@@ -25,18 +25,32 @@ const ICON_FILES: Record<string, string> = {
     clist: 'clist.svg'
 };
 
+const ICON_DARK_REPLACEMENTS: Record<string, Array<[string, string]>> = {
+    atcoder: [
+        ['.cls-1{fill:#fff;}', '.cls-1{fill:#231815;}'],
+        ['.cls-2{fill:#231815;}', '.cls-2{fill:#fff;}']
+    ],
+    github: [['fill="#24292f"', 'fill="#fff"']]
+};
+
 const iconCache: Record<string, string> = {};
 
-function getIconDataUri(platform: string): string {
-    if (iconCache[platform]) return iconCache[platform];
+function getIconDataUri(platform: string, theme: 'light' | 'dark'): string {
+    const cacheKey = `${platform}:${theme}`;
+    if (iconCache[cacheKey]) return iconCache[cacheKey];
     const filename = ICON_FILES[platform];
     if (!filename) return '';
     const filepath = resolve(process.cwd(), 'public/icons', filename);
     if (!existsSync(filepath)) return '';
-    const svg = readFileSync(filepath, 'utf-8');
+    let svg = readFileSync(filepath, 'utf-8');
+    if (theme === 'dark' && ICON_DARK_REPLACEMENTS[platform]) {
+        for (const [from, to] of ICON_DARK_REPLACEMENTS[platform]) {
+            svg = svg.split(from).join(to);
+        }
+    }
     const b64 = Buffer.from(svg).toString('base64');
     const uri = `data:image/svg+xml;base64,${b64}`;
-    iconCache[platform] = uri;
+    iconCache[cacheKey] = uri;
     return uri;
 }
 
@@ -128,8 +142,9 @@ function buildCardSvg(params: {
     width: number;
     colors: ThemeColors;
     lang: string;
+    themeName: 'light' | 'dark';
 }): string {
-    const { username, displayName, accounts, width, colors, lang } = params;
+    const { username, displayName, accounts, width, colors, lang, themeName } = params;
     const strings = getStrings(lang);
     const paddingSide = 20; // Left/right inner padding.
     const paddingTop = 20; // Top inner padding.
@@ -177,7 +192,7 @@ function buildCardSvg(params: {
 
         accounts.forEach((acc, i) => {
             const y = platformStartY + i * platformRowHeight; // Current row top Y.
-            const iconUri = getIconDataUri(acc.platform);
+            const iconUri = getIconDataUri(acc.platform, themeName);
             const name = PLATFORM_NAMES[acc.platform] || acc.platform;
             const handle = acc.platformUsername || acc.platformUid;
 
@@ -280,7 +295,8 @@ export default defineEventHandler(async event => {
         accounts,
         width,
         colors,
-        lang
+        lang,
+        themeName
     });
 
     setResponseHeaders(event, {
