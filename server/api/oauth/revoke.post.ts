@@ -1,15 +1,23 @@
 import { consola } from 'consola';
+import { authenticateOAuthClient } from '~/server/utils/oauth';
 import prisma from '~/server/utils/prisma';
 
 const logger = consola.withTag('oauth:revoke');
 
 export default defineEventHandler(async event => {
     const body = await readBody(event);
-    const { token, token_type_hint: tokenTypeHint } = body;
+    const {
+        token,
+        token_type_hint: tokenTypeHint,
+        client_id: clientId,
+        client_secret: clientSecret
+    } = body;
 
     if (!token) {
         throw createError({ statusCode: 400, message: 'Missing required parameter: token' });
     }
+    // Authenticate the client (RFC 7009 §2.1)
+    await authenticateOAuthClient(clientId, clientSecret);
 
     // Try to find and revoke the token
     // Per RFC 7009, always return 200 regardless of whether the token was found
