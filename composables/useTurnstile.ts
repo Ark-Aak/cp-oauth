@@ -37,11 +37,12 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
     const token = ref('');
     const el = ref<HTMLElement | null>(null);
     let widgetId: string | null = null;
+    let mounted = false;
 
     function removeWidget() {
         token.value = '';
 
-        if (widgetId !== null && (window as any).turnstile) {
+        if (import.meta.client && widgetId !== null && (window as any).turnstile) {
             try {
                 (window as any).turnstile.remove(widgetId);
             } catch {
@@ -53,6 +54,8 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
     }
 
     async function render() {
+        if (!import.meta.client || !mounted) return;
+
         if (!el.value || !siteKey.value) {
             removeWidget();
             return;
@@ -92,10 +95,12 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
     function reset() {
         token.value = '';
 
+        if (!import.meta.client) return;
+
         const ts = (window as any).turnstile;
-        if (widgetId !== null && ts?.reset) {
+        if (ts?.reset) {
             try {
-                ts.reset(widgetId);
+                ts.reset();
                 return;
             } catch {
                 // Fall back to rendering a fresh widget
@@ -105,9 +110,22 @@ export function useTurnstile(siteKey: Ref<string> | ComputedRef<string>) {
         void render();
     }
 
-    watch([el, siteKey], () => void render(), { flush: 'post' });
+    onMounted(async () => {
+        mounted = true;
+        await nextTick();
+        void render();
+    });
+
+    watch(
+        [el, siteKey],
+        () => {
+            if (mounted) void render();
+        },
+        { flush: 'post' }
+    );
 
     onBeforeUnmount(() => {
+        mounted = false;
         removeWidget();
     });
 
