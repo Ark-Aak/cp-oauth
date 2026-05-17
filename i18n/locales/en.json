@@ -239,6 +239,7 @@
         "step1_title": "Enter your {platform} UID",
         "step1_desc": "Enter your user ID on {platform}.",
         "step1_desc_atcoder": "Enter your AtCoder username.",
+        "step1_desc_leetcode": "Enter your LeetCode username (the part after /u/ in your profile URL).",
         "uid_placeholder": "e.g. 123456",
         "username_placeholder": "e.g. John",
         "get_code": "Get Verification Code",
@@ -246,6 +247,7 @@
         "step2_title": "Verify Ownership",
         "step2_desc": "Create a public clipboard on {platform} containing the code below, then enter the clipboard ID.",
         "step2_desc_atcoder": "Put the code below into your AtCoder profile Affiliation field, save it, then click Verify directly.",
+        "step2_desc_leetcode": "Put the code below into the bio (About Me) section of your LeetCode profile, save it, then click Verify directly.",
         "atcoder_settings_guide": "Open AtCoder settings to edit Affiliation:",
         "atcoder_cn_plugin_hint": "",
         "code_label": "Verification Code",
@@ -291,6 +293,7 @@
         "platforms": {
             "luogu": "Luogu",
             "atcoder": "AtCoder",
+            "leetcode": "LeetCode",
             "codeforces": "Codeforces",
             "github": "GitHub",
             "google": "Google",

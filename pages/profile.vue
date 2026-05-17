@@ -243,6 +243,15 @@
                                 >
                             </span>
                         </el-button>
+                        <el-button :disabled="leetcodeLinked" @click="openBindDialog('leetcode')">
+                            <span class="profile__bind-btn-content">
+                                <AppPlatformIcon platform="leetcode" />
+                                <span
+                                    >{{ $t('binding.link_account') }} —
+                                    {{ $t('binding.platforms.leetcode') }}</span
+                                >
+                            </span>
+                        </el-button>
                         <el-button :disabled="codeforcesLinked" @click="handleBindCodeforcesOAuth">
                             <span class="profile__bind-btn-content">
                                 <AppPlatformIcon platform="codeforces" />
@@ -656,7 +665,10 @@
                             })
                         }}
                     </p>
-                    <p v-if="isAtcoderBinding" class="profile__bind-desc profile__bind-desc--minor">
+                    <p
+                        v-if="isUsernameBasedBinding"
+                        class="profile__bind-desc profile__bind-desc--minor"
+                    >
                         {{ $t('binding.atcoder_settings_guide') }}
                         <a
                             href="https://atcoder.jp/settings"
@@ -667,7 +679,7 @@
                         </a>
                     </p>
                     <p
-                        v-if="isAtcoderBinding && locale === 'zh'"
+                        v-if="isUsernameBasedBinding && locale === 'zh'"
                         class="profile__bind-desc profile__bind-desc--minor"
                     >
                         {{ $t('binding.atcoder_cn_plugin_hint') }}
@@ -685,7 +697,7 @@
                         </p>
                     </div>
                     <el-input
-                        v-if="!isAtcoderBinding"
+                        v-if="!isUsernameBasedBinding"
                         v-model="bindCredential"
                         :placeholder="$t(bindCredentialPlaceholderKey)"
                         class="profile__bind-input"
@@ -694,7 +706,7 @@
                         <el-button
                             type="primary"
                             :loading="bindLoading"
-                            :disabled="!isAtcoderBinding && !bindCredential.trim()"
+                            :disabled="!isUsernameBasedBinding && !bindCredential.trim()"
                             @click="handleVerify"
                         >
                             {{ bindLoading ? $t('binding.verifying') : $t('binding.verify') }}
@@ -1277,21 +1289,30 @@ const luoguLinked = computed(() => bindings.value.some(account => account.platfo
 const atcoderLinked = computed(() =>
     bindings.value.some(account => account.platform === 'atcoder')
 );
+const leetcodeLinked = computed(() =>
+    bindings.value.some(account => account.platform === 'leetcode')
+);
 const codeforcesLinked = computed(() =>
     bindings.value.some(account => account.platform === 'codeforces')
 );
 const githubLinked = computed(() => bindings.value.some(account => account.platform === 'github'));
 const googleLinked = computed(() => bindings.value.some(account => account.platform === 'google'));
 const clistLinked = computed(() => bindings.value.some(account => account.platform === 'clist'));
-const bindStep2DescKey = computed(() =>
-    bindPlatform.value === 'atcoder' ? 'binding.step2_desc_atcoder' : 'binding.step2_desc'
+const bindStep2DescKey = computed(() => {
+    if (bindPlatform.value === 'atcoder') return 'binding.step2_desc_atcoder';
+    if (bindPlatform.value === 'leetcode') return 'binding.step2_desc_leetcode';
+    return 'binding.step2_desc';
+});
+const isUsernameBasedBinding = computed(
+    () => bindPlatform.value === 'atcoder' || bindPlatform.value === 'leetcode'
 );
-const isAtcoderBinding = computed(() => bindPlatform.value === 'atcoder');
-const bindStep1DescKey = computed(() =>
-    bindPlatform.value === 'atcoder' ? 'binding.step1_desc_atcoder' : 'binding.step1_desc'
-);
+const bindStep1DescKey = computed(() => {
+    if (bindPlatform.value === 'atcoder') return 'binding.step1_desc_atcoder';
+    if (bindPlatform.value === 'leetcode') return 'binding.step1_desc_leetcode';
+    return 'binding.step1_desc';
+});
 const bindUidPlaceholderKey = computed(() =>
-    bindPlatform.value === 'atcoder' ? 'binding.username_placeholder' : 'binding.uid_placeholder'
+    isUsernameBasedBinding.value ? 'binding.username_placeholder' : 'binding.uid_placeholder'
 );
 const bindCredentialPlaceholderKey = computed(() =>
     bindPlatform.value === 'atcoder'
@@ -1402,7 +1423,7 @@ async function handleVerify() {
             headers: { Authorization: `Bearer ${token.value}` },
             body: {
                 platform: bindPlatform.value,
-                credential: isAtcoderBinding.value ? '' : bindCredential.value.trim()
+                credential: isUsernameBasedBinding.value ? '' : bindCredential.value.trim()
             }
         });
         ElMessage.success(t('binding.verify_success'));

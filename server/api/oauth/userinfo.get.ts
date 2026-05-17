@@ -25,6 +25,7 @@ interface OAuthPayload {
 const LINK_SCOPE_PLATFORMS = [
     'luogu',
     'atcoder',
+    'leetcode',
     'codeforces',
     'github',
     'google',

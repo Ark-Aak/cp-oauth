@@ -1,0 +1,114 @@
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import { getPlatformVerifier } from '~/server/utils/platforms';
+import prisma from '~/server/utils/prisma';
+import { getRedis } from '~/server/utils/redis';
+import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
+import { fetchLeetcodeProfile } from '~/server/utils/leetcode-fetch';
+
+async function allocateSyntheticLeetcodeEmail(platformUid: string): Promise<string> {
+    const base = `leetcode_${platformUid.replace(/[^A-Za-z0-9_]/g, '_')}`.slice(0, 40);
+    for (let i = 0; i <= 9999; i += 1) {
+        const suffix = i === 0 ? '' : `_${i}`;
+        const candidate = `${base}${suffix}@leetcode.local`;
+        const exists = await prisma.user.findUnique({
+            where: { email: candidate },
+            select: { id: true }
+        });
+        if (!exists) {
+            return candidate;
+        }
+    }
+    throw createError({ statusCode: 500, message: 'Unable to allocate email for LeetCode user' });
+}
+
+export default defineEventHandler(async event => {
+    const body = await readBody(event);
+    const requestId = String(body.requestId || '').trim();
+    const credential = String(body.credential || '').trim();
+
+    if (!requestId || !credential) {
+        throw createError({ statusCode: 400, message: 'requestId and credential are required' });
+    }
+
+    const redis = getRedis();
+    const key = `auth:leetcode:register:${requestId}`;
+    const raw = await redis.get(key);
+    if (!raw) {
+        throw createError({
+            statusCode: 400,
+            message: 'Registration request expired or not found'
+        });
+    }
+
+    const { code, platformUid } = JSON.parse(raw) as { code: string; platformUid: string };
+
+    const verifier = getPlatformVerifier('leetcode');
+    if (!verifier) {
+        throw createError({ statusCode: 500, message: 'LeetCode verifier is unavailable' });
+    }
+
+    const result = await verifier.verify({ platformUid, code, credential });
+    if (!result.success) {
+        throw createError({ statusCode: 400, message: result.error || 'Verification failed' });
+    }
+
+    const taken = await prisma.linkedAccount.findUnique({
+        where: {
+            platform_platformUid: {
+                platform: 'leetcode',
+                platformUid: result.platformUid
+            }
+        },
+        select: { id: true }
+    });
+    if (taken) {
+        throw createError({
+            statusCode: 409,
+            message: 'This LeetCode account has already registered'
+        });
+    }
+
+    const username = await getUniqueUsername(
+        result.platformUsername || `leetcode_${result.platformUid}`
+    );
+    const email = await allocateSyntheticLeetcodeEmail(result.platformUid);
+    const userCount = await prisma.user.count();
+    const role = userCount === 0 ? 'admin' : 'user';
+
+    const profile = await fetchLeetcodeProfile(result.platformUid);
+    const avatarUrl = profile?.userAvatar || null;
+
+    const user = await prisma.user.create({
+        data: {
+            email,
+            username,
+            passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
+            displayName: result.platformUsername || null,
+            avatarUrl,
+            emailVerified: false,
+            role
+        },
+        select: { id: true, username: true, displayName: true, email: true }
+    });
+
+    await prisma.linkedAccount.create({
+        data: {
+            userId: user.id,
+            platform: 'leetcode',
+            platformUid: result.platformUid,
+            platformUsername: result.platformUsername || null
+        }
+    });
+
+    await redis.del(key);
+
+    const token = await signAuthToken(user.id);
+
+    return {
+        token,
+        user: createAuthUserResponse(user),
+        mode: 'register'
+    };
+});
