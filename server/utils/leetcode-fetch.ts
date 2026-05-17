@@ -9,6 +9,7 @@ export interface LeetcodeProfile {
     userSlug: string;
     realName: string | null;
     aboutMe: string | null;
+    userAvatar: string | null;
     siteRanking: number | null;
     acceptedEasy: number;
     acceptedMedium: number;
@@ -22,6 +23,7 @@ interface LeetcodeGraphQLResponse {
                 userSlug: string;
                 realName: string | null;
                 aboutMe: string | null;
+                userAvatar: string | null;
             };
             siteRanking: number | null;
         } | null;
@@ -41,6 +43,7 @@ const PROFILE_QUERY = `query userProfile($userSlug: String!) {
             userSlug
             realName
             aboutMe
+            userAvatar
         }
         siteRanking
     }
@@ -108,6 +111,7 @@ export async function fetchLeetcodeProfile(userSlug: string): Promise<LeetcodePr
             userSlug: publicProfile.profile.userSlug,
             realName: publicProfile.profile.realName,
             aboutMe: publicProfile.profile.aboutMe,
+            userAvatar: publicProfile.profile.userAvatar,
             siteRanking: publicProfile.siteRanking,
             acceptedEasy: counts.EASY,
             acceptedMedium: counts.MEDIUM,
