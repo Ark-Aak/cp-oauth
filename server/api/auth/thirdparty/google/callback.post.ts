@@ -9,6 +9,7 @@ import {
 } from '~/server/utils/google-oauth';
 import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { findOrCreateLocalUser as findOrCreateLocalUserBase } from '~/server/utils/thirdparty';
 
 interface CallbackBody {
     code?: string;
@@ -29,75 +30,6 @@ async function allocateSyntheticEmail(platformUid: string): Promise<string> {
         if (!existing) return candidate;
     }
     throw createError({ statusCode: 500, message: 'Unable to allocate email for Google user' });
-}
-
-async function findOrCreateLocalUser(identity: {
-    platformUid: string;
-    platformUsername: string;
-    email: string | null;
-    emailVerified: boolean;
-    displayName: string | null;
-    avatarUrl: string | null;
-}) {
-    const linked = await prisma.linkedAccount.findUnique({
-        where: {
-            platform_platformUid: {
-                platform: 'google',
-                platformUid: identity.platformUid
-            }
-        },
-        include: { user: true }
-    });
-
-    if (linked) return linked.user;
-
-    let user = null;
-    const normalizedEmail = normalizeUsername(identity.email);
-    if (normalizedEmail) {
-        user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    }
-
-    if (!user) {
-        const username = await getUniqueUsername(
-            identity.platformUsername || `go_${identity.platformUid}`
-        );
-        const userCount = await prisma.user.count();
-        const role = userCount === 0 ? 'admin' : 'user';
-        const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
-
-        user = await prisma.user.create({
-            data: {
-                email,
-                username,
-                passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
-                displayName: identity.displayName,
-                avatarUrl: identity.avatarUrl,
-                emailVerified: normalizedEmail ? identity.emailVerified : false,
-                role
-            }
-        });
-    }
-
-    await prisma.linkedAccount.upsert({
-        where: {
-            userId_platform: {
-                userId: user.id,
-                platform: 'google'
-            }
-        },
-        update: {
-            platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername
-        },
-        create: {
-            userId: user.id,
-            platform: 'google',
-            platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername
-        }
-    });
-
-    return user;
 }
 
 async function registerLocalUserFromGoogle(identity: {
@@ -304,7 +236,18 @@ export default defineEventHandler(async event => {
         };
     }
 
-    const user = await findOrCreateLocalUser(identity);
+    const user = await findOrCreateLocalUserBase({
+        platform: 'google',
+        platformUid: identity.platformUid,
+        platformUsername: identity.platformUsername,
+        email: identity.email,
+        emailVerified: identity.emailVerified,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
+        usernamePrefix: 'go_',
+        getUniqueUsername: async (base) => getUniqueUsername(base),
+        allocateSyntheticEmail
+    });
     const authToken = await signAuthToken(user.id);
 
     return {

@@ -10,6 +10,7 @@ import {
     resolveClistIdentity
 } from '~/server/utils/clist-oauth';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { findOrCreateLocalUser as findOrCreateLocalUserBase } from '~/server/utils/thirdparty';
 
 const logger = consola.withTag('auth:clist:callback');
 
@@ -64,102 +65,6 @@ async function allocateSyntheticEmail(platformUid: string): Promise<string> {
     }
 
     throw createError({ statusCode: 500, message: 'Unable to allocate email for Clist user' });
-}
-
-async function findOrCreateLocalUser(identity: {
-    platformUid: string;
-    platformUsername: string;
-    email: string | null;
-    emailVerified: boolean;
-    displayName: string | null;
-    avatarUrl: string | null;
-    oauthCredentials: ClistOAuthCredentialSnapshot;
-}) {
-    const linked = await prisma.linkedAccount.findUnique({
-        where: {
-            platform_platformUid: {
-                platform: 'clist',
-                platformUid: identity.platformUid
-            }
-        },
-        include: { user: true }
-    });
-
-    if (linked) {
-        await prisma.linkedAccount.update({
-            where: { id: linked.id },
-            data: {
-                platformUsername: identity.platformUsername,
-                oauthAccessToken: identity.oauthCredentials.oauthAccessToken,
-                oauthRefreshToken: identity.oauthCredentials.oauthRefreshToken,
-                oauthTokenType: identity.oauthCredentials.oauthTokenType,
-                oauthExpiresAt: identity.oauthCredentials.oauthExpiresAt,
-                oauthScope: identity.oauthCredentials.oauthScope
-            }
-        });
-
-        return linked.user;
-    }
-
-    let user = null;
-    const normalizedEmail = normalizeUsername(identity.email);
-    if (normalizedEmail) {
-        user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    }
-
-    if (!user) {
-        const username = await getClistUniqueUsername(
-            identity.platformUsername || `clist_${identity.platformUid}`
-        );
-        const userCount = await prisma.user.count();
-        const role = userCount === 0 ? 'admin' : 'user';
-        const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
-
-        user = await prisma.user.create({
-            data: {
-                email,
-                username,
-                passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
-                displayName: identity.displayName,
-                avatarUrl: identity.avatarUrl,
-                emailVerified: normalizedEmail ? identity.emailVerified : false,
-                role
-            }
-        });
-
-        logger.info(`Created local user from Clist: user=${user.id}, username=${user.username}`);
-    }
-
-    await prisma.linkedAccount.upsert({
-        where: {
-            userId_platform: {
-                userId: user.id,
-                platform: 'clist'
-            }
-        },
-        update: {
-            platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername,
-            oauthAccessToken: identity.oauthCredentials.oauthAccessToken,
-            oauthRefreshToken: identity.oauthCredentials.oauthRefreshToken,
-            oauthTokenType: identity.oauthCredentials.oauthTokenType,
-            oauthExpiresAt: identity.oauthCredentials.oauthExpiresAt,
-            oauthScope: identity.oauthCredentials.oauthScope
-        },
-        create: {
-            userId: user.id,
-            platform: 'clist',
-            platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername,
-            oauthAccessToken: identity.oauthCredentials.oauthAccessToken,
-            oauthRefreshToken: identity.oauthCredentials.oauthRefreshToken,
-            oauthTokenType: identity.oauthCredentials.oauthTokenType,
-            oauthExpiresAt: identity.oauthCredentials.oauthExpiresAt,
-            oauthScope: identity.oauthCredentials.oauthScope
-        }
-    });
-
-    return user;
 }
 
 async function registerLocalUserFromClist(identity: {
@@ -413,7 +318,27 @@ export default defineEventHandler(async event => {
         };
     }
 
-    const user = await findOrCreateLocalUser({ ...identity, oauthCredentials });
+    const user = await findOrCreateLocalUserBase({
+        platform: 'clist',
+        platformUid: identity.platformUid,
+        platformUsername: identity.platformUsername,
+        email: identity.email,
+        emailVerified: identity.emailVerified,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
+        usernamePrefix: 'clist_',
+        getUniqueUsername: async (base) => getClistUniqueUsername(base),
+        allocateSyntheticEmail,
+        logger,
+        refreshOnFound: true,
+        oauthFields: {
+            oauthAccessToken: oauthCredentials.oauthAccessToken,
+            oauthRefreshToken: oauthCredentials.oauthRefreshToken,
+            oauthTokenType: oauthCredentials.oauthTokenType,
+            oauthExpiresAt: oauthCredentials.oauthExpiresAt,
+            oauthScope: oauthCredentials.oauthScope
+        }
+    });
 
     const authToken = await signAuthToken(user.id);
 

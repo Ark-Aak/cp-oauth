@@ -10,6 +10,7 @@ import {
 import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
 import { fetchPlatformUsername } from '~/server/utils/platform-username';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { findOrCreateLocalUser as findOrCreateLocalUserBase } from '~/server/utils/thirdparty';
 
 interface GitHubTokenPayload {
     accessToken: string;
@@ -36,84 +37,6 @@ async function allocateSyntheticEmail(platformUid: string): Promise<string> {
         if (!existing) return candidate;
     }
     throw createError({ statusCode: 500, message: 'Unable to allocate email for GitHub user' });
-}
-
-async function findOrCreateLocalUser(
-    identity: {
-        platformUid: string;
-        platformUsername: string;
-        email: string | null;
-        emailVerified: boolean;
-        displayName: string | null;
-        avatarUrl: string | null;
-    },
-    token: GitHubTokenPayload
-) {
-    const linked = await prisma.linkedAccount.findUnique({
-        where: {
-            platform_platformUid: {
-                platform: 'github',
-                platformUid: identity.platformUid
-            }
-        },
-        include: { user: true }
-    });
-
-    if (linked) return linked.user;
-
-    let user = null;
-    const normalizedEmail = normalizeUsername(identity.email);
-    if (normalizedEmail) {
-        user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    }
-
-    if (!user) {
-        const username = await getUniqueUsername(
-            identity.platformUsername || `gh_${identity.platformUid}`
-        );
-        const userCount = await prisma.user.count();
-        const role = userCount === 0 ? 'admin' : 'user';
-        const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
-
-        user = await prisma.user.create({
-            data: {
-                email,
-                username,
-                passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
-                displayName: identity.displayName,
-                avatarUrl: identity.avatarUrl,
-                emailVerified: normalizedEmail ? identity.emailVerified : false,
-                role
-            }
-        });
-    }
-
-    await prisma.linkedAccount.upsert({
-        where: {
-            userId_platform: {
-                userId: user.id,
-                platform: 'github'
-            }
-        },
-        update: {
-            platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername,
-            oauthAccessToken: token.accessToken,
-            oauthTokenType: token.tokenType || 'bearer',
-            oauthScope: token.scope || null
-        },
-        create: {
-            userId: user.id,
-            platform: 'github',
-            platformUid: identity.platformUid,
-            platformUsername: identity.platformUsername,
-            oauthAccessToken: token.accessToken,
-            oauthTokenType: token.tokenType || 'bearer',
-            oauthScope: token.scope || null
-        }
-    });
-
-    return user;
 }
 
 async function registerLocalUserFromGitHub(
@@ -377,7 +300,23 @@ export default defineEventHandler(async event => {
         };
     }
 
-    const user = await findOrCreateLocalUser(identity, githubToken);
+    const user = await findOrCreateLocalUserBase({
+        platform: 'github',
+        platformUid: identity.platformUid,
+        platformUsername: identity.platformUsername,
+        email: identity.email,
+        emailVerified: identity.emailVerified,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
+        usernamePrefix: 'gh_',
+        getUniqueUsername: async (base) => getUniqueUsername(base),
+        allocateSyntheticEmail,
+        oauthFields: {
+            oauthAccessToken: githubToken.accessToken,
+            oauthTokenType: githubToken.tokenType || 'bearer',
+            oauthScope: githubToken.scope || null
+        }
+    });
     const refreshedUsername = await fetchPlatformUsername('github', {
         platformUid: identity.platformUid,
         oauthAccessToken: githubToken.accessToken,
