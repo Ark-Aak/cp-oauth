@@ -19,7 +19,11 @@
 
         <!-- User table -->
         <el-table v-loading="tableLoading" :data="users" stripe class="admin__table">
-            <el-table-column prop="username" :label="$t('admin.users.username')" />
+            <el-table-column :label="$t('admin.users.username')">
+                <template #default="{ row }">
+                    {{ row.displayName || row.username }}
+                </template>
+            </el-table-column>
             <el-table-column prop="email" :label="$t('admin.users.email')" />
             <el-table-column :label="$t('admin.users.role')" width="140">
                 <template #default="{ row }">

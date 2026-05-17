@@ -9,6 +9,7 @@ import {
     getClistUniqueUsername,
     resolveClistIdentity
 } from '~/server/utils/clist-oauth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 
 const logger = consola.withTag('auth:clist:callback');
 
@@ -246,7 +247,7 @@ async function bindClistToExistingUser(params: {
 }) {
     const targetUser = await prisma.user.findUnique({
         where: { id: params.userId },
-        select: { id: true, username: true, email: true }
+        select: { id: true, username: true, displayName: true, email: true }
     });
     if (!targetUser) {
         throw createError({ statusCode: 404, message: 'User not found' });
@@ -391,11 +392,7 @@ export default defineEventHandler(async event => {
         return {
             mode: 'bind',
             redirect: redirectAfterLogin,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email
-            }
+            user: createAuthUserResponse(user)
         };
     }
 
@@ -412,11 +409,7 @@ export default defineEventHandler(async event => {
             mode: 'register',
             token: authToken,
             redirect: redirectAfterLogin,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email
-            }
+            user: createAuthUserResponse(user)
         };
     }
 
@@ -430,10 +423,6 @@ export default defineEventHandler(async event => {
         mode: 'login',
         token: authToken,
         redirect: redirectAfterLogin,
-        user: {
-            id: user.id,
-            username: user.username,
-            email: user.email
-        }
+        user: createAuthUserResponse(user)
     };
 });

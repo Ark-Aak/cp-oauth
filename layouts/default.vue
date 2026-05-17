@@ -6,6 +6,7 @@
             :is-logged-in="isLoggedIn"
             :is-admin="isAdmin"
             :username="sidebarUsername"
+            :display-name="sidebarDisplayName"
             :avatar-url="sidebarAvatarUrl"
             :open="sidebarOpen"
             @logout="handleLogout"
@@ -30,6 +31,7 @@ const token = useCookie('auth_token');
 const isLoggedIn = computed(() => !!token.value);
 const userRole = ref('');
 const sidebarUsername = ref('');
+const sidebarDisplayName = ref('');
 const sidebarAvatarUrl = ref('');
 const sidebarOpen = ref(false);
 
@@ -37,22 +39,27 @@ async function fetchCurrentUser() {
     if (!token.value) {
         userRole.value = '';
         sidebarUsername.value = '';
+        sidebarDisplayName.value = '';
         sidebarAvatarUrl.value = '';
         return;
     }
     try {
-        const data = await $fetch<{ role: string; username: string; avatarUrl: string | null }>(
-            '/api/auth/me',
-            {
-                headers: { Authorization: `Bearer ${token.value}` }
-            }
-        );
+        const data = await $fetch<{
+            role: string;
+            username: string;
+            displayName: string | null;
+            avatarUrl: string | null;
+        }>('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token.value}` }
+        });
         userRole.value = data.role;
         sidebarUsername.value = data.username;
+        sidebarDisplayName.value = data.displayName || '';
         sidebarAvatarUrl.value = data.avatarUrl || '';
     } catch {
         userRole.value = '';
         sidebarUsername.value = '';
+        sidebarDisplayName.value = '';
         sidebarAvatarUrl.value = '';
     }
 }
@@ -73,6 +80,7 @@ function handleLogout() {
     token.value = null;
     userRole.value = '';
     sidebarUsername.value = '';
+    sidebarDisplayName.value = '';
     sidebarAvatarUrl.value = '';
     sidebarOpen.value = false;
     navigateTo('/login');

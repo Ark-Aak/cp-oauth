@@ -5,6 +5,7 @@ import {
     extractLuoguCredentialTokens,
     findFirstValidLuoguCredential
 } from '~/server/utils/luogu-login-credential';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 
 export default defineEventHandler(async event => {
     const body = await readBody(event);
@@ -65,7 +66,7 @@ export default defineEventHandler(async event => {
 
     const user = await prisma.user.findUnique({
         where: { id: credential.userId },
-        select: { id: true, username: true, email: true }
+        select: { id: true, username: true, displayName: true, email: true }
     });
 
     if (!user) {
@@ -76,7 +77,7 @@ export default defineEventHandler(async event => {
 
     return {
         token,
-        user,
+        user: createAuthUserResponse(user),
         loginMethod: 'luogu-paste'
     };
 });

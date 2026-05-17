@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import prisma from '~/server/utils/prisma';
 import { signAuthToken } from '~/server/utils/auth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 import { getPasskeyRpInfo, verifyAuthentication } from '~/server/utils/passkey';
 import {
     build2faLoginChallengeKey,
@@ -40,6 +41,7 @@ export default defineEventHandler(async event => {
                 select: {
                     id: true,
                     username: true,
+                    displayName: true,
                     email: true,
                     twoFactorEnabled: true,
                     twoFactorMethod: true
@@ -111,10 +113,6 @@ export default defineEventHandler(async event => {
 
     return {
         token: await signAuthToken(passkey.user.id),
-        user: {
-            id: passkey.user.id,
-            username: passkey.user.username,
-            email: passkey.user.email
-        }
+        user: createAuthUserResponse(passkey.user)
     };
 });

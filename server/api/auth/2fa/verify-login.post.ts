@@ -1,5 +1,6 @@
 import prisma from '~/server/utils/prisma';
 import { signAuthToken } from '~/server/utils/auth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 import {
     build2faLoginChallengeKey,
     delRedisKey,
@@ -33,6 +34,7 @@ export default defineEventHandler(async event => {
         select: {
             id: true,
             username: true,
+            displayName: true,
             email: true,
             totpSecret: true,
             twoFactorEnabled: true,
@@ -62,6 +64,6 @@ export default defineEventHandler(async event => {
 
     return {
         token: await signAuthToken(user.id),
-        user: { id: user.id, username: user.username, email: user.email }
+        user: createAuthUserResponse(user)
     };
 });

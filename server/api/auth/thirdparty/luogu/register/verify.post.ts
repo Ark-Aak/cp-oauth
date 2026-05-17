@@ -4,6 +4,7 @@ import { getPlatformVerifier } from '~/server/utils/platforms';
 import prisma from '~/server/utils/prisma';
 import { getRedis } from '~/server/utils/redis';
 import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 
 async function allocateSyntheticLuoguEmail(platformUid: string): Promise<string> {
     const base = `luogu_${platformUid.replace(/[^A-Za-z0-9_]/g, '_')}`.slice(0, 40);
@@ -89,7 +90,7 @@ export default defineEventHandler(async event => {
             emailVerified: false,
             role
         },
-        select: { id: true, username: true, email: true }
+        select: { id: true, username: true, displayName: true, email: true }
     });
 
     await prisma.linkedAccount.create({
@@ -107,7 +108,7 @@ export default defineEventHandler(async event => {
 
     return {
         token,
-        user,
+        user: createAuthUserResponse(user),
         mode: 'register'
     };
 });

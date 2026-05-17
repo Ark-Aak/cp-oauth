@@ -5,6 +5,7 @@ import prisma from '~/server/utils/prisma';
 import { getConfig } from '~/server/utils/config';
 import { sendTwoFactorEmailCode } from '~/server/utils/mailer';
 import { signAuthToken } from '~/server/utils/auth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 import {
     build2faLoginChallengeKey,
     generateSixDigitCode,
@@ -94,5 +95,5 @@ export default defineEventHandler(async event => {
 
     logger.success(`Login successful: ${user.username} (${user.id})`);
 
-    return { token, user: { id: user.id, username: user.username, email: user.email } };
+    return { token, user: createAuthUserResponse(user) };
 });

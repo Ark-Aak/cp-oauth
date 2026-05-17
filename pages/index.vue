@@ -135,6 +135,7 @@ interface SiteStatsResponse {
 
 interface MeSummary {
     username: string;
+    displayName: string | null;
 }
 
 const DEFAULT_RECENT_USERS_LIMIT = 6;
@@ -154,8 +155,8 @@ if (token.value) {
 }
 
 const homeTitle = computed(() => {
-    if (me.value?.username) {
-        return t('home.welcome_user', { username: me.value.username });
+    if (me.value?.username || me.value?.displayName) {
+        return t('home.welcome_user', { username: me.value.displayName || me.value.username });
     }
     return t('home.title');
 });

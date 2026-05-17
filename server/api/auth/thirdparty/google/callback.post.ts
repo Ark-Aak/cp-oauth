@@ -8,6 +8,7 @@ import {
     resolveGoogleIdentity
 } from '~/server/utils/google-oauth';
 import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 
 interface CallbackBody {
     code?: string;
@@ -151,7 +152,7 @@ async function registerLocalUserFromGoogle(identity: {
             emailVerified: normalizedEmail ? identity.emailVerified : false,
             role
         },
-        select: { id: true, username: true, email: true }
+        select: { id: true, username: true, displayName: true, email: true }
     });
 
     await prisma.linkedAccount.create({
@@ -173,7 +174,7 @@ async function bindGoogleToExistingUser(params: {
 }) {
     const targetUser = await prisma.user.findUnique({
         where: { id: params.userId },
-        select: { id: true, username: true, email: true }
+        select: { id: true, username: true, displayName: true, email: true }
     });
     if (!targetUser) throw createError({ statusCode: 404, message: 'User not found' });
 
@@ -287,11 +288,7 @@ export default defineEventHandler(async event => {
         return {
             mode: 'bind',
             redirect: redirectAfterLogin,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email
-            }
+            user: createAuthUserResponse(user)
         };
     }
 
@@ -303,11 +300,7 @@ export default defineEventHandler(async event => {
             mode: 'register',
             token: authToken,
             redirect: redirectAfterLogin,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email
-            }
+            user: createAuthUserResponse(user)
         };
     }
 
@@ -318,10 +311,6 @@ export default defineEventHandler(async event => {
         mode: 'login',
         token: authToken,
         redirect: redirectAfterLogin,
-        user: {
-            id: user.id,
-            username: user.username,
-            email: user.email
-        }
+        user: createAuthUserResponse(user)
     };
 });

@@ -31,12 +31,12 @@
                 <AppUserAvatar
                     :size="34"
                     :src="avatarUrl || undefined"
-                    :name="username || 'U'"
+                    :name="displayName || username || 'U'"
                     class="app-sidebar__avatar"
                 />
                 <div class="app-sidebar__user-text">
                     <p class="app-sidebar__user-label">{{ $t('nav.signed_in_as') }}</p>
-                    <p class="app-sidebar__user-name">{{ username }}</p>
+                    <p class="app-sidebar__user-name">{{ displayName || username }}</p>
                 </div>
             </div>
             <el-menu
@@ -72,6 +72,7 @@ defineProps<{
     isAdmin: boolean;
     open: boolean;
     username: string;
+    displayName: string;
     avatarUrl: string;
 }>();
 const emit = defineEmits<{ logout: []; navigate: [] }>();

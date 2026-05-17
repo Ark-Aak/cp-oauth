@@ -6,6 +6,7 @@ import { getConfig } from '~/server/utils/config';
 import { sendVerificationEmail } from '~/server/utils/mailer';
 import { hashToken } from '~/server/utils/token-hash';
 import { getPublicBaseUrl } from '~/server/utils/base-url';
+import { createAuthUserResponse } from '~/server/utils/user-response';
 import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
 
 const logger = consola.withTag('auth:register');
@@ -85,5 +86,5 @@ export default defineEventHandler(async event => {
 
     const token = await signAuthToken(user.id);
 
-    return { token, user: { id: user.id, username: user.username, email: user.email } };
+    return { token, user: createAuthUserResponse(user) };
 });

@@ -3,13 +3,9 @@
         <h1 class="showcase__title">{{ $t('showcase.title') }}</h1>
         <p class="showcase__subtitle">{{ $t('showcase.subtitle') }}</p>
 
-        <el-tabs v-model="activeTab">
-            <el-tab-pane :label="$t('showcase.projects_tab')" name="projects" />
-            <el-tab-pane :label="$t('showcase.sites_tab')" name="sites" />
-        </el-tabs>
-
         <div v-loading="pending" class="showcase__content">
-            <template v-if="activeTab === 'projects'">
+            <section class="showcase__column">
+                <h2 class="showcase__section-title">{{ $t('showcase.projects_tab') }}</h2>
                 <div v-if="projects.length" class="showcase__grid">
                     <a
                         v-for="item in projects"
@@ -38,9 +34,10 @@
                     </a>
                 </div>
                 <el-empty v-else :description="$t('showcase.no_projects')" :image-size="64" />
-            </template>
+            </section>
 
-            <template v-if="activeTab === 'sites'">
+            <section class="showcase__column">
+                <h2 class="showcase__section-title">{{ $t('showcase.sites_tab') }}</h2>
                 <div v-if="sites.length" class="showcase__grid">
                     <a
                         v-for="item in sites"
@@ -69,7 +66,7 @@
                     </a>
                 </div>
                 <el-empty v-else :description="$t('showcase.no_sites')" :image-size="64" />
-            </template>
+            </section>
         </div>
     </div>
 </template>
@@ -80,8 +77,6 @@ import { ExternalLink } from 'lucide-vue-next';
 const { t } = useI18n();
 
 useHead({ title: () => `${t('showcase.title')} - CP OAuth` });
-
-const activeTab = ref('projects');
 
 interface ShowcaseItem {
     id: string;
@@ -118,7 +113,7 @@ function handleIconError(e: Event) {
 
 <style scoped lang="scss">
 .showcase {
-    max-width: 760px;
+    max-width: none;
 
     &__title {
         font-size: 22px;
@@ -134,7 +129,21 @@ function handleIconError(e: Event) {
     }
 
     &__content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 28px;
         min-height: 120px;
+    }
+
+    &__column {
+        min-width: 0;
+    }
+
+    &__section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 12px;
     }
 
     &__grid {
@@ -191,6 +200,16 @@ function handleIconError(e: Event) {
         color: var(--text-secondary);
         margin: 0;
         line-height: 1.6;
+    }
+}
+
+@media (max-width: 1080px) {
+    .showcase {
+        max-width: 760px;
+
+        &__content {
+            grid-template-columns: 1fr;
+        }
     }
 }
 </style>

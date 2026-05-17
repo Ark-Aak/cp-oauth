@@ -19,141 +19,158 @@
             </div>
         </div>
 
-        <!-- Linked CP Accounts -->
-        <el-card shadow="never" class="user-profile__section">
-            <template #header>
-                <span class="user-profile__section-title">{{ $t('user.linked_accounts') }}</span>
-            </template>
-            <div v-if="cpLinkedAccounts.length">
-                <div
-                    v-for="account in cpLinkedAccounts"
-                    :key="account.platform"
-                    class="user-profile__linked-item"
-                >
-                    <span class="user-profile__linked-platform">
-                        <AppPlatformIcon :platform="account.platform" />
-                        <span>{{ $t(`binding.platforms.${account.platform}`) }}</span>
-                    </span>
-                    <span class="user-profile__linked-uid-row">
-                        <a
-                            v-if="getProfileUrl(account)"
-                            :href="getProfileUrl(account)!"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="user-profile__linked-link"
-                        >
-                            {{ account.platformUsername || account.platformUid }}
-                            <ExternalLink :size="12" :stroke-width="1.5" />
-                        </a>
-                        <span v-else class="user-profile__linked-uid">
-                            {{ account.platformUsername || account.platformUid }}
-                        </span>
-                        <el-button
-                            v-if="canRefresh(account.platform)"
-                            text
-                            size="small"
-                            :loading="
-                                refreshingPlatformUid ===
-                                `${account.platform}:${account.platformUid}`
-                            "
-                            :title="$t('binding.refresh_username')"
-                            @click="handleRefreshUsername(account)"
-                        >
-                            <RefreshCw :size="13" :stroke-width="1.5" />
-                        </el-button>
-                    </span>
-                </div>
-            </div>
-            <el-empty v-else :description="$t('user.no_linked')" :image-size="48" />
-        </el-card>
-
-        <el-card shadow="never" class="user-profile__section">
-            <template #header>
-                <span class="user-profile__section-title">{{ $t('user.other_accounts') }}</span>
-            </template>
-            <div v-if="otherLinkedAccounts.length">
-                <div
-                    v-for="account in otherLinkedAccounts"
-                    :key="account.platform"
-                    class="user-profile__linked-item"
-                >
-                    <span class="user-profile__linked-platform">
-                        <AppPlatformIcon :platform="account.platform" />
-                        <span>{{ $t(`binding.platforms.${account.platform}`) }}</span>
-                    </span>
-                    <a
-                        v-if="getProfileUrl(account)"
-                        :href="getProfileUrl(account)!"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="user-profile__linked-link"
-                    >
-                        {{ account.platformUsername || account.platformUid }}
-                        <ExternalLink :size="12" :stroke-width="1.5" />
-                    </a>
-                    <span v-else class="user-profile__linked-uid">
-                        {{ account.platformUsername || account.platformUid }}
-                    </span>
-                </div>
-            </div>
-            <el-empty v-else :description="$t('user.no_other_accounts')" :image-size="48" />
-        </el-card>
-
-        <!-- CP Stats -->
-        <el-card v-if="user.cpStats" shadow="never" class="user-profile__section">
-            <template #header>
-                <span class="user-profile__section-title">{{ $t('user.cp_stats') }}</span>
-            </template>
-            <div v-if="user.cpStats.accounts.length">
-                <div
-                    v-for="account in user.cpStats.accounts"
-                    :key="account.resource"
-                    class="user-profile__cp-stat-item"
-                >
-                    <span class="user-profile__cp-resource">
-                        <AppPlatformIcon :platform="account.resource" />
-                        {{ account.resource_name || account.resource }}
-                    </span>
-                    <span class="user-profile__cp-handle">{{ account.handle }}</span>
-                    <span v-if="account.rating != null" class="user-profile__cp-rating">
-                        {{ $t('user.rating') }}: <strong>{{ account.rating }}</strong>
-                    </span>
-                    <span v-else class="user-profile__cp-rating user-profile__cp-rating--unrated">
-                        {{ $t('user.rating') }}: {{ $t('user.unrated') }}
-                    </span>
-                    <span v-if="account.n_contests" class="user-profile__cp-contests">
-                        {{ $t('user.contests') }}: {{ account.n_contests }}
-                    </span>
-                    <span v-if="account.resource_rank != null" class="user-profile__cp-rank">
-                        {{ $t('user.rank') }}: #{{ account.resource_rank }}
-                    </span>
-                </div>
-            </div>
-            <el-empty v-else :description="$t('user.no_cp_stats')" :image-size="48" />
-        </el-card>
-
-        <!-- Rating History Chart -->
-        <el-card
-            v-if="user.ratingHistory && user.ratingHistory.length"
-            shadow="never"
-            class="user-profile__section"
+        <div
+            class="user-profile__content"
+            :class="{ 'user-profile__content--single': !hasLeftColumn }"
         >
-            <template #header>
-                <span class="user-profile__section-title">{{ $t('user.rating_history') }}</span>
-            </template>
-            <div v-loading="!chartReady" class="user-profile__chart-container">
-                <canvas ref="ratingChartCanvas" />
-            </div>
-        </el-card>
+            <div v-if="hasLeftColumn" class="user-profile__column">
+                <el-card v-if="user.homepage" shadow="never" class="user-profile__section">
+                    <template #header>
+                        <span class="user-profile__section-title">{{ $t('user.homepage') }}</span>
+                    </template>
+                    <div v-if="renderedHtml" class="user-profile__markdown" v-html="renderedHtml" />
+                    <p v-else class="user-profile__loading-md">{{ $t('user.loading') }}</p>
+                </el-card>
 
-        <!-- Homepage (Markdown) -->
-        <el-card v-if="user.homepage" shadow="never" class="user-profile__section">
-            <template #header>
-                <span class="user-profile__section-title">{{ $t('user.homepage') }}</span>
-            </template>
-            <div v-if="renderedHtml" class="user-profile__markdown" v-html="renderedHtml" />
-            <p v-else class="user-profile__loading-md">{{ $t('user.loading') }}</p>
-        </el-card>
+                <el-card
+                    v-if="user.ratingHistory && user.ratingHistory.length"
+                    shadow="never"
+                    class="user-profile__section"
+                >
+                    <template #header>
+                        <span class="user-profile__section-title">{{
+                            $t('user.rating_history')
+                        }}</span>
+                    </template>
+                    <div v-loading="!chartReady" class="user-profile__chart-container">
+                        <canvas ref="ratingChartCanvas" />
+                    </div>
+                </el-card>
+            </div>
+
+            <div class="user-profile__column">
+                <el-card shadow="never" class="user-profile__section">
+                    <template #header>
+                        <span class="user-profile__section-title">{{
+                            $t('user.linked_accounts')
+                        }}</span>
+                    </template>
+                    <div v-if="cpLinkedAccounts.length">
+                        <div
+                            v-for="account in cpLinkedAccounts"
+                            :key="account.platform"
+                            class="user-profile__linked-item"
+                        >
+                            <span class="user-profile__linked-platform">
+                                <AppPlatformIcon :platform="account.platform" />
+                                <span>{{ $t(`binding.platforms.${account.platform}`) }}</span>
+                            </span>
+                            <span class="user-profile__linked-uid-row">
+                                <a
+                                    v-if="getProfileUrl(account)"
+                                    :href="getProfileUrl(account)!"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="user-profile__linked-link"
+                                >
+                                    {{ account.platformUsername || account.platformUid }}
+                                    <ExternalLink :size="12" :stroke-width="1.5" />
+                                </a>
+                                <span v-else class="user-profile__linked-uid">
+                                    {{ account.platformUsername || account.platformUid }}
+                                </span>
+                                <el-button
+                                    v-if="canRefresh(account.platform)"
+                                    text
+                                    size="small"
+                                    :loading="
+                                        refreshingPlatformUid ===
+                                        `${account.platform}:${account.platformUid}`
+                                    "
+                                    :title="$t('binding.refresh_username')"
+                                    @click="handleRefreshUsername(account)"
+                                >
+                                    <RefreshCw :size="13" :stroke-width="1.5" />
+                                </el-button>
+                            </span>
+                        </div>
+                    </div>
+                    <el-empty v-else :description="$t('user.no_linked')" :image-size="48" />
+                </el-card>
+
+                <el-card shadow="never" class="user-profile__section">
+                    <template #header>
+                        <span class="user-profile__section-title">{{
+                            $t('user.other_accounts')
+                        }}</span>
+                    </template>
+                    <div v-if="otherLinkedAccounts.length">
+                        <div
+                            v-for="account in otherLinkedAccounts"
+                            :key="account.platform"
+                            class="user-profile__linked-item"
+                        >
+                            <span class="user-profile__linked-platform">
+                                <AppPlatformIcon :platform="account.platform" />
+                                <span>{{ $t(`binding.platforms.${account.platform}`) }}</span>
+                            </span>
+                            <a
+                                v-if="getProfileUrl(account)"
+                                :href="getProfileUrl(account)!"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="user-profile__linked-link"
+                            >
+                                {{ account.platformUsername || account.platformUid }}
+                                <ExternalLink :size="12" :stroke-width="1.5" />
+                            </a>
+                            <span v-else class="user-profile__linked-uid">
+                                {{ account.platformUsername || account.platformUid }}
+                            </span>
+                        </div>
+                    </div>
+                    <el-empty v-else :description="$t('user.no_other_accounts')" :image-size="48" />
+                </el-card>
+
+                <el-card v-if="user.cpStats" shadow="never" class="user-profile__section">
+                    <template #header>
+                        <span class="user-profile__section-title">{{ $t('user.cp_stats') }}</span>
+                    </template>
+                    <div v-if="user.cpStats.accounts.length">
+                        <div
+                            v-for="account in user.cpStats.accounts"
+                            :key="account.resource"
+                            class="user-profile__cp-stat-item"
+                        >
+                            <span class="user-profile__cp-resource">
+                                <AppPlatformIcon :platform="account.resource" />
+                                {{ account.resource_name || account.resource }}
+                            </span>
+                            <span class="user-profile__cp-handle">{{ account.handle }}</span>
+                            <span v-if="account.rating != null" class="user-profile__cp-rating">
+                                {{ $t('user.rating') }}: <strong>{{ account.rating }}</strong>
+                            </span>
+                            <span
+                                v-else
+                                class="user-profile__cp-rating user-profile__cp-rating--unrated"
+                            >
+                                {{ $t('user.rating') }}: {{ $t('user.unrated') }}
+                            </span>
+                            <span v-if="account.n_contests" class="user-profile__cp-contests">
+                                {{ $t('user.contests') }}: {{ account.n_contests }}
+                            </span>
+                            <span
+                                v-if="account.resource_rank != null"
+                                class="user-profile__cp-rank"
+                            >
+                                {{ $t('user.rank') }}: #{{ account.resource_rank }}
+                            </span>
+                        </div>
+                    </div>
+                    <el-empty v-else :description="$t('user.no_cp_stats')" :image-size="48" />
+                </el-card>
+            </div>
+        </div>
     </div>
     <el-empty v-else-if="error" :description="$t('user.not_found')" />
     <div v-else v-loading="true" class="user-profile__loading" />
@@ -188,8 +205,6 @@ function getProfileUrl(account: {
     const fn = platformProfileUrls[account.platform];
     return fn ? fn(account.platformUid, account.platformUsername) : null;
 }
-
-useHead({ title: () => `@${username} - CP OAuth` });
 
 interface CpStatAccount {
     resource: string;
@@ -237,6 +252,10 @@ interface UserProfile {
 
 const { data: user, error } = await useFetch<UserProfile>(`/api/users/${username}`);
 
+useHead({
+    title: () => `${user.value?.displayName || user.value?.username || `@${username}`} - CP OAuth`
+});
+
 const renderedHtml = ref('');
 const cpPlatforms = new Set(['luogu', 'codeforces', 'atcoder']);
 const refreshablePlatforms = new Set(['luogu', 'codeforces', 'github', 'clist']);
@@ -279,6 +298,9 @@ const cpLinkedAccounts = computed(
 );
 const otherLinkedAccounts = computed(
     () => user.value?.linkedAccounts?.filter(account => !cpPlatforms.has(account.platform)) || []
+);
+const hasLeftColumn = computed(
+    () => Boolean(user.value?.homepage) || Boolean(user.value?.ratingHistory?.length)
 );
 
 const currentTheme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'));
@@ -503,7 +525,7 @@ await render();
 
 <style scoped lang="scss">
 .user-profile {
-    max-width: 720px;
+    max-width: none;
 
     &__header {
         display: flex;
@@ -563,6 +585,21 @@ await render();
 
     &__loading {
         min-height: 200px;
+    }
+
+    &__content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+    }
+
+    &__content--single {
+        grid-template-columns: minmax(0, 720px);
+    }
+
+    &__column {
+        min-width: 0;
     }
 
     &__linked-item {
@@ -660,7 +697,7 @@ await render();
     &__chart-container {
         position: relative;
         width: 100%;
-        height: 320px;
+        height: 360px;
 
         canvas {
             display: block;
@@ -771,6 +808,17 @@ await render();
                 background: var(--bg-tertiary);
                 font-weight: 600;
             }
+        }
+    }
+}
+
+@media (max-width: 1080px) {
+    .user-profile {
+        max-width: 720px;
+
+        &__content,
+        &__content--single {
+            grid-template-columns: 1fr;
         }
     }
 }
