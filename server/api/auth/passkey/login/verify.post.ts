@@ -110,7 +110,7 @@ export default defineEventHandler(async event => {
     }
 
     return {
-        token: signAuthToken(passkey.user.id),
+        token: await signAuthToken(passkey.user.id),
         user: {
             id: passkey.user.id,
             username: passkey.user.username,

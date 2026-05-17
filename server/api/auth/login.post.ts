@@ -90,7 +90,7 @@ export default defineEventHandler(async event => {
         };
     }
 
-    const token = signAuthToken(user.id);
+    const token = await signAuthToken(user.id);
 
     logger.success(`Login successful: ${user.username} (${user.id})`);
 

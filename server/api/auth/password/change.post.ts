@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
-import { getUserIdFromEvent } from '~/server/utils/auth';
+import { getUserIdFromEvent, revokeAllUserAuthSessions } from '~/server/utils/auth';
 
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
@@ -33,12 +33,23 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 401, message: 'Current password is incorrect' });
     }
 
-    await prisma.user.update({
-        where: { id: user.id },
-        data: {
-            passwordHash: await bcrypt.hash(newPassword, 10)
-        }
-    });
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.$transaction([
+        prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash: newPasswordHash
+            }
+        }),
+        prisma.oAuthAccessToken.deleteMany({
+            where: { userId: user.id }
+        }),
+        prisma.oAuthRefreshToken.updateMany({
+            where: { userId: user.id, revoked: false },
+            data: { revoked: true }
+        })
+    ]);
+    await revokeAllUserAuthSessions(user.id);
 
     return { success: true };
 });
