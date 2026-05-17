@@ -1,6 +1,6 @@
 import { consola } from 'consola';
 import type { PlatformVerifier, VerifyResult } from './types';
-import { fetchLuoguPaste } from '~/server/utils/luogu-paste';
+import { fetchLuoguPaste } from '~/server/utils/fetch-luogu';
 
 const logger = consola.withTag('platform:luogu');
 
