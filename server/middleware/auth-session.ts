@@ -7,6 +7,9 @@ export default defineEventHandler(async event => {
     if (!auth?.startsWith('Bearer ')) {
         return;
     }
+    if (event.path === '/api/oauth/userinfo') {
+        return;
+    }
 
     const token = auth.slice(7);
     const config = useRuntimeConfig();
@@ -19,7 +22,7 @@ export default defineEventHandler(async event => {
     }
 
     if (typeof payload.sid !== 'string' || typeof payload.userId !== 'string') {
-        return;
+        throw createError({ statusCode: 401, message: 'Invalid token' });
     }
 
     const sessionUserId = await getRedis().get(buildAuthSessionKey(payload.sid));
