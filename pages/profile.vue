@@ -1423,7 +1423,12 @@ async function handleVerify() {
             headers: { Authorization: `Bearer ${token.value}` },
             body: {
                 platform: bindPlatform.value,
-                credential: isUsernameBasedBinding.value ? '' : bindCredential.value.trim()
+                credential:
+                    bindPlatform.value === 'atcoder'
+                        ? ''
+                        : bindPlatform.value === 'leetcode'
+                          ? bindUid.value.trim()
+                          : bindCredential.value.trim()
             }
         });
         ElMessage.success(t('binding.verify_success'));
