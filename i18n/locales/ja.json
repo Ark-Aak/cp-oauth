@@ -238,6 +238,7 @@
         "step1_title": "{platform} の UID を入力",
         "step1_desc": "{platform} でのユーザー ID を入力してください。",
         "step1_desc_atcoder": "AtCoder のユーザー名を入力してください。",
+        "step1_desc_leetcode": "LeetCode のユーザー名を入力してください(プロフィール URL の /u/ の後の部分)。",
         "uid_placeholder": "例: 123456",
         "username_placeholder": "例: John",
         "get_code": "認証コードを取得",
@@ -245,6 +246,7 @@
         "step2_title": "所有権の確認",
         "step2_desc": "{platform} で以下のコードを含む公開クリップボードを作成し、クリップボード ID を入力してください。",
         "step2_desc_atcoder": "以下のコードを AtCoder プロフィールの Affiliation に設定して保存し、そのまま確認を押してください。",
+        "step2_desc_leetcode": "下記の認証コードを LeetCode プロフィールの自己紹介(About Me)に貼り付け、保存してから「検証」をクリックしてください。",
         "atcoder_settings_guide": "Affiliation は AtCoder 設定ページで編集できます：",
         "atcoder_cn_plugin_hint": "",
         "code_label": "認証コード",
@@ -290,6 +292,7 @@
         "platforms": {
             "luogu": "Luogu",
             "atcoder": "AtCoder",
+            "leetcode": "LeetCode",
             "codeforces": "Codeforces",
             "github": "GitHub",
             "google": "Google",

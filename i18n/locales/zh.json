@@ -239,6 +239,7 @@
         "step1_title": "输入你的 {platform} UID",
         "step1_desc": "输入你在 {platform} 上的用户 ID。",
         "step1_desc_atcoder": "输入你在 AtCoder 上的用户名。",
+        "step1_desc_leetcode": "请输入您的 LeetCode 用户名（个人主页 URL 中 /u/ 之后的部分）。",
         "uid_placeholder": "例如 123456",
         "username_placeholder": "例如 John",
         "get_code": "获取验证码",
@@ -246,6 +247,7 @@
         "step2_title": "验证所有权",
         "step2_desc": "在 {platform} 上创建一个包含以下验证码的公开剪贴板，然后输入剪贴板 ID。",
         "step2_desc_atcoder": "将以下验证码写入 AtCoder 个人主页的 Affiliation 字段并保存，然后直接点击确认即可。",
+        "step2_desc_leetcode": "将下方验证码粘贴到您 LeetCode 个人简介（About Me）中，保存后直接点击验证。",
         "atcoder_settings_guide": "请前往 AtCoder 设置页编辑 Affiliation：",
         "atcoder_cn_plugin_hint": "中文用户提示：如果安装了 AtCoder Better 插件，Affiliation 可能会被翻译成“机构”。",
         "code_label": "验证码",
@@ -291,6 +293,7 @@
         "platforms": {
             "luogu": "洛谷",
             "atcoder": "AtCoder",
+            "leetcode": "LeetCode",
             "codeforces": "Codeforces",
             "github": "GitHub",
             "google": "Google",

@@ -15,6 +15,7 @@ export default defineEventHandler(async event => {
     const allowedPublicPlatforms = new Set([
         'luogu',
         'atcoder',
+        'leetcode',
         'codeforces',
         'github',
         'google',
