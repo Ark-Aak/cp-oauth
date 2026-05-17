@@ -19,8 +19,9 @@ export default defineEventHandler(async event => {
     }
 
     const body = await readBody(event);
-    const { username, email, password, turnstileToken } = body;
+    const { username, email: rawEmail, password, turnstileToken } = body;
     const normalizedUsername = normalizeUsername(username);
+    const email = normalizeUsername(rawEmail);
 
     if (!normalizedUsername || !email || !password) {
         throw createError({ statusCode: 400, message: 'All fields are required' });

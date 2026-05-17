@@ -5,9 +5,7 @@ import { buildPasskeyLoginChallengeKey, setRedisJson } from '~/server/utils/secu
 
 export default defineEventHandler(async event => {
     const body = await readBody(event);
-    const email = String(body?.email || '')
-        .trim()
-        .toLowerCase();
+    const email = normalizeUsername(body.email);
 
     if (!email) {
         throw createError({ statusCode: 400, message: 'Email is required' });

@@ -52,7 +52,7 @@ async function findOrCreateLocalUser(identity: {
     if (linked) return linked.user;
 
     let user = null;
-    const normalizedEmail = identity.email?.toLowerCase().trim() || null;
+    const normalizedEmail = normalizeUsername(identity.email);
     if (normalizedEmail) {
         user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     }

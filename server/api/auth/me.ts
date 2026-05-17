@@ -78,7 +78,7 @@ export default defineEventHandler(async event => {
         if (homepage !== undefined) data.homepage = homepage;
         if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
         if (body.email !== undefined) {
-            const email = String(body.email).trim().toLowerCase();
+            const email = normalizeUsername(body.email);
             if (!isValidEmail(email)) {
                 throw createError({ statusCode: 400, message: 'Invalid email format' });
             }
