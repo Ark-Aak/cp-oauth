@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
-import { getUserIdFromEvent } from '~/server/utils/auth';
+import { getUserIdFromEvent, revokeAllUserAuthSessions } from '~/server/utils/auth';
 
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
@@ -49,6 +49,7 @@ export default defineEventHandler(async event => {
             data: { revoked: true }
         })
     ]);
+    await revokeAllUserAuthSessions(user.id);
 
     return { success: true };
 });

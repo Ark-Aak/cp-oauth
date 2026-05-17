@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
+import { revokeAllUserAuthSessions } from '~/server/utils/auth';
 import { hashToken } from '~/server/utils/token-hash';
 
 export default defineEventHandler(async event => {
@@ -46,6 +47,7 @@ export default defineEventHandler(async event => {
             data: { revoked: true }
         })
     ]);
+    await revokeAllUserAuthSessions(user.id);
 
     return { success: true };
 });

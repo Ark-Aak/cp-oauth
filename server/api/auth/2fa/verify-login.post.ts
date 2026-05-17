@@ -61,7 +61,7 @@ export default defineEventHandler(async event => {
     await delRedisKey(key);
 
     return {
-        token: signAuthToken(user.id),
+        token: await signAuthToken(user.id),
         user: { id: user.id, username: user.username, email: user.email }
     };
 });
