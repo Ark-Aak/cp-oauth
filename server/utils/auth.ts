@@ -18,13 +18,19 @@ export async function signAuthToken(userId: string): Promise<string> {
     const sessionId = crypto.randomUUID();
     const redis = getRedis();
     const userSessionsKey = buildUserSessionsKey(userId);
-    await redis
+    const execResults = await redis
         .multi()
         .set(buildAuthSessionKey(sessionId), userId, 'EX', AUTH_TOKEN_TTL_SECONDS)
         .sadd(userSessionsKey, sessionId)
         .expire(userSessionsKey, AUTH_TOKEN_TTL_SECONDS)
         .exec();
-
+    if (!execResults) {
+        throw new Error(`Failed to sign auth sessions for user ${userId}: Redis pipeline returned no results`);
+    }
+    const pipelineError = execResults.find(([error]) => error != null)?.[0];
+    if (pipelineError) {
+        throw new Error(`Failed to sign auth sessions for user ${userId}: ${pipelineError.message}`);
+    }
     const config = useRuntimeConfig();
     return jwt.sign({ userId, sid: sessionId }, config.jwtSecret, {
         expiresIn: AUTH_TOKEN_EXPIRES_IN
