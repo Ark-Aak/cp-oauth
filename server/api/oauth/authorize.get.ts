@@ -1,6 +1,7 @@
 import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
 import { isSafeOAuthRedirectUri, validateScopes } from '~/server/utils/oauth';
+import { incrementOAuthLoginRequestCount } from '~/server/utils/stats';
 
 const logger = consola.withTag('oauth:authorize');
 
@@ -17,6 +18,7 @@ export default defineEventHandler(async event => {
     logger.info(
         `Authorization request: client_id=${clientId}, scopes=${scope}, pkce=${!!codeChallenge}`
     );
+    await incrementOAuthLoginRequestCount();
 
     if (responseType !== 'code') {
         logger.warn(
