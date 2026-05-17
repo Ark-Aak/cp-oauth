@@ -18,7 +18,8 @@ const CODER_ME_CACHE_TTL = 24 * 60 * 60; // 1 day
 export const RESOURCE_TO_PLATFORM: Record<string, string> = {
     'codeforces.com': 'codeforces',
     'atcoder.jp': 'atcoder',
-    'luogu.com.cn': 'luogu'
+    'luogu.com.cn': 'luogu',
+    'leetcode.com': 'leetcode'
 };
 
 export const PLATFORM_TO_RESOURCE: Record<string, string> = Object.fromEntries(

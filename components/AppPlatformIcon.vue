@@ -18,6 +18,7 @@ const RESOURCE_TO_ICON: Record<string, string> = {
     'atcoder.jp': 'atcoder',
     'atcoder.jp/heuristic': 'atcoder',
     'luogu.com.cn': 'luogu',
+    'leetcode.com': 'leetcode',
     'github.com': 'github',
     'google.com': 'google',
     'clist.by': 'clist'
@@ -46,6 +47,9 @@ const iconSrc = computed(() => {
     }
     if (p === 'luogu') {
         return `${baseUrl.value}icons/luogu.svg`;
+    }
+    if (p === 'leetcode') {
+        return `${baseUrl.value}icons/leetcode.svg`;
     }
     // Fallback: try simpleicons by domain name (strip TLD)
     const name = props.platform.replace(/\..+$/, '');
