@@ -5,6 +5,16 @@ import { generateCode, isSafeOAuthRedirectUri, validateScopes } from '~/server/u
 
 const logger = consola.withTag('oauth:authorize');
 
+function buildCallbackUrl(redirectUri: string, params: Record<string, string | undefined>): string {
+    const url = new URL(redirectUri);
+    for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined) {
+            url.searchParams.set(key, value);
+        }
+    }
+    return url.toString();
+}
+
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
     const body = await readBody(event);
@@ -41,7 +51,7 @@ export default defineEventHandler(async event => {
 
     if (!approved) {
         logger.info(`User ${userId} denied authorization for client_id=${clientId}`);
-        return { redirect: `${redirectUri}?error=access_denied${state ? `&state=${state}` : ''}` };
+        return { redirect: buildCallbackUrl(redirectUri, { error: 'access_denied', state }) };
     }
 
     const code = generateCode();
@@ -60,12 +70,9 @@ export default defineEventHandler(async event => {
         }
     });
 
-    const params = new URLSearchParams({ code });
-    if (state) params.set('state', state);
-
     logger.success(
         `Authorization code issued for user ${userId} → client "${client.name}" (${clientId}), scopes=[${scopes.join(', ')}]`
     );
 
-    return { redirect: `${redirectUri}?${params.toString()}` };
+    return { redirect: buildCallbackUrl(redirectUri, { code, state }) };
 });
