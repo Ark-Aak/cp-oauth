@@ -3,8 +3,8 @@ import { getUserIdFromEvent } from '~/server/utils/auth';
 import { getPasskeyRpInfo, verifyRegistration } from '~/server/utils/passkey';
 import {
     buildPasskeyRegisterChallengeKey,
-    delRedisKey,
-    getRedisJson
+    deleteRedisKeyIfValue,
+    getRedisJsonWithRaw
 } from '~/server/utils/security';
 
 export default defineEventHandler(async event => {
@@ -19,7 +19,8 @@ export default defineEventHandler(async event => {
     }
 
     const key = buildPasskeyRegisterChallengeKey(userId);
-    const payload = await getRedisJson<{ challenge: string }>(key);
+    const payloadEntry = await getRedisJsonWithRaw<{ challenge: string }>(key);
+    const payload = payloadEntry?.value;
     if (!payload) {
         throw createError({
             statusCode: 400,
@@ -40,6 +41,15 @@ export default defineEventHandler(async event => {
     const credential = verification.registrationInfo.credential;
     const responseTransports =
         (response as { response?: { transports?: string[] } }).response?.transports || [];
+
+    const consumed = await deleteRedisKeyIfValue(key, payloadEntry.raw);
+    if (!consumed) {
+        throw createError({
+            statusCode: 400,
+            message: 'Passkey registration challenge is missing'
+        });
+    }
+
     await prisma.passkeyCredential.create({
         data: {
             userId,
@@ -50,8 +60,6 @@ export default defineEventHandler(async event => {
             transports: responseTransports
         }
     });
-
-    await delRedisKey(key);
 
     return { success: true };
 });

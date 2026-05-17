@@ -10,6 +10,7 @@ import {
     resolveCodeforcesIdentity
 } from '~/server/utils/codeforces-oauth';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { createUserWithInitialRole } from '~/server/utils/role';
 
 const logger = consola.withTag('auth:codeforces:callback');
 
@@ -115,19 +116,16 @@ async function findOrCreateLocalUser(identity: {
         const username = await getUniqueUsername(
             identity.platformUsername || `cf_${identity.platformUid}`
         );
-        const userCount = await prisma.user.count();
-        const role = userCount === 0 ? 'admin' : 'user';
         const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
 
-        user = await prisma.user.create({
+        user = await createUserWithInitialRole({
             data: {
                 email,
                 username,
                 passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
                 displayName: identity.displayName,
                 avatarUrl: identity.avatarUrl,
-                emailVerified: normalizedEmail ? identity.emailVerified : false,
-                role
+                emailVerified: normalizedEmail ? identity.emailVerified : false
             }
         });
 
@@ -209,23 +207,21 @@ async function registerLocalUserFromCodeforces(identity: {
     const username = await getUniqueUsername(
         identity.platformUsername || `cf_${identity.platformUid}`
     );
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? 'admin' : 'user';
     const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
 
-    const user = await prisma.user.create({
+    const user = await createUserWithInitialRole({
         data: {
             email,
             username,
             passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
             displayName: identity.displayName,
             avatarUrl: identity.avatarUrl,
-            emailVerified: normalizedEmail ? identity.emailVerified : false,
-            role
+            emailVerified: normalizedEmail ? identity.emailVerified : false
         },
         select: {
             id: true,
             username: true,
+            displayName: true,
             email: true
         }
     });
@@ -343,11 +339,10 @@ export default defineEventHandler(async event => {
     }
 
     const stateKey = `oauth:codeforces:state:${body.state}`;
-    const cachedState = await getRedis().get(stateKey);
+    const cachedState = (await getRedis().getdel(stateKey)) as string | null;
     if (!cachedState) {
         throw createError({ statusCode: 400, message: 'Invalid or expired OAuth state' });
     }
-    await getRedis().del(stateKey);
 
     const statePayload = JSON.parse(cachedState) as {
         mode?: CodeforcesOAuthMode;

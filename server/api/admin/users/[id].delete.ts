@@ -25,14 +25,16 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 404, message: 'User not found' });
     }
 
-    if (target.role === 'admin') {
-        const adminCount = await prisma.user.count({ where: { role: 'admin' } });
-        if (adminCount <= 1) {
-            throw createError({ statusCode: 400, message: 'Cannot delete the last admin' });
+    await prisma.$transaction(async tx => {
+        if (target.role === 'admin') {
+            const adminCount = await tx.user.count({ where: { role: 'admin' } });
+            if (adminCount <= 1) {
+                throw createError({ statusCode: 400, message: 'Cannot delete the last admin' });
+            }
         }
-    }
 
-    await prisma.user.delete({ where: { id } });
+        await tx.user.delete({ where: { id } });
+    });
 
     logger.info(`User deleted by admin ${adminId}: ${target.username} (${target.id})`);
 

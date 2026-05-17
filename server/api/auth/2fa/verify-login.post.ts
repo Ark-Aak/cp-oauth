@@ -3,7 +3,7 @@ import { signAuthToken } from '~/server/utils/auth';
 import { createAuthUserResponse } from '~/server/utils/user-response';
 import {
     build2faLoginChallengeKey,
-    delRedisKey,
+    consumeRedisJson,
     getRedisJson,
     verifyCodeHash,
     verifyTotp
@@ -60,7 +60,10 @@ export default defineEventHandler(async event => {
         }
     }
 
-    await delRedisKey(key);
+    const consumed = await consumeRedisJson(key);
+    if (!consumed) {
+        throw createError({ statusCode: 400, message: 'Challenge is invalid or expired' });
+    }
 
     return {
         token: await signAuthToken(user.id),

@@ -53,6 +53,36 @@ export async function getRedisJson<T>(key: string): Promise<T | null> {
     return JSON.parse(raw) as T;
 }
 
+export async function getRedisJsonWithRaw<T>(
+    key: string
+): Promise<{ raw: string; value: T } | null> {
+    const raw = await getRedis().get(key);
+    if (!raw) return null;
+    return { raw, value: JSON.parse(raw) as T };
+}
+
+export async function consumeRedisJson<T>(key: string): Promise<T | null> {
+    const raw = await getRedis().eval(
+        // language=Lua
+        "local value = redis.call('GET', KEYS[1]); if value then redis.call('DEL', KEYS[1]); end; return value",
+        1,
+        key
+    );
+    if (typeof raw !== 'string') return null;
+    return JSON.parse(raw) as T;
+}
+
+export async function deleteRedisKeyIfValue(key: string, expectedValue: string): Promise<boolean> {
+    const result = await getRedis().eval(
+        // language=Lua
+        "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end",
+        1,
+        key,
+        expectedValue
+    );
+    return Number(result) === 1;
+}
+
 export async function delRedisKey(key: string): Promise<void> {
     await getRedis().del(key);
 }

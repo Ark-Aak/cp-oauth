@@ -26,6 +26,21 @@ function getActiveCredentialKeyByUser(userId: string): string {
     return `auth:luogu:credential:active:${userId}`;
 }
 
+async function consumeCredentialIfActive(
+    token: string,
+    payload: LuoguLoginCredentialPayload
+): Promise<boolean> {
+    const result = await getRedis().eval(
+        // language=Lua
+        "if redis.call('GET', KEYS[1]) == ARGV[1] then redis.call('DEL', KEYS[1]); redis.call('DEL', KEYS[2]); return 1 else return 0 end",
+        2,
+        getActiveCredentialKeyByUser(payload.userId),
+        getCredentialKey(token),
+        token
+    );
+    return Number(result) === 1;
+}
+
 export function isValidLuoguLoginDuration(value: string): value is LuoguLoginDuration {
     return isValidLuoguLoginDurationOption(value);
 }
@@ -90,6 +105,10 @@ export async function findFirstValidLuoguCredential(params: {
 
         const activeToken = await redis.get(getActiveCredentialKeyByUser(payload.userId));
         if (activeToken !== token) {
+            continue;
+        }
+
+        if (!(await consumeCredentialIfActive(token, payload))) {
             continue;
         }
 

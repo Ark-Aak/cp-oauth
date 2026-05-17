@@ -5,6 +5,8 @@ import prisma from '~/server/utils/prisma';
 import { getRedis } from '~/server/utils/redis';
 import { getUniqueUsername } from '~/server/utils/codeforces-oauth';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { deleteRedisKeyIfValue } from '~/server/utils/security';
+import { createUserWithInitialRole } from '~/server/utils/role';
 
 async function allocateSyntheticLuoguEmail(platformUid: string): Promise<string> {
     const base = `luogu_${platformUid.replace(/[^A-Za-z0-9_]/g, '_')}`.slice(0, 40);
@@ -57,6 +59,14 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: result.error || 'Verification failed' });
     }
 
+    const consumed = await deleteRedisKeyIfValue(key, raw);
+    if (!consumed) {
+        throw createError({
+            statusCode: 400,
+            message: 'Registration request expired or not found'
+        });
+    }
+
     const taken = await prisma.linkedAccount.findUnique({
         where: {
             platform_platformUid: {
@@ -77,18 +87,14 @@ export default defineEventHandler(async event => {
         result.platformUsername || `luogu_${result.platformUid}`
     );
     const email = await allocateSyntheticLuoguEmail(result.platformUid);
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? 'admin' : 'user';
-
-    const user = await prisma.user.create({
+    const user = await createUserWithInitialRole({
         data: {
             email,
             username,
             passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
             displayName: result.platformUsername || null,
             avatarUrl: getDefaultLuoguAvatarUrl(result.platformUid),
-            emailVerified: false,
-            role
+            emailVerified: false
         },
         select: { id: true, username: true, displayName: true, email: true }
     });
@@ -101,8 +107,6 @@ export default defineEventHandler(async event => {
             platformUsername: result.platformUsername || null
         }
     });
-
-    await redis.del(key);
 
     const token = await signAuthToken(user.id);
 

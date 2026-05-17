@@ -10,6 +10,7 @@ import {
     resolveClistIdentity
 } from '~/server/utils/clist-oauth';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { createUserWithInitialRole } from '~/server/utils/role';
 
 const logger = consola.withTag('auth:clist:callback');
 
@@ -111,19 +112,16 @@ async function findOrCreateLocalUser(identity: {
         const username = await getClistUniqueUsername(
             identity.platformUsername || `clist_${identity.platformUid}`
         );
-        const userCount = await prisma.user.count();
-        const role = userCount === 0 ? 'admin' : 'user';
         const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
 
-        user = await prisma.user.create({
+        user = await createUserWithInitialRole({
             data: {
                 email,
                 username,
                 passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
                 displayName: identity.displayName,
                 avatarUrl: identity.avatarUrl,
-                emailVerified: normalizedEmail ? identity.emailVerified : false,
-                role
+                emailVerified: normalizedEmail ? identity.emailVerified : false
             }
         });
 
@@ -201,23 +199,21 @@ async function registerLocalUserFromClist(identity: {
     const username = await getClistUniqueUsername(
         identity.platformUsername || `clist_${identity.platformUid}`
     );
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? 'admin' : 'user';
     const email = normalizedEmail || (await allocateSyntheticEmail(identity.platformUid));
 
-    const user = await prisma.user.create({
+    const user = await createUserWithInitialRole({
         data: {
             email,
             username,
             passwordHash: await bcrypt.hash(crypto.randomUUID(), 10),
             displayName: identity.displayName,
             avatarUrl: identity.avatarUrl,
-            emailVerified: normalizedEmail ? identity.emailVerified : false,
-            role
+            emailVerified: normalizedEmail ? identity.emailVerified : false
         },
         select: {
             id: true,
             username: true,
+            displayName: true,
             email: true
         }
     });
@@ -332,11 +328,10 @@ export default defineEventHandler(async event => {
     }
 
     const stateKey = `oauth:clist:state:${body.state}`;
-    const cachedState = await getRedis().get(stateKey);
+    const cachedState = (await getRedis().getdel(stateKey)) as string | null;
     if (!cachedState) {
         throw createError({ statusCode: 400, message: 'Invalid or expired OAuth state' });
     }
-    await getRedis().del(stateKey);
 
     const statePayload = JSON.parse(cachedState) as {
         mode?: ClistOAuthMode;

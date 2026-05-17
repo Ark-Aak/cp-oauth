@@ -6,9 +6,9 @@ import { getPasskeyRpInfo, verifyAuthentication } from '~/server/utils/passkey';
 import {
     build2faLoginChallengeKey,
     buildPasskeyLoginChallengeKey,
-    delRedisKey,
+    deleteRedisKeyIfValue,
     generateSixDigitCode,
-    getRedisJson,
+    getRedisJsonWithRaw,
     hashCode,
     setRedisJson
 } from '~/server/utils/security';
@@ -25,10 +25,11 @@ export default defineEventHandler(async event => {
     }
 
     const key = buildPasskeyLoginChallengeKey(challengeId);
-    const challenge = await getRedisJson<{
+    const challengeEntry = await getRedisJsonWithRaw<{
         challenge: string;
         userId: string;
     }>(key);
+    const challenge = challengeEntry?.value;
     if (!challenge) {
         throw createError({ statusCode: 400, message: 'Passkey challenge is invalid or expired' });
     }
@@ -68,12 +69,15 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 401, message: 'Passkey verification failed' });
     }
 
+    const consumed = await deleteRedisKeyIfValue(key, challengeEntry.raw);
+    if (!consumed) {
+        throw createError({ statusCode: 400, message: 'Passkey challenge is invalid or expired' });
+    }
+
     await prisma.passkeyCredential.update({
         where: { id: passkey.id },
         data: { counter: verified.authenticationInfo.newCounter }
     });
-
-    await delRedisKey(key);
 
     if (passkey.user.twoFactorEnabled && passkey.user.twoFactorMethod) {
         const loginChallengeId = crypto.randomUUID();

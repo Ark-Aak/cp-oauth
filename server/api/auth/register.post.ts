@@ -7,6 +7,7 @@ import { sendVerificationEmail } from '~/server/utils/mailer';
 import { hashToken } from '~/server/utils/token-hash';
 import { getPublicBaseUrl } from '~/server/utils/base-url';
 import { createAuthUserResponse } from '~/server/utils/user-response';
+import { createUserWithInitialRole } from '~/server/utils/role';
 import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
 
 const logger = consola.withTag('auth:register');
@@ -66,20 +67,16 @@ export default defineEventHandler(async event => {
     const emailVerifyToken = crypto.randomBytes(32).toString('hex');
 
     // First registered user becomes admin
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? 'admin' : 'user';
-
-    const user = await prisma.user.create({
+    const user = await createUserWithInitialRole({
         data: {
             username: normalizedUsername,
             email,
             passwordHash,
-            emailVerifyToken: hashToken(emailVerifyToken),
-            role
+            emailVerifyToken: hashToken(emailVerifyToken)
         }
     });
 
-    logger.success(`User registered: ${normalizedUsername} (${user.id}), role=${role}`);
+    logger.success(`User registered: ${normalizedUsername} (${user.id}), role=${user.role}`);
 
     // Attempt to send verification email
     await sendVerificationEmail(email, emailVerifyToken, getPublicBaseUrl());

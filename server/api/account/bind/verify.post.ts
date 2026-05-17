@@ -3,6 +3,7 @@ import { getUserIdFromEvent } from '~/server/utils/auth';
 import { getPlatformVerifier } from '~/server/utils/platforms';
 import { getRedis } from '~/server/utils/redis';
 import prisma from '~/server/utils/prisma';
+import { deleteRedisKeyIfValue } from '~/server/utils/security';
 
 const logger = consola.withTag('account:bind');
 
@@ -58,6 +59,14 @@ export default defineEventHandler(async event => {
         });
     }
 
+    const consumed = await deleteRedisKeyIfValue(key, raw);
+    if (!consumed) {
+        throw createError({
+            statusCode: 400,
+            message: 'No pending bind request found or it has expired'
+        });
+    }
+
     // Save to database
     const linked = await prisma.linkedAccount.create({
         data: {
@@ -67,9 +76,6 @@ export default defineEventHandler(async event => {
             platformUsername: result.platformUsername || null
         }
     });
-
-    // Clean up Redis
-    await redis.del(key);
 
     logger.success(
         `Account linked: user=${userId}, platform=${platform}, uid=${result.platformUid}, username=${result.platformUsername}`

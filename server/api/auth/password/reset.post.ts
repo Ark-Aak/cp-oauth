@@ -30,23 +30,34 @@ export default defineEventHandler(async event => {
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
-    await prisma.$transaction([
-        prisma.user.update({
-            where: { id: user.id },
+    await prisma.$transaction(async tx => {
+        const consumeResult = await tx.user.updateMany({
+            where: {
+                id: user.id,
+                passwordResetToken: hashToken(token),
+                passwordResetExpiresAt: {
+                    gt: new Date()
+                }
+            },
             data: {
                 passwordHash: newPasswordHash,
                 passwordResetToken: null,
                 passwordResetExpiresAt: null
             }
-        }),
-        prisma.oAuthAccessToken.deleteMany({
+        });
+
+        if (consumeResult.count !== 1) {
+            throw createError({ statusCode: 400, message: 'Reset token is invalid or expired' });
+        }
+
+        await tx.oAuthAccessToken.deleteMany({
             where: { userId: user.id }
-        }),
-        prisma.oAuthRefreshToken.updateMany({
+        });
+        await tx.oAuthRefreshToken.updateMany({
             where: { userId: user.id, revoked: false },
             data: { revoked: true }
-        })
-    ]);
+        });
+    });
     await revokeAllUserAuthSessions(user.id);
 
     return { success: true };
