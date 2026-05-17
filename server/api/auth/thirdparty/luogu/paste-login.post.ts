@@ -72,7 +72,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 404, message: 'User not found' });
     }
 
-    const token = signAuthToken(user.id);
+    const token = await signAuthToken(user.id);
 
     return {
         token,

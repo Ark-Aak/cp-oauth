@@ -370,7 +370,7 @@ export default defineEventHandler(async event => {
                 }
             });
         }
-        const authToken = signAuthToken(user.id);
+        const authToken = await signAuthToken(user.id);
 
         return {
             mode: 'register',
@@ -403,7 +403,7 @@ export default defineEventHandler(async event => {
             }
         });
     }
-    const authToken = signAuthToken(user.id);
+    const authToken = await signAuthToken(user.id);
 
     return {
         mode: 'login',

@@ -409,7 +409,7 @@ export default defineEventHandler(async event => {
             ...identity,
             oauthCredentials
         });
-        const authToken = signAuthToken(user.id);
+        const authToken = await signAuthToken(user.id);
 
         logger.success(`Codeforces register success: cf=${identity.platformUid}, user=${user.id}`);
 
@@ -427,7 +427,7 @@ export default defineEventHandler(async event => {
 
     const user = await findOrCreateLocalUser({ ...identity, oauthCredentials });
 
-    const authToken = signAuthToken(user.id);
+    const authToken = await signAuthToken(user.id);
 
     logger.success(`Codeforces login success: cf=${identity.platformUid}, user=${user.id}`);
 

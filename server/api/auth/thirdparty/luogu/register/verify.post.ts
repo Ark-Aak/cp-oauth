@@ -103,7 +103,7 @@ export default defineEventHandler(async event => {
 
     await redis.del(key);
 
-    const token = signAuthToken(user.id);
+    const token = await signAuthToken(user.id);
 
     return {
         token,

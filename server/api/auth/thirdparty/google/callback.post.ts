@@ -297,7 +297,7 @@ export default defineEventHandler(async event => {
 
     if (mode === 'register') {
         const user = await registerLocalUserFromGoogle(identity);
-        const authToken = signAuthToken(user.id);
+        const authToken = await signAuthToken(user.id);
 
         return {
             mode: 'register',
@@ -312,7 +312,7 @@ export default defineEventHandler(async event => {
     }
 
     const user = await findOrCreateLocalUser(identity);
-    const authToken = signAuthToken(user.id);
+    const authToken = await signAuthToken(user.id);
 
     return {
         mode: 'login',

@@ -404,7 +404,7 @@ export default defineEventHandler(async event => {
             ...identity,
             oauthCredentials
         });
-        const authToken = signAuthToken(user.id);
+        const authToken = await signAuthToken(user.id);
 
         logger.success(`Clist register success: clist=${identity.platformUid}, user=${user.id}`);
 
@@ -422,7 +422,7 @@ export default defineEventHandler(async event => {
 
     const user = await findOrCreateLocalUser({ ...identity, oauthCredentials });
 
-    const authToken = signAuthToken(user.id);
+    const authToken = await signAuthToken(user.id);
 
     logger.success(`Clist login success: clist=${identity.platformUid}, user=${user.id}`);
 
