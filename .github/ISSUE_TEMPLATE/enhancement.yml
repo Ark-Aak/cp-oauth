@@ -1,0 +1,50 @@
+name: Enhancement
+description: Suggest a new feature or improvement.
+title: '[Enhancement]: '
+labels:
+    - 'status: triage'
+    - 'type: enhancement'
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Use this template for feature requests, improvements, and behavior changes.
+    - type: textarea
+      id: problem
+      attributes:
+          label: Problem or use case
+          description: What problem does this solve, and who needs it?
+          placeholder: Describe the user need or workflow gap.
+      validations:
+          required: true
+    - type: textarea
+      id: proposal
+      attributes:
+          label: Proposed solution
+          description: What should change? Include command names, config shape, or UX details if relevant.
+      validations:
+          required: true
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: Alternatives considered
+          description: What alternatives or workarounds did you consider?
+    - type: textarea
+      id: scope
+      attributes:
+          label: Scope and compatibility
+          description: Note expected side effects, migration needs, permission changes, or compatibility concerns.
+    - type: checkboxes
+      id: self-check
+      attributes:
+          label: Self-check
+          description: Please confirm you completed these checks.
+          options:
+              - label: I searched existing issues and did not find a duplicate.
+                required: true
+              - label: I confirmed this is not already supported by existing commands or configuration.
+                required: true
+              - label: I described the use case and proposed behavior clearly.
+                required: true
+              - label: I considered compatibility, permissions, and possible side effects.
+                required: true

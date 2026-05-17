@@ -1,0 +1,51 @@
+name: Documentation
+description: Request a documentation fix or improvement.
+title: '[Docs]: '
+labels:
+    - 'status: triage'
+    - 'type: documentation'
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Use this template for incorrect, missing, unclear, or outdated documentation.
+    - type: textarea
+      id: summary
+      attributes:
+          label: Summary
+          description: What documentation should be changed?
+          placeholder: Describe the documentation problem or improvement.
+      validations:
+          required: true
+    - type: input
+      id: location
+      attributes:
+          label: Location
+          description: Link or path to the relevant documentation, if known.
+          placeholder: README.md, docs/..., wiki URL, command usage, etc.
+    - type: textarea
+      id: current
+      attributes:
+          label: Current wording or behavior
+          description: What is currently written, missing, or confusing?
+    - type: textarea
+      id: proposed
+      attributes:
+          label: Proposed change
+          description: What should the documentation say instead?
+      validations:
+          required: true
+    - type: checkboxes
+      id: self-check
+      attributes:
+          label: Self-check
+          description: Please confirm you completed these checks.
+          options:
+              - label: I searched existing issues and did not find a duplicate.
+                required: true
+              - label: I checked the current documentation or command output before filing this.
+                required: true
+              - label: I explained what is missing, incorrect, outdated, or unclear.
+                required: true
+              - label: I included a proposed wording or clear expected documentation outcome.
+                required: true
