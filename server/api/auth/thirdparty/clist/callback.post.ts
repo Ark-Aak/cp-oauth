@@ -327,7 +327,7 @@ export default defineEventHandler(async event => {
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
         usernamePrefix: 'clist_',
-        getUniqueUsername: async (base) => getClistUniqueUsername(base),
+        getUniqueUsername: getClistUniqueUsername,
         allocateSyntheticEmail,
         logger,
         refreshOnFound: true,

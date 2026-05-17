@@ -245,7 +245,7 @@ export default defineEventHandler(async event => {
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
         usernamePrefix: 'go_',
-        getUniqueUsername: async (base) => getUniqueUsername(base),
+        getUniqueUsername,
         allocateSyntheticEmail
     });
     const authToken = await signAuthToken(user.id);

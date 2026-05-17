@@ -2,16 +2,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
 import { normalizeUsername } from '~/utils/username';
 
-export interface LinkedAccountOAuthFields {
-    oauthAccessToken?: string | null;
-    oauthRefreshToken?: string | null;
-    oauthIdToken?: string | null;
-    oauthTokenType?: string | null;
-    oauthExpiresAt?: Date | null;
-    oauthScope?: string | null;
-}
-
-export interface FindOrCreateLocalUserOptions {
+interface FindOrCreateLocalUserOptions {
     platform: string;
     platformUid: string;
     platformUsername: string;
@@ -20,15 +11,13 @@ export interface FindOrCreateLocalUserOptions {
     displayName: string | null;
     avatarUrl: string | null;
     usernamePrefix: string;
-    oauthFields?: LinkedAccountOAuthFields;
-    /** If true, update OAuth fields on linkedAccount even when user already linked */
-    refreshOnFound?: boolean;
-    /** Custom username generator (overrides default getUniqueUsername with prefix) */
-    getUniqueUsername?: (base: string) => Promise<string>;
-    /** Synthetic email allocator for users without email */
-    allocateSyntheticEmail?: (platformUid: string) => Promise<string>;
-    /** Logger for created user event */
+    getUniqueUsername: (base: string) => Promise<string>;
+    allocateSyntheticEmail: (platformUid: string) => Promise<string>;
     logger?: { info: (msg: string) => void };
+    /** OAuth fields to store in linkedAccount. If already linked and refreshOnFound is true, these fields are updated. */
+    oauthFields?: Record<string, unknown>;
+    /** Update linkedAccount OAuth fields when the user is already linked (Codeforces/Clist do this) */
+    refreshOnFound?: boolean;
 }
 
 export async function findOrCreateLocalUser(opts: FindOrCreateLocalUserOptions) {
@@ -41,61 +30,38 @@ export async function findOrCreateLocalUser(opts: FindOrCreateLocalUserOptions) 
         displayName,
         avatarUrl,
         usernamePrefix,
-        oauthFields,
-        refreshOnFound = false,
-        getUniqueUsername: customGetUsername,
-        allocateSyntheticEmail: customAllocEmail,
-        logger
+        getUniqueUsername,
+        allocateSyntheticEmail,
+        logger,
+        oauthFields = {},
+        refreshOnFound = false
     } = opts;
 
     const linked = await prisma.linkedAccount.findUnique({
-        where: {
-            platform_platformUid: {
-                platform,
-                platformUid
-            }
-        },
+        where: { platform_platformUid: { platform, platformUid } },
         include: { user: true }
     });
 
     if (linked) {
-        if (refreshOnFound && oauthFields) {
-            const updateData: Record<string, unknown> = {
-                platformUsername
-            };
-            if (oauthFields.oauthAccessToken !== undefined) updateData.oauthAccessToken = oauthFields.oauthAccessToken;
-            if (oauthFields.oauthRefreshToken !== undefined) updateData.oauthRefreshToken = oauthFields.oauthRefreshToken;
-            if (oauthFields.oauthIdToken !== undefined) updateData.oauthIdToken = oauthFields.oauthIdToken;
-            if (oauthFields.oauthTokenType !== undefined) updateData.oauthTokenType = oauthFields.oauthTokenType;
-            if (oauthFields.oauthExpiresAt !== undefined) updateData.oauthExpiresAt = oauthFields.oauthExpiresAt;
-            if (oauthFields.oauthScope !== undefined) updateData.oauthScope = oauthFields.oauthScope;
-
+        if (refreshOnFound) {
             await prisma.linkedAccount.update({
                 where: { id: linked.id },
-                data: updateData
+                data: { platformUsername, ...oauthFields }
             });
         }
-
         return linked.user;
     }
 
-    let user = null;
     const normalizedEmail = normalizeUsername(rawEmail);
-    if (normalizedEmail) {
-        user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    }
+    let user = normalizedEmail
+        ? await prisma.user.findUnique({ where: { email: normalizedEmail } })
+        : null;
 
     if (!user) {
         const baseUsername = platformUsername || `${usernamePrefix}${platformUid}`;
-        const username = customGetUsername
-            ? await customGetUsername(baseUsername)
-            : baseUsername;
-
+        const username = await getUniqueUsername(baseUsername);
         const userCount = await prisma.user.count();
-        const role = userCount === 0 ? 'admin' : 'user';
-        const email = normalizedEmail || (customAllocEmail
-            ? await customAllocEmail(platformUid)
-            : `${usernamePrefix}${platformUid}@synthetic.local`);
+        const email = normalizedEmail || (await allocateSyntheticEmail(platformUid));
 
         user = await prisma.user.create({
             data: {
@@ -105,39 +71,17 @@ export async function findOrCreateLocalUser(opts: FindOrCreateLocalUserOptions) 
                 displayName,
                 avatarUrl,
                 emailVerified: normalizedEmail ? emailVerified : false,
-                role
+                role: userCount === 0 ? 'admin' : 'user'
             }
         });
 
         logger?.info(`Created local user from ${platform}: user=${user.id}, username=${user.username}`);
     }
 
-    const linkedAccountData: Record<string, unknown> = {
-        platformUid,
-        platformUsername
-    };
-    if (oauthFields) {
-        if (oauthFields.oauthAccessToken !== undefined) linkedAccountData.oauthAccessToken = oauthFields.oauthAccessToken;
-        if (oauthFields.oauthRefreshToken !== undefined) linkedAccountData.oauthRefreshToken = oauthFields.oauthRefreshToken;
-        if (oauthFields.oauthIdToken !== undefined) linkedAccountData.oauthIdToken = oauthFields.oauthIdToken;
-        if (oauthFields.oauthTokenType !== undefined) linkedAccountData.oauthTokenType = oauthFields.oauthTokenType;
-        if (oauthFields.oauthExpiresAt !== undefined) linkedAccountData.oauthExpiresAt = oauthFields.oauthExpiresAt;
-        if (oauthFields.oauthScope !== undefined) linkedAccountData.oauthScope = oauthFields.oauthScope;
-    }
-
     await prisma.linkedAccount.upsert({
-        where: {
-            userId_platform: {
-                userId: user.id,
-                platform
-            }
-        },
-        update: linkedAccountData,
-        create: {
-            userId: user.id,
-            platform,
-            ...linkedAccountData
-        }
+        where: { userId_platform: { userId: user.id, platform } },
+        update: { platformUid, platformUsername, ...oauthFields },
+        create: { userId: user.id, platform, platformUid, platformUsername, ...oauthFields }
     });
 
     return user;
