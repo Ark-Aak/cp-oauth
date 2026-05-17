@@ -1,7 +1,6 @@
 import { consola } from 'consola';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
 import { getConfig } from '~/server/utils/config';
 import { sendVerificationEmail } from '~/server/utils/mailer';
@@ -84,8 +83,7 @@ export default defineEventHandler(async event => {
     // Attempt to send verification email
     await sendVerificationEmail(email, emailVerifyToken, getPublicBaseUrl());
 
-    const config = useRuntimeConfig();
-    const token = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+    const token = await signAuthToken(user.id);
 
     return { token, user: { id: user.id, username: user.username, email: user.email } };
 });
