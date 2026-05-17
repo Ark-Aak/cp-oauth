@@ -2,9 +2,12 @@
     <div v-if="user" class="user-profile">
         <!-- Header -->
         <div class="user-profile__header">
-            <el-avatar :size="72" :src="user.avatarUrl || undefined" class="user-profile__avatar">
-                {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
-            </el-avatar>
+            <AppUserAvatar
+                :size="72"
+                :src="user.avatarUrl || undefined"
+                :name="user.displayName || user.username"
+                class="user-profile__avatar"
+            />
             <div class="user-profile__meta">
                 <h1 class="user-profile__name">{{ user.displayName || user.username }}</h1>
                 <p class="user-profile__handle">@{{ user.username }}</p>
@@ -509,10 +512,6 @@ await render();
     }
 
     &__avatar {
-        flex-shrink: 0;
-        background: var(--bg-tertiary);
-        color: var(--text-secondary);
-        font-weight: 600;
         font-size: 22px;
     }
 

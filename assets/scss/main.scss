@@ -8,6 +8,36 @@
     --text-secondary: var(--el-text-color-regular);
     --text-muted: var(--el-text-color-secondary);
     --accent: var(--el-color-primary);
+    --card-bg: #ffffff;
+    --card-border: #e4e4e7;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.025);
+    --divider-subtle: #eeeeef;
+    --accent-subtle: #e6f0f2;
+}
+
+.dark {
+    --card-bg: #1e1e1e;
+    --card-border: #2a2a2a;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
+    --divider-subtle: #2a2a2a;
+    --accent-subtle: #16292e;
+}
+
+.ui-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+}
+
+.ui-quote-block {
+    padding-left: 18px;
+    border-left: 3px solid var(--accent);
+}
+
+.ui-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 $sidebar-width: 240px;

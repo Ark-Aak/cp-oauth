@@ -28,9 +28,12 @@
         </el-menu>
         <div class="app-sidebar__footer">
             <div v-if="isLoggedIn" class="app-sidebar__user">
-                <el-avatar :size="34" :src="avatarUrl || undefined" class="app-sidebar__avatar">
-                    {{ (username || 'U').charAt(0).toUpperCase() }}
-                </el-avatar>
+                <AppUserAvatar
+                    :size="34"
+                    :src="avatarUrl || undefined"
+                    :name="username || 'U'"
+                    class="app-sidebar__avatar"
+                />
                 <div class="app-sidebar__user-text">
                     <p class="app-sidebar__user-label">{{ $t('nav.signed_in_as') }}</p>
                     <p class="app-sidebar__user-name">{{ username }}</p>
@@ -87,7 +90,7 @@ function handleNav() {
     top: 0;
     left: 0;
     height: 100vh;
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -129,13 +132,13 @@ function handleNav() {
                 color 0.15s ease;
 
             &:hover {
-                background: var(--bg-tertiary);
+                background: var(--bg-secondary);
                 color: var(--text-primary);
             }
 
             &.is-active {
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
+                background: var(--bg-primary);
+                color: var(--accent);
                 font-weight: 500;
                 position: relative;
 
@@ -143,10 +146,10 @@ function handleNav() {
                     content: '';
                     position: absolute;
                     left: 0;
-                    top: 8px;
-                    bottom: 8px;
-                    width: 2px;
-                    border-radius: 1px;
+                    top: 7px;
+                    bottom: 7px;
+                    width: 3px;
+                    border-radius: 2px;
                     background: var(--accent);
                 }
             }
@@ -171,15 +174,13 @@ function handleNav() {
         margin: 8px 12px 10px;
         padding: 8px;
         border-radius: 8px;
-        background: var(--bg-tertiary);
+        background: var(--card-bg);
         border: 1px solid var(--border-color);
+        box-shadow: var(--card-shadow);
     }
 
     &__avatar {
-        flex-shrink: 0;
-        background: var(--bg-primary);
-        color: var(--text-secondary);
-        font-weight: 600;
+        font-size: 13px;
     }
 
     &__user-text {
@@ -220,7 +221,7 @@ function handleNav() {
             color 0.15s ease;
 
         &:hover {
-            background: var(--bg-tertiary);
+            background: var(--bg-secondary);
             color: var(--text-primary);
         }
     }

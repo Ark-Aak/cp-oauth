@@ -5,9 +5,12 @@
             <!-- Avatar preview -->
             <div class="profile__avatar-section">
                 <div class="profile__avatar-wrapper">
-                    <el-avatar :size="72" :src="form.avatarUrl || undefined">
-                        {{ (form.displayName || form.username || '?').charAt(0).toUpperCase() }}
-                    </el-avatar>
+                    <AppUserAvatar
+                        :size="72"
+                        :src="form.avatarUrl || undefined"
+                        :name="form.displayName || form.username || '?'"
+                        class="profile__avatar"
+                    />
                 </div>
                 <div class="profile__avatar-info">
                     <span v-if="form.displayName" class="profile__avatar-name">{{
@@ -1605,11 +1608,10 @@ function copyLuoguCredential() {
 
     &__avatar-wrapper {
         flex-shrink: 0;
+    }
 
-        :deep(.el-avatar) {
-            border: 2px solid var(--border-color);
-            font-size: 28px;
-        }
+    &__avatar {
+        font-size: 28px;
     }
 
     &__avatar-info {

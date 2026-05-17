@@ -94,7 +94,7 @@ function handleLogout() {
     &__main {
         margin-left: 240px;
         padding: 28px 36px;
-        background: var(--bg-primary);
+        background: var(--bg-secondary);
         min-height: 100vh;
     }
 
