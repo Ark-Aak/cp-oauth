@@ -33,12 +33,22 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 401, message: 'Current password is incorrect' });
     }
 
-    await prisma.user.update({
-        where: { id: user.id },
-        data: {
-            passwordHash: await bcrypt.hash(newPassword, 10)
-        }
-    });
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.$transaction([
+        prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash: newPasswordHash
+            }
+        }),
+        prisma.oAuthAccessToken.deleteMany({
+            where: { userId: user.id }
+        }),
+        prisma.oAuthRefreshToken.updateMany({
+            where: { userId: user.id, revoked: false },
+            data: { revoked: true }
+        })
+    ]);
 
     return { success: true };
 });
