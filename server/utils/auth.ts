@@ -41,7 +41,16 @@ export async function revokeAllUserAuthSessions(userId: string): Promise<void> {
         pipeline.del(...sessionIds.map(buildAuthSessionKey));
     }
     pipeline.del(userSessionsKey);
-    await pipeline.exec();
+
+    const execResults = await pipeline.exec();
+    if (!execResults) {
+        throw new Error(`Failed to revoke auth sessions for user ${userId}: Redis pipeline returned no results`);
+    }
+
+    const pipelineError = execResults.find(([error]) => error != null)?.[0];
+    if (pipelineError) {
+        throw new Error(`Failed to revoke auth sessions for user ${userId}: ${pipelineError.message}`);
+    }
 }
 
 export function getUserIdFromEvent(event: H3Event): string {
