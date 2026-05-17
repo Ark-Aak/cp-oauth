@@ -9,6 +9,7 @@ export const SCOPES = {
     'cp:linked': 'Linked competitive programming accounts',
     'link:luogu': 'Read linked Luogu account info',
     'link:atcoder': 'Read linked AtCoder account info',
+    'link:leetcode': 'Read linked LeetCode account info',
     'link:codeforces': 'Read linked Codeforces account info',
     'link:github': 'Read linked GitHub account info',
     'link:google': 'Read linked Google account info',

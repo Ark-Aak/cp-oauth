@@ -2,10 +2,12 @@ import type { PlatformVerifier } from './types';
 
 import { atcoderVerifier } from './atcoder';
 import { luoguVerifier } from './luogu';
+import { leetcodeVerifier } from './leetcode';
 
 const verifiers = new Map<string, PlatformVerifier>([
     ['luogu', luoguVerifier],
-    ['atcoder', atcoderVerifier]
+    ['atcoder', atcoderVerifier],
+    ['leetcode', leetcodeVerifier]
 ]);
 
 export function getPlatformVerifier(platform: string): PlatformVerifier | undefined {

@@ -9,6 +9,7 @@ const PLATFORM_NAMES: Record<string, string> = {
     luogu: 'Luogu',
     codeforces: 'Codeforces',
     atcoder: 'AtCoder',
+    leetcode: 'LeetCode',
     github: 'GitHub',
     google: 'Google',
     clist: 'Clist.by'
@@ -20,6 +21,7 @@ const ICON_FILES: Record<string, string> = {
     luogu: 'luogu.svg',
     codeforces: 'codeforces-tricolor.svg',
     atcoder: 'atcoder.svg',
+    leetcode: 'leetcode.svg',
     github: 'github.svg',
     google: 'google.svg',
     clist: 'clist.svg'
@@ -30,7 +32,8 @@ const ICON_DARK_REPLACEMENTS: Record<string, Array<[string, string]>> = {
         ['.cls-1{fill:#fff;}', '.cls-1{fill:#231815;}'],
         ['.cls-2{fill:#231815;}', '.cls-2{fill:#fff;}']
     ],
-    github: [['fill="#24292f"', 'fill="#fff"']]
+    github: [['fill="#24292f"', 'fill="#fff"']],
+    leetcode: [['fill="#1A1A1A"', 'fill="#fff"']]
 };
 
 const iconCache: Record<string, string> = {};
