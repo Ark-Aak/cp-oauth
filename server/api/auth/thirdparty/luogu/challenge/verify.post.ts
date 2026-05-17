@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken';
 import { getPlatformVerifier } from '~/server/utils/platforms';
 import prisma from '~/server/utils/prisma';
 import { getRedis } from '~/server/utils/redis';
@@ -61,8 +60,7 @@ export default defineEventHandler(async event => {
 
     await redis.del(key);
 
-    const config = useRuntimeConfig();
-    const token = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+    const token = signAuthToken(user.id);
 
     return {
         token,

@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
 import { fetchLuoguPaste } from '~/server/utils/luogu-paste';
 import { verifyTurnstileToken } from '~/server/utils/turnstile';
@@ -73,8 +72,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 404, message: 'User not found' });
     }
 
-    const config = useRuntimeConfig();
-    const token = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+    const token = signAuthToken(user.id);
 
     return {
         token,

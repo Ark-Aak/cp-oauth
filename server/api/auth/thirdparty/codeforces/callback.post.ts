@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
 import { getRedis } from '~/server/utils/redis';
@@ -195,7 +194,7 @@ async function registerLocalUserFromCodeforces(identity: {
         });
     }
 
-    const normalizedEmail = identity.email?.toLowerCase().trim() || null;
+    const normalizedEmail = normalizeUsername(identity.email);
     if (normalizedEmail) {
         const existingUser = await prisma.user.findUnique({
             where: { email: normalizedEmail },
@@ -410,8 +409,7 @@ export default defineEventHandler(async event => {
             ...identity,
             oauthCredentials
         });
-        const config = useRuntimeConfig();
-        const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+        const authToken = signAuthToken(user.id);
 
         logger.success(`Codeforces register success: cf=${identity.platformUid}, user=${user.id}`);
 
@@ -429,8 +427,7 @@ export default defineEventHandler(async event => {
 
     const user = await findOrCreateLocalUser({ ...identity, oauthCredentials });
 
-    const config = useRuntimeConfig();
-    const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+    const authToken = signAuthToken(user.id);
 
     logger.success(`Codeforces login success: cf=${identity.platformUid}, user=${user.id}`);
 

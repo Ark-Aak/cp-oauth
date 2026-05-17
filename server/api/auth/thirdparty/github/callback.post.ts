@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
 import { getConfig } from '~/server/utils/config';
 import { getRedis } from '~/server/utils/redis';
@@ -143,7 +142,7 @@ async function registerLocalUserFromGitHub(
         });
     }
 
-    const normalizedEmail = identity.email?.toLowerCase().trim() || null;
+    const normalizedEmail = normalizeUsername(identity.email);
     if (normalizedEmail) {
         const existingUser = await prisma.user.findUnique({
             where: { email: normalizedEmail },
@@ -371,8 +370,7 @@ export default defineEventHandler(async event => {
                 }
             });
         }
-        const config = useRuntimeConfig();
-        const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+        const authToken = signAuthToken(user.id);
 
         return {
             mode: 'register',
@@ -405,8 +403,7 @@ export default defineEventHandler(async event => {
             }
         });
     }
-    const config = useRuntimeConfig();
-    const authToken = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
+    const authToken = signAuthToken(user.id);
 
     return {
         mode: 'login',
