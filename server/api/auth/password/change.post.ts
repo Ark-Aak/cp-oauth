@@ -33,8 +33,6 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 401, message: 'Current password is incorrect' });
     }
 
-    await revokeAllUserAuthSessions(user.id);
-
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await prisma.$transaction([
         prisma.user.update({
