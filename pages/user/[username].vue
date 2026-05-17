@@ -352,7 +352,7 @@ async function initRatingChart() {
         return {
             label: resourceDisplayNames[resource] || resource,
             data: data
-                .filter(e => e.new_rating !== null)
+                ?.filter(e => e.new_rating !== null)
                 .map(e => ({
                     x: new Date(e.date).getTime(),
                     y: e.new_rating as number,

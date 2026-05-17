@@ -76,7 +76,7 @@ async function fetchCodeforcesUsername(context: RefreshUsernameContext): Promise
             `https://codeforces.com/api/user.info?handles=${encodeURIComponent(platformUid)}`
         );
         if (res.status === 'OK' && res.result?.length > 0) {
-            return res.result[0].handle || null;
+            return res.result[0]?.handle || null;
         }
         return null;
     } catch (e: unknown) {

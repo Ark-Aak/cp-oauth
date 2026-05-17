@@ -6,6 +6,8 @@ import {
 } from '~/utils/luogu-login-credential';
 import { getRedis } from './redis';
 
+export type { LuoguLoginDuration } from '~/utils/luogu-login-credential';
+
 export interface LuoguLoginCredentialPayload {
     userId: string;
     platformUid: string;
