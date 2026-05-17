@@ -190,7 +190,7 @@ async function handleDecision(approved: boolean) {
         align-items: center;
         gap: 10px;
         padding: 10px 14px;
-        border-radius: 14px;
+        border-radius: var(--card-radius);
         border: 1px solid rgba(0, 0, 0, 0.12);
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(12px);

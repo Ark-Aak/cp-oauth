@@ -279,7 +279,7 @@ function formatNumber(value: number): string {
     &__notice-card {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
-        border-radius: 12px;
+        border-radius: var(--card-radius);
         padding: 16px 18px;
         box-shadow: var(--card-shadow);
     }
@@ -320,7 +320,7 @@ function formatNumber(value: number): string {
     &__stats-card {
         overflow: hidden;
         border: 1px solid var(--card-border);
-        border-radius: 12px;
+        border-radius: var(--card-radius);
         background: var(--card-bg);
         box-shadow: var(--card-shadow);
     }
@@ -382,7 +382,7 @@ function formatNumber(value: number): string {
     &__users-card {
         padding: 6px;
         border: 1px solid var(--card-border);
-        border-radius: 12px;
+        border-radius: var(--card-radius);
         background: var(--card-bg);
         box-shadow: var(--card-shadow);
     }
@@ -398,7 +398,7 @@ function formatNumber(value: number): string {
         align-items: center;
         gap: 12px;
         padding: 10px 12px;
-        border-radius: 8px;
+        border-radius: var(--card-radius);
         transition: background 0.15s ease;
 
         &:hover {

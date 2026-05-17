@@ -158,7 +158,7 @@ function handleIconError(e: Event) {
         gap: 14px;
         padding: 16px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: var(--card-radius);
         background: var(--bg-primary);
         text-decoration: none;
         transition:

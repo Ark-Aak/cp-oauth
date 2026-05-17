@@ -1602,7 +1602,7 @@ function copyLuoguCredential() {
         margin-bottom: 24px;
         padding: 16px;
         background: var(--bg-secondary);
-        border-radius: 8px;
+        border-radius: var(--card-radius);
         border: 1px solid var(--border-color);
     }
 
@@ -1685,7 +1685,7 @@ function copyLuoguCredential() {
         margin-bottom: 18px;
         padding: 14px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: var(--card-radius);
         background: var(--bg-secondary);
     }
 
@@ -1786,7 +1786,7 @@ function copyLuoguCredential() {
         padding: 10px 14px;
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: var(--card-radius);
         margin-bottom: 6px;
     }
 
@@ -1886,7 +1886,7 @@ function copyLuoguCredential() {
         padding: 8px 12px;
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: var(--card-radius);
         cursor: pointer;
         transition: border-color 0.15s;
 
@@ -1913,7 +1913,7 @@ function copyLuoguCredential() {
         margin-top: 14px;
         padding: 12px;
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: var(--card-radius);
         background: var(--bg-secondary);
     }
 

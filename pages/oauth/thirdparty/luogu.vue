@@ -271,7 +271,7 @@ function copyChallengeCode() {
         padding: 8px 12px;
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
+        border-radius: var(--card-radius);
         cursor: pointer;
         margin-bottom: 4px;
 

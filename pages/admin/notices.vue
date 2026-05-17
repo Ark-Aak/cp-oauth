@@ -204,7 +204,7 @@ await loadNotices();
     &__item {
         border: 1px solid var(--border-color);
         background: var(--bg-secondary);
-        border-radius: 8px;
+        border-radius: var(--card-radius);
         padding: 12px;
     }
 

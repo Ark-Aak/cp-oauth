@@ -174,7 +174,7 @@ function handleNav() {
         gap: 10px;
         margin: 8px 12px 10px;
         padding: 8px;
-        border-radius: 8px;
+        border-radius: var(--card-radius);
         background: var(--card-bg);
         border: 1px solid var(--border-color);
         box-shadow: var(--card-shadow);
