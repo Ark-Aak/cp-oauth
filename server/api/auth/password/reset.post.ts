@@ -29,6 +29,8 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Reset token is invalid or expired' });
     }
 
+    await revokeAllUserAuthSessions(user.id);
+
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await prisma.$transaction([
         prisma.user.update({

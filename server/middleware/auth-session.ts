@@ -2,12 +2,14 @@ import jwt from 'jsonwebtoken';
 import { buildAuthSessionKey } from '~/server/utils/auth';
 import { getRedis } from '~/server/utils/redis';
 
+const SESSION_OPTIONAL_PATH_PREFIXES = ['/api/oauth/userinfo'];
+
 export default defineEventHandler(async event => {
     const auth = getHeader(event, 'authorization');
     if (!auth?.startsWith('Bearer ')) {
         return;
     }
-    if (event.path === '/api/oauth/userinfo') {
+    if (SESSION_OPTIONAL_PATH_PREFIXES.some(path => event.path.startsWith(path))) {
         return;
     }
 
