@@ -1,5 +1,4 @@
 import { consola } from 'consola';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '~/server/utils/prisma';
 import { verifyPKCE, generateRefreshToken, authenticateOAuthClient } from '~/server/utils/oauth';
@@ -8,24 +7,6 @@ const logger = consola.withTag('oauth:token');
 
 const ACCESS_TOKEN_EXPIRES_IN = 3600; // 1 hour
 const REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 3600; // 30 days
-
-async function verifyClient(clientId: string, clientSecret: string | undefined) {
-    if (!clientSecret) {
-        logger.warn(`Rejected: missing client_secret for client_id=${clientId}`);
-        throw createError({ statusCode: 400, message: 'client_secret required' });
-    }
-    const client = await prisma.oAuthClient.findUnique({ where: { clientId } });
-    if (!client) {
-        logger.warn(`Rejected: unknown client_id=${clientId} during token exchange`);
-        throw createError({ statusCode: 400, message: 'Unknown client' });
-    }
-    const valid = await bcrypt.compare(clientSecret, client.clientSecretHash);
-    if (!valid) {
-        logger.warn(`Rejected: invalid client_secret for "${client.name}" (${clientId})`);
-        throw createError({ statusCode: 401, message: 'Invalid client_secret' });
-    }
-    logger.debug(`Client secret verified for "${client.name}" (${clientId})`);
-}
 
 function issueAccessToken(userId: string, clientId: string, scopes: string[]) {
     const config = useRuntimeConfig();
@@ -98,7 +79,7 @@ async function handleAuthorizationCode(body: Record<string, string>) {
         }
         logger.debug(`PKCE verified for client_id=${clientId}`);
     } else {
-        await verifyClient(clientId, clientSecret);
+        await authenticateOAuthClient(clientId, clientSecret);
     }
 
     // Mark code as used
