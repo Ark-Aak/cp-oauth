@@ -2,7 +2,7 @@ import { consola } from 'consola';
 import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
 import { getUserIdFromEvent } from '~/server/utils/auth';
-import { generateClientSecret } from '~/server/utils/oauth';
+import { generateClientSecret, isSafeOAuthRedirectUri } from '~/server/utils/oauth';
 
 const logger = consola.withTag('oauth:clients');
 
@@ -31,6 +31,13 @@ export default defineEventHandler(async event => {
 
         if (!name || !redirectUris || !Array.isArray(redirectUris) || redirectUris.length === 0) {
             throw createError({ statusCode: 400, message: 'name and redirectUris are required' });
+        }
+
+        if (!redirectUris.every(uri => typeof uri === 'string' && isSafeOAuthRedirectUri(uri))) {
+            throw createError({
+                statusCode: 400,
+                message: 'All redirectUris must be valid http(s) URLs'
+            });
         }
 
         const plainSecret = generateClientSecret();

@@ -23,6 +23,15 @@ export function validateScopes(scopes: string[]): scopes is ScopeName[] {
     return scopes.every(s => s in SCOPES);
 }
 
+export function isSafeOAuthRedirectUri(redirectUri: string): boolean {
+    try {
+        const parsed = new URL(redirectUri);
+        return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    } catch {
+        return false;
+    }
+}
+
 export function generateCode(): string {
     return crypto.randomBytes(32).toString('hex');
 }

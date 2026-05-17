@@ -1,6 +1,6 @@
 import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
-import { validateScopes } from '~/server/utils/oauth';
+import { isSafeOAuthRedirectUri, validateScopes } from '~/server/utils/oauth';
 
 const logger = consola.withTag('oauth:authorize');
 
@@ -39,7 +39,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 404, message: 'Unknown client_id' });
     }
 
-    if (!client.redirectUris.includes(redirectUri)) {
+    if (!isSafeOAuthRedirectUri(redirectUri) || !client.redirectUris.includes(redirectUri)) {
         logger.warn(`Rejected: invalid redirect_uri for client "${client.name}" (${clientId})`);
         throw createError({ statusCode: 400, message: 'Invalid redirect_uri' });
     }
