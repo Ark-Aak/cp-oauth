@@ -24,8 +24,15 @@
                 </el-button>
             </div>
         </el-card>
+
         <el-card v-else-if="loadError" class="consent__card" shadow="never">
-            <el-result icon="error" :sub-title="loadError" />
+            <el-result icon="error" :sub-title="loadError">
+                <template v-if="loadErrorData?.reason === 'email_not_verified'" #extra>
+                    <el-button type="primary" @click="goVerifyEmail">
+                        {{ $t('oauth.consent.go_verify_email') }}
+                    </el-button>
+                </template>
+            </el-result>
         </el-card>
         <div v-else v-loading="true" class="consent__loading" />
 
@@ -55,9 +62,10 @@ const { t } = useI18n();
 useHead({ title: () => `${t('oauth.consent.title')} - CP OAuth` });
 const route = useRoute();
 const loadError = ref('');
+const loadErrorData = ref<{ reason?: string } | null>(null);
 
 interface ClientData {
-    client: { name: string; clientId: string };
+    client: { name: string; clientId: string; requireEmailVerified: boolean };
     scopes: string[];
     redirectUri: string;
     state: string | null;
@@ -81,11 +89,16 @@ try {
     });
     clientData.value = data;
 } catch (e: unknown) {
-    const err = e as { data?: { message?: string } };
+    const err = e as { data?: { message?: string; reason?: string } };
     loadError.value = err.data?.message || t('oauth.consent.error');
+    loadErrorData.value = { reason: err.data?.reason };
 }
 
 const token = useCookie('auth_token');
+
+function goVerifyEmail() {
+    navigateTo('/profile');
+}
 
 async function handleDecision(approved: boolean) {
     if (!clientData.value) return;
@@ -111,8 +124,17 @@ async function handleDecision(approved: boolean) {
         });
         window.location.href = result.redirect;
     } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('oauth.consent.error'));
+        const err = e as {
+            data?: { data?: { reason?: string; message?: string }; message?: string };
+        };
+        if (err.data?.data?.reason === 'email_not_verified') {
+            loadError.value =
+                err.data.data.message || t('oauth.consent.email_verification_required');
+            loadErrorData.value = { reason: 'email_not_verified' };
+            clientData.value = null;
+        } else {
+            ElMessage.error(err.data?.message || t('oauth.consent.error'));
+        }
     }
 }
 </script>
@@ -149,6 +171,10 @@ async function handleDecision(approved: boolean) {
 
     &__scopes {
         margin-bottom: 24px;
+    }
+
+    &__email-notice {
+        margin-bottom: 16px;
     }
 
     &__scopes-label {

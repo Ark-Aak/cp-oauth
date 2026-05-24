@@ -67,13 +67,14 @@ model SystemConfig {
 }
 
 model OAuthClient {
-  id              String   @id @default(uuid())
-  clientId        String   @unique @default(uuid()) @map("client_id")
-  clientSecretHash String  @map("client_secret_hash")
-  name            String
-  redirectUris    String[] @map("redirect_uris")
-  userId          String   @map("user_id")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                   String   @id @default(uuid())
+  clientId             String   @unique @default(uuid()) @map("client_id")
+  clientSecretHash     String   @map("client_secret_hash")
+  name                 String
+  redirectUris         String[] @map("redirect_uris")
+  requireEmailVerified Boolean  @default(false) @map("require_email_verified")
+  userId               String   @map("user_id")
+  createdAt            DateTime @default(now()) @map("created_at")
 
   user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   authorizationCodes OAuthAuthorizationCode[]

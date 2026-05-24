@@ -323,7 +323,10 @@
             "authorize": "Authorize",
             "deny": "Deny",
             "loading": "Loading...",
-            "error": "Authorization request failed"
+            "error": "Authorization request failed",
+            "email_verified_required_notice": "This application requires a verified email to authorize. If your email is not verified, an error will be shown after clicking Authorize.",
+            "email_verification_required": "The creator of this application requires you to verify your email before authorizing.",
+            "go_verify_email": "Verify Email"
         },
         "scopes": {
             "openid": "Base identity — your user ID",
@@ -360,6 +363,8 @@
         "app_name": "Application Name",
         "redirect_uris": "Redirect URIs",
         "redirect_uris_hint": "Comma-separated URIs (e.g. https://myapp.com/callback)",
+        "require_email_verified": "Require verified email before authorization",
+        "email_verified_required": "Email verification required",
         "create": "Create Application",
         "creating": "Creating...",
         "create_error": "Failed to create application",
@@ -367,6 +372,13 @@
         "dismiss": "I've saved it",
         "your_apps": "Your Applications",
         "no_apps": "You haven't registered any applications yet.",
+        "edit": "Edit",
+        "edit_app": "Edit Application",
+        "save": "Save",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "updated": "Application updated",
+        "update_error": "Failed to update application",
         "delete": "Delete",
         "delete_error": "Failed to delete application"
     },

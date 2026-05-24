@@ -17,6 +17,7 @@ export default defineEventHandler(async event => {
                 clientId: true,
                 name: true,
                 redirectUris: true,
+                requireEmailVerified: true,
                 createdAt: true
             },
             orderBy: { createdAt: 'desc' }
@@ -27,7 +28,7 @@ export default defineEventHandler(async event => {
 
     if (event.method === 'POST') {
         const body = await readBody(event);
-        const { name, redirectUris } = body;
+        const { name, redirectUris, requireEmailVerified } = body;
 
         if (!name || !redirectUris || !Array.isArray(redirectUris) || redirectUris.length === 0) {
             throw createError({ statusCode: 400, message: 'name and redirectUris are required' });
@@ -47,6 +48,7 @@ export default defineEventHandler(async event => {
             data: {
                 name,
                 redirectUris,
+                requireEmailVerified: Boolean(requireEmailVerified),
                 clientSecretHash,
                 userId
             },
@@ -55,6 +57,7 @@ export default defineEventHandler(async event => {
                 clientId: true,
                 name: true,
                 redirectUris: true,
+                requireEmailVerified: true,
                 createdAt: true
             }
         });

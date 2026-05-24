@@ -49,6 +49,25 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Invalid redirect_uri' });
     }
 
+    if (client.requireEmailVerified) {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { emailVerified: true }
+        });
+        if (!user) {
+            throw createError({ statusCode: 404, message: 'User not found' });
+        }
+        if (!user.emailVerified) {
+            logger.warn(
+                `User ${userId} denied authorization: email not verified, required by client "${client.name}"`
+            );
+            throw createError({
+                statusCode: 403,
+                data: { reason: 'email_not_verified' }
+            });
+        }
+    }
+
     if (!approved) {
         logger.info(`User ${userId} denied authorization for client_id=${clientId}`);
         return { redirect: buildCallbackUrl(redirectUri, { error: 'access_denied', state }) };
