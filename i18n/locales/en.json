@@ -324,7 +324,6 @@
             "deny": "Deny",
             "loading": "Loading...",
             "error": "Authorization request failed",
-            "email_verified_required_notice": "This application requires a verified email to authorize. If your email is not verified, an error will be shown after clicking Authorize.",
             "email_verification_required": "The creator of this application requires you to verify your email before authorizing.",
             "go_verify_email": "Verify Email"
         },
