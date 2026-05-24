@@ -323,7 +323,9 @@
             "authorize": "授权",
             "deny": "拒绝",
             "loading": "加载中...",
-            "error": "授权请求失败"
+            "error": "授权请求失败",
+            "email_verification_required": "此应用的创建者要求您必须验证邮箱才能授权。",
+            "go_verify_email": "前往验证邮箱"
         },
         "scopes": {
             "openid": "基本身份 — 您的用户 ID",
@@ -360,6 +362,8 @@
         "app_name": "应用名称",
         "redirect_uris": "回调地址",
         "redirect_uris_hint": "以逗号分隔的 URI（例如 https://myapp.com/callback）",
+        "require_email_verified": "要求用户验证邮箱后才可授权",
+        "email_verified_required": "需要验证邮箱",
         "create": "创建应用",
         "creating": "创建中...",
         "create_error": "创建应用失败",
@@ -367,6 +371,13 @@
         "dismiss": "我已保存",
         "your_apps": "我的应用",
         "no_apps": "您还没有注册任何应用。",
+        "edit": "编辑",
+        "edit_app": "编辑应用",
+        "save": "保存",
+        "saving": "保存中...",
+        "cancel": "取消",
+        "updated": "应用已更新",
+        "update_error": "更新应用失败",
         "delete": "删除",
         "delete_error": "删除应用失败"
     },

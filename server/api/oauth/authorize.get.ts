@@ -53,11 +53,15 @@ export default defineEventHandler(async event => {
     }
 
     logger.info(
-        `Authorization page served for client "${client.name}" (${clientId}), scopes=[${scopes.join(', ')}]`
+        `Authorization page served for client "${client.name}" (${clientId}), scopes=[${scopes.join(', ')}], requireEmailVerified=${client.requireEmailVerified}`
     );
 
     return {
-        client: { name: client.name, clientId: client.clientId },
+        client: {
+            name: client.name,
+            clientId: client.clientId,
+            requireEmailVerified: client.requireEmailVerified
+        },
         scopes,
         redirectUri,
         state: state || null,

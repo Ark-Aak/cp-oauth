@@ -322,7 +322,9 @@
             "authorize": "許可",
             "deny": "拒否",
             "loading": "読み込み中...",
-            "error": "認可リクエストに失敗しました"
+            "error": "認可リクエストに失敗しました",
+            "email_verification_required": "このアプリケーションの作成者は、認可する前にメールアドレスの確認を必須としています。",
+            "go_verify_email": "メールアドレスを確認する"
         },
         "scopes": {
             "openid": "基本情報 — あなたのユーザーID",
@@ -359,6 +361,8 @@
         "app_name": "アプリ名",
         "redirect_uris": "リダイレクトURI",
         "redirect_uris_hint": "カンマ区切りのURI（例: https://myapp.com/callback）",
+        "require_email_verified": "メール確認済みユーザーのみ認可を許可",
+        "email_verified_required": "メール確認が必要",
         "create": "アプリを作成",
         "creating": "作成中...",
         "create_error": "アプリの作成に失敗しました",
@@ -366,6 +370,13 @@
         "dismiss": "保存しました",
         "your_apps": "あなたのアプリ",
         "no_apps": "まだアプリを登録していません。",
+        "edit": "編集",
+        "edit_app": "アプリを編集",
+        "save": "保存",
+        "saving": "保存中...",
+        "cancel": "キャンセル",
+        "updated": "アプリを更新しました",
+        "update_error": "アプリの更新に失敗しました",
         "delete": "削除",
         "delete_error": "アプリの削除に失敗しました"
     },
