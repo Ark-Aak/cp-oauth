@@ -101,7 +101,11 @@ const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public
 const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
 const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
 const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
-const { token: turnstileToken, el: turnstileEl } = useTurnstile(turnstileSiteKey);
+const {
+    token: turnstileToken,
+    el: turnstileEl,
+    reset: resetTurnstile
+} = useTurnstile(turnstileSiteKey);
 
 async function handleRegister() {
     if (!formRef.value) return;
@@ -124,6 +128,7 @@ async function handleRegister() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.register.error'));
+        resetTurnstile();
     } finally {
         loading.value = false;
     }
