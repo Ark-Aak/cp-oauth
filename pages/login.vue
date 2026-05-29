@@ -429,6 +429,7 @@ async function handleGitHubLogin() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         githubLoading.value = false;
     }
@@ -450,6 +451,7 @@ async function handleGoogleLogin() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         googleLoading.value = false;
     }
@@ -471,6 +473,7 @@ async function handleCodeforcesLogin() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         codeforcesLoading.value = false;
     }
@@ -492,6 +495,7 @@ async function handleClistLogin() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         clistLoading.value = false;
     }

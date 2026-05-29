@@ -137,7 +137,11 @@ interface PublicConfigResponse {
 const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
 const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
 const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
-const { token: turnstileToken, el: turnstileEl } = useTurnstile(turnstileSiteKey);
+const {
+    token: turnstileToken,
+    el: turnstileEl,
+    reset: resetTurnstile
+} = useTurnstile(turnstileSiteKey);
 const thirdPartyCaptchaReady = computed(
     () => !turnstileEnabled.value || Boolean(turnstileToken.value)
 );
@@ -166,6 +170,7 @@ async function handleLuoguCredentialLogin() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         loading.value = false;
     }
@@ -191,6 +196,7 @@ async function handleChallengeRequest() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         loading.value = false;
     }
@@ -214,6 +220,7 @@ async function handleChallengeVerify() {
     } catch (e: unknown) {
         const err = e as { data?: { message?: string } };
         ElMessage.error(err.data?.message || t('auth.login.error'));
+        resetTurnstile();
     } finally {
         loading.value = false;
     }
