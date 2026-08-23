@@ -33,6 +33,27 @@ export function isSafeOAuthRedirectUri(redirectUri: string): boolean {
     }
 }
 
+export function normalizeOAuthRedirectUris(value: unknown): string[] | null {
+    if (!Array.isArray(value)) return null;
+
+    const redirectUris: string[] = [];
+    const seen = new Set<string>();
+
+    for (const valueItem of value) {
+        if (typeof valueItem !== 'string') return null;
+
+        const redirectUri = valueItem.trim();
+        if (!redirectUri || !isSafeOAuthRedirectUri(redirectUri)) return null;
+
+        if (!seen.has(redirectUri)) {
+            seen.add(redirectUri);
+            redirectUris.push(redirectUri);
+        }
+    }
+
+    return redirectUris.length > 0 ? redirectUris : null;
+}
+
 export function generateCode(): string {
     return crypto.randomBytes(32).toString('hex');
 }

@@ -8,38 +8,38 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  username       String   @unique
-  passwordHash   String   @map("password_hash")
-  displayName    String?  @map("display_name")
-  bio            String?
-  homepage       String?  @db.Text
-  avatarUrl      String?  @map("avatar_url")
-  role           String   @default("user")
-  emailVerified  Boolean  @default(false) @map("email_verified")
-  emailVerifyToken String? @unique @map("email_verify_token")
-  publicLinkedPlatforms String[] @default([]) @map("public_linked_platforms")
-  publicLinkedPlatformsConfigured Boolean @default(false) @map("public_linked_platforms_configured")
-  publicCpStats Boolean @default(false) @map("public_cp_stats")
-  publicRatingHistory Boolean @default(false) @map("public_rating_history")
-  passwordResetToken String? @unique @map("password_reset_token")
-  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
-  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
-  twoFactorMethod String? @map("two_factor_method")
-  totpSecret String? @map("totp_secret") @db.Text
-  theme          String   @default("system")
-  locale         String   @default("en")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                              String    @id @default(uuid())
+  email                           String    @unique
+  username                        String    @unique
+  passwordHash                    String    @map("password_hash")
+  displayName                     String?   @map("display_name")
+  bio                             String?
+  homepage                        String?   @db.Text
+  avatarUrl                       String?   @map("avatar_url")
+  role                            String    @default("user")
+  emailVerified                   Boolean   @default(false) @map("email_verified")
+  emailVerifyToken                String?   @unique @map("email_verify_token")
+  publicLinkedPlatforms           String[]  @default([]) @map("public_linked_platforms")
+  publicLinkedPlatformsConfigured Boolean   @default(false) @map("public_linked_platforms_configured")
+  publicCpStats                   Boolean   @default(false) @map("public_cp_stats")
+  publicRatingHistory             Boolean   @default(false) @map("public_rating_history")
+  passwordResetToken              String?   @unique @map("password_reset_token")
+  passwordResetExpiresAt          DateTime? @map("password_reset_expires_at")
+  twoFactorEnabled                Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorMethod                 String?   @map("two_factor_method")
+  totpSecret                      String?   @map("totp_secret") @db.Text
+  theme                           String    @default("system")
+  locale                          String    @default("en")
+  createdAt                       DateTime  @default(now()) @map("created_at")
+  updatedAt                       DateTime  @updatedAt @map("updated_at")
 
-  oauthClients      OAuthClient[]
+  oauthClients       OAuthClient[]
   authorizationCodes OAuthAuthorizationCode[]
-  accessTokens      OAuthAccessToken[]
-  refreshTokens     OAuthRefreshToken[]
-  linkedAccounts    LinkedAccount[]
+  accessTokens       OAuthAccessToken[]
+  refreshTokens      OAuthRefreshToken[]
+  linkedAccounts     LinkedAccount[]
   passkeyCredentials PasskeyCredential[]
-  luoguApis LuoguApiSecert?
+  luoguApis          LuoguApiSecret?
 
   @@map("users")
 }
@@ -136,19 +136,19 @@ model OAuthRefreshToken {
 }
 
 model LinkedAccount {
-  id               String   @id @default(uuid())
-  userId           String   @map("user_id")
-  platform         String
-  platformUid      String   @map("platform_uid")
-  platformUsername  String?  @map("platform_username")
-  oauthAccessToken String?  @map("oauth_access_token") @db.Text
-  oauthRefreshToken String? @map("oauth_refresh_token") @db.Text
-  oauthIdToken     String?  @map("oauth_id_token") @db.Text
-  oauthTokenType   String?  @map("oauth_token_type")
-  oauthExpiresAt   DateTime? @map("oauth_expires_at")
-  oauthScope       String?  @map("oauth_scope") @db.Text
-  verifiedAt       DateTime @default(now()) @map("verified_at")
-  createdAt        DateTime @default(now()) @map("created_at")
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  platform          String
+  platformUid       String    @map("platform_uid")
+  platformUsername  String?   @map("platform_username")
+  oauthAccessToken  String?   @map("oauth_access_token") @db.Text
+  oauthRefreshToken String?   @map("oauth_refresh_token") @db.Text
+  oauthIdToken      String?   @map("oauth_id_token") @db.Text
+  oauthTokenType    String?   @map("oauth_token_type")
+  oauthExpiresAt    DateTime? @map("oauth_expires_at")
+  oauthScope        String?   @map("oauth_scope") @db.Text
+  verifiedAt        DateTime  @default(now()) @map("verified_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -183,7 +183,7 @@ model ShowcaseItem {
   @@map("showcase_items")
 }
 
-model LuoguApiSecert {
+model LuoguApiSecret {
   userId                           String  @id @map("user_id")
   passwordHash                     String  @map("password_hash")
   kekSalt                          String  @map("kek_salt") @db.Bit(256) // 32 字节随机盐
@@ -196,7 +196,7 @@ model LuoguApiSecert {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   apiTokens LuoguApiToken[] @relation("LuoguApiTokens")
 
   @@map("luogu_api_secrets")
@@ -211,7 +211,7 @@ model LuoguApiToken {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  apiSecert LuoguApiSecert @relation("LuoguApiTokens", fields: [userId], references: [userId], onDelete: Cascade)
+  apiSecret LuoguApiSecret @relation("LuoguApiTokens", fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("luogu_api_tokens")
 }

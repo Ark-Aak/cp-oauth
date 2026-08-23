@@ -24,7 +24,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Invalid request body' });
     }
 
-    const secret = await prisma.luoguApiSecert.findUnique({
+    const secret = await prisma.luoguApiSecret.findUnique({
         where: { userId },
         select: {
             luoguUid: true,

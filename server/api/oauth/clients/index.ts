@@ -2,7 +2,7 @@ import { consola } from 'consola';
 import bcrypt from 'bcryptjs';
 import prisma from '~/server/utils/prisma';
 import { getUserIdFromEvent } from '~/server/utils/auth';
-import { generateClientSecret, isSafeOAuthRedirectUri } from '~/server/utils/oauth';
+import { generateClientSecret, normalizeOAuthRedirectUris } from '~/server/utils/oauth';
 
 const logger = consola.withTag('oauth:clients');
 
@@ -29,15 +29,24 @@ export default defineEventHandler(async event => {
     if (event.method === 'POST') {
         const body = await readBody(event);
         const { name, redirectUris, requireEmailVerified } = body;
+        const normalizedName = typeof name === 'string' ? name.trim() : '';
+        const normalizedRedirectUris = normalizeOAuthRedirectUris(redirectUris);
 
-        if (!name || !redirectUris || !Array.isArray(redirectUris) || redirectUris.length === 0) {
-            throw createError({ statusCode: 400, message: 'name and redirectUris are required' });
+        if (!normalizedName) {
+            throw createError({ statusCode: 400, message: 'name must be a non-empty string' });
         }
 
-        if (!redirectUris.every(uri => typeof uri === 'string' && isSafeOAuthRedirectUri(uri))) {
+        if (!normalizedRedirectUris) {
             throw createError({
                 statusCode: 400,
-                message: 'All redirectUris must be valid http(s) URLs'
+                message: 'redirectUris must contain at least one valid http(s) URL'
+            });
+        }
+
+        if (requireEmailVerified !== undefined && typeof requireEmailVerified !== 'boolean') {
+            throw createError({
+                statusCode: 400,
+                message: 'requireEmailVerified must be a boolean'
             });
         }
 
@@ -46,9 +55,9 @@ export default defineEventHandler(async event => {
 
         const client = await prisma.oAuthClient.create({
             data: {
-                name,
-                redirectUris,
-                requireEmailVerified: Boolean(requireEmailVerified),
+                name: normalizedName,
+                redirectUris: normalizedRedirectUris,
+                requireEmailVerified: requireEmailVerified ?? false,
                 clientSecretHash,
                 userId
             },
@@ -62,7 +71,9 @@ export default defineEventHandler(async event => {
             }
         });
 
-        logger.success(`Client created: "${name}" (${client.clientId}) by user ${userId}`);
+        logger.success(
+            `Client created: "${normalizedName}" (${client.clientId}) by user ${userId}`
+        );
 
         // Return plain secret only once at creation
         return { ...client, clientSecret: plainSecret };

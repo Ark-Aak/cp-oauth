@@ -69,7 +69,7 @@ export default defineEventHandler(async event => {
         kek.fill(0);
     }
     try {
-        await prisma.luoguApiSecert.create({
+        await prisma.luoguApiSecret.create({
             data: {
                 userId: userId,
                 passwordHash,

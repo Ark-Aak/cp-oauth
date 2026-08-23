@@ -1,7 +1,7 @@
 import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
 import { getUserIdFromEvent } from '~/server/utils/auth';
-import { isSafeOAuthRedirectUri } from '~/server/utils/oauth';
+import { normalizeOAuthRedirectUris } from '~/server/utils/oauth';
 
 const logger = consola.withTag('oauth:clients');
 
@@ -32,23 +32,24 @@ export default defineEventHandler(async event => {
     }
 
     if (redirectUris !== undefined) {
-        if (
-            !Array.isArray(redirectUris) ||
-            redirectUris.length === 0 ||
-            !redirectUris.every(
-                (uri: unknown) => typeof uri === 'string' && isSafeOAuthRedirectUri(uri as string)
-            )
-        ) {
+        const normalizedRedirectUris = normalizeOAuthRedirectUris(redirectUris);
+        if (!normalizedRedirectUris) {
             throw createError({
                 statusCode: 400,
-                message: 'All redirectUris must be valid http(s) URLs'
+                message: 'redirectUris must contain at least one valid http(s) URL'
             });
         }
-        data.redirectUris = redirectUris;
+        data.redirectUris = normalizedRedirectUris;
     }
 
     if (requireEmailVerified !== undefined) {
-        data.requireEmailVerified = Boolean(requireEmailVerified);
+        if (typeof requireEmailVerified !== 'boolean') {
+            throw createError({
+                statusCode: 400,
+                message: 'requireEmailVerified must be a boolean'
+            });
+        }
+        data.requireEmailVerified = requireEmailVerified;
     }
 
     if (Object.keys(data).length === 0) {

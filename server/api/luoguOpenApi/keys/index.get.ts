@@ -7,7 +7,7 @@ import { hasLuoguOpenApiCredentialCache } from '~/server/utils/luogu-openapi-cre
 export default defineEventHandler(async event => {
     const userId = getUserIdFromEvent(event);
 
-    const keys = await prisma.luoguApiSecert.findUnique({
+    const keys = await prisma.luoguApiSecret.findUnique({
         where: {
             userId
         },

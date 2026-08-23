@@ -27,7 +27,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 428, message: 'Luogu credential decrypt is required' });
     }
 
-    const secret = await prisma.luoguApiSecert.findUnique({
+    const secret = await prisma.luoguApiSecret.findUnique({
         where: { userId },
         select: { userId: true }
     });

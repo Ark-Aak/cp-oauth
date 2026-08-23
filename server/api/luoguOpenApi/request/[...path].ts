@@ -133,7 +133,7 @@ export default defineEventHandler(async event => {
             crypto.createHash('sha256').update(tokenBuffer).digest()
         );
 
-        const secretRecord = await prisma.luoguApiSecert.findUnique({
+        const secretRecord = await prisma.luoguApiSecret.findUnique({
             where: { userId },
             select: {
                 luoguUid: true,
@@ -302,7 +302,7 @@ export default defineEventHandler(async event => {
         });
     } finally {
         if (Object.keys(secretRecordPatch).length > 0) {
-            await prisma.luoguApiSecert.update({
+            await prisma.luoguApiSecret.update({
                 where: { userId },
                 data: {
                     valid: secretRecordPatch.valid,
