@@ -2,7 +2,6 @@ import crypto from 'crypto';
 import prisma from '~/server/utils/prisma';
 import { buildAuthenticationOptions, getPasskeyRpInfo } from '~/server/utils/passkey';
 import { buildPasskeyLoginChallengeKey, setRedisJson } from '~/server/utils/security';
-import { normalizeUsername } from '~/utils/username';
 
 export default defineEventHandler(async event => {
     const body = await readBody(event);
