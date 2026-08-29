@@ -323,12 +323,33 @@ const redirectUriRules = computed<FormItemRule[]>(() => [
 ]);
 
 async function loadClients() {
+    if (!token.value) {
+        await navigateTo(buildLoginPath(route.fullPath));
+        return;
+    }
+
     try {
         clients.value = await $fetch<OAuthClient[]>('/api/oauth/clients', {
             headers: { Authorization: `Bearer ${token.value}` }
         });
-    } catch {
-        navigateTo(buildLoginPath(route.fullPath));
+    } catch (error: unknown) {
+        const fetchError = error as {
+            status?: number;
+            statusCode?: number;
+            response?: { status?: number };
+            data?: { message?: string };
+        };
+        const status = fetchError.statusCode ?? fetchError.status ?? fetchError.response?.status;
+
+        if (status === 401) {
+            token.value = null;
+            await navigateTo(buildLoginPath(route.fullPath));
+            return;
+        }
+
+        if (import.meta.client) {
+            ElMessage.error(fetchError.data?.message || t('common.error'));
+        }
     }
 }
 
@@ -424,7 +445,9 @@ async function handleDelete(id: string) {
     }
 }
 
-await loadClients();
+onMounted(() => {
+    void loadClients();
+});
 </script>
 
 <style scoped lang="scss">
