@@ -5,7 +5,7 @@ const LUOGU_USER_AGENT = 'Mozilla/5.0 (compatible; CPOAuth/1.0)';
 
 interface LuoguPasteResponse {
     code: number;
-    currentData: {
+    data: {
         paste: {
             data: string;
             id: string;
@@ -38,12 +38,12 @@ export async function fetchLuoguPaste(pasteId: string): Promise<LuoguPasteData |
             {
                 headers: {
                     'user-agent': LUOGU_USER_AGENT,
-                    'x-luogu-type': 'content-only'
+                    'x-lentille-type': 'content-only'
                 }
             }
         );
 
-        const paste = res.currentData?.paste;
+        const paste = res.data?.paste;
         if (!paste) {
             return null;
         }
