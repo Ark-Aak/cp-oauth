@@ -2,9 +2,15 @@ import { consola } from 'consola';
 
 const logger = consola.withTag('platform:luogu');
 const LUOGU_USER_AGENT = 'Mozilla/5.0 (compatible; CPOAuth/1.0)';
+const LUOGU_PASTE_HOSTS = new Set([
+    'luogu.com',
+    'www.luogu.com',
+    'luogu.com.cn',
+    'www.luogu.com.cn'
+]);
 
 interface LuoguPasteResponse {
-    code: number;
+    status: number;
     data: {
         paste: {
             data: string;
@@ -26,19 +32,49 @@ export interface LuoguPasteData {
     ownerUsername: string;
 }
 
-export async function fetchLuoguPaste(pasteId: string): Promise<LuoguPasteData | null> {
-    const normalizedPasteId = pasteId.trim();
-    if (!normalizedPasteId) {
+function parseLuoguPasteId(input: string): string | null {
+    if (/^[A-Za-z0-9]+$/.test(input)) {
+        return input;
+    }
+
+    try {
+        const url = new URL(input);
+        if (
+            !['http:', 'https:'].includes(url.protocol) ||
+            !LUOGU_PASTE_HOSTS.has(url.hostname) ||
+            url.username ||
+            url.password ||
+            url.port
+        ) {
+            return null;
+        }
+
+        return url.pathname.match(/^\/paste\/([A-Za-z0-9]+)\/?$/)?.[1] || null;
+    } catch {
         return null;
+    }
+}
+
+export async function fetchLuoguPaste(pasteIdOrUrl: string): Promise<LuoguPasteData | null> {
+    const input = pasteIdOrUrl.trim();
+    if (!input) {
+        return null;
+    }
+
+    const normalizedPasteId = parseLuoguPasteId(input);
+    if (!normalizedPasteId) {
+        throw createError({ statusCode: 400, message: 'Invalid Luogu clipboard ID or URL' });
     }
 
     try {
         const res = await $fetch<LuoguPasteResponse>(
             `https://www.luogu.com/paste/${normalizedPasteId}`,
             {
+                method: 'GET',
                 headers: {
                     'user-agent': LUOGU_USER_AGENT,
-                    'x-lentille-type': 'content-only'
+                    accept: 'application/json',
+                    'x-lentille-request': 'content-only'
                 }
             }
         );
