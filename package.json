@@ -12,6 +12,7 @@
         "migrate:usernames-lowercase": "node scripts/migrate-usernames-lowercase.mjs",
         "postinstall": "nuxt prepare",
         "lint": "eslint . --ignore-pattern generated/**",
+        "test:luogu": "node --test tests/luogu-paste.test.mjs",
         "format": "prettier --write .",
         "prepare": "husky"
     },
