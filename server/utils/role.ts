@@ -16,7 +16,7 @@ async function getInitialUserRole(tx: RoleTransaction): Promise<string> {
 
 export async function createUserWithInitialRole<T extends Prisma.UserCreateArgs>(args: T) {
     return prisma.$transaction(async tx => {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${INITIAL_ROLE_LOCK_NAMESPACE}, ${INITIAL_ROLE_LOCK_KEY})`;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${INITIAL_ROLE_LOCK_NAMESPACE}::integer, ${INITIAL_ROLE_LOCK_KEY}::integer)`;
         const role = await getInitialUserRole(tx);
 
         const user = (await tx.user.create({
