@@ -1,4 +1,10 @@
 const cdnUrl = process.env.NODE_ENV === 'production' ? process.env.NUXT_APP_CDN_URL || '' : '';
+const locales = [
+    { code: 'en', name: 'English', file: 'en.json' },
+    { code: 'zh', name: '中文', file: 'zh.json' },
+    { code: 'ja', name: '日本語', file: 'ja.json' }
+];
+const i18nRoutePrefix = '/_i18n';
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-03-21',
@@ -23,14 +29,11 @@ export default defineNuxtConfig({
         '~/assets/scss/element-overrides.scss'
     ],
     i18n: {
-        locales: [
-            { code: 'en', name: 'English', file: 'en.json' },
-            { code: 'zh', name: '中文', file: 'zh.json' },
-            { code: 'ja', name: '日本語', file: 'ja.json' }
-        ],
+        locales,
         defaultLocale: 'en',
         langDir: 'locales/',
-        strategy: 'no_prefix'
+        strategy: 'no_prefix',
+        serverRoutePrefix: i18nRoutePrefix
     },
     colorMode: {
         preference: 'system',
@@ -76,7 +79,32 @@ export default defineNuxtConfig({
             cloudflareAnalyticsToken: ''
         }
     },
+    hooks: {
+        'nitro:init'(nitro) {
+            if (nitro.options.dev) return;
+            const messagesPrefix = JSON.parse(nitro.options.replace.__I18N_SERVER_ROUTE__);
+            const messagesRoute = `${i18nRoutePrefix}/:hash/:locale/messages.json`;
+            nitro.hooks.hook('prerender:routes', routes => {
+                for (const { code } of locales) {
+                    routes.add(`${messagesPrefix}/${code}/messages.json`);
+                }
+            });
+            nitro.hooks.hook('prerender:config', config => {
+                // Only language resources are prerendered; application services stay runtime-only.
+                config.srcDir = `${nitro.options.buildDir}/i18n-prerender`;
+                config.scanDirs = [];
+                config.renderer = undefined;
+                config.handlers = nitro.options.handlers.filter(
+                    handler => handler.route === messagesRoute
+                );
+                config.plugins = nitro.options.plugins.filter(plugin =>
+                    plugin.replace(/\\/g, '/').includes('/@nuxtjs/i18n/')
+                );
+            });
+        }
+    },
     nitro: {
+        prerender: { failOnError: true },
         externals: {
             external: ['@prisma/client', '.prisma/client']
         }
