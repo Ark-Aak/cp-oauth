@@ -1,8 +1,8 @@
 const cdnUrl = process.env.NODE_ENV === 'production' ? process.env.NUXT_APP_CDN_URL || '' : '';
 const locales = [
-    { code: 'en', name: 'English', file: 'en.json' },
-    { code: 'zh', name: '中文', file: 'zh.json' },
-    { code: 'ja', name: '日本語', file: 'ja.json' }
+    { code: 'en' as const, name: 'English', file: 'en.json' },
+    { code: 'zh' as const, name: '中文', file: 'zh.json' },
+    { code: 'ja' as const, name: '日本語', file: 'ja.json' }
 ];
 const i18nRoutePrefix = '/_i18n';
 
@@ -82,7 +82,11 @@ export default defineNuxtConfig({
     hooks: {
         'nitro:init'(nitro) {
             if (nitro.options.dev) return;
-            const messagesPrefix = JSON.parse(nitro.options.replace.__I18N_SERVER_ROUTE__);
+            const messagesReplacement = nitro.options.replace.__I18N_SERVER_ROUTE__;
+            if (typeof messagesReplacement !== 'string') {
+                throw new Error('Expected a static i18n resource route from the i18n module');
+            }
+            const messagesPrefix = JSON.parse(messagesReplacement);
             const messagesRoute = `${i18nRoutePrefix}/:hash/:locale/messages.json`;
             nitro.hooks.hook('prerender:routes', routes => {
                 for (const { code } of locales) {

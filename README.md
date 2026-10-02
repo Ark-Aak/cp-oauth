@@ -105,6 +105,8 @@ npm run upload:s3
 
 The build emits `.output/public/_i18n/<build-hash>/{en,zh,ja}/messages.json` using a locale-only prerenderer. Application pages remain SSR; application startup checks are not disabled. For CDN/OSS deployment, set `NUXT_APP_CDN_URL` when building, upload the **entire** `.output/public` including `_i18n`, and deploy `.output/server` from the **same build**. An application-domain Nginx rule cannot repair missing files requested from a separate asset domain.
 
+The locale-only build aborts if the i18n module does not provide a static language-resource route; a missing or callable replacement is not parsed or published as a resource URL.
+
 ### Run
 
 ```bash
