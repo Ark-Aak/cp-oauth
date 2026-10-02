@@ -7,7 +7,7 @@
 <script setup lang="ts">
 const props = withDefaults(
     defineProps<{
-        size?: number | string;
+        size?: number | 'small' | 'default' | 'large';
         src?: string | null;
         name?: string | null;
     }>(),
@@ -19,7 +19,10 @@ const props = withDefaults(
 );
 
 const normalizedSrc = computed(() => props.src?.trim() || undefined);
-const initial = computed(() => (props.name?.trim() || '?').charAt(0).toUpperCase());
+const initial = computed(() => {
+    const name = props.name?.trim() || '?';
+    return String.fromCodePoint(name.codePointAt(0) ?? 63).toUpperCase();
+});
 </script>
 
 <style scoped lang="scss">

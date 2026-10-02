@@ -1,52 +1,41 @@
 import { getConfig } from '~/server/utils/config';
-import { getRedis } from '~/server/utils/redis';
 
-const CACHE_KEY = 'public:config';
-const CACHE_TTL = 60; // 1 minute
+export default defineEventHandler(async event => {
+    setResponseHeader(event, 'Cache-Control', 'no-store');
+    const config = await getConfig([
+        'site_title',
+        'registration_enabled',
+        'home_recent_users_count',
+        'turnstile_enabled',
+        'turnstile_site_key',
+        'turnstile_secret_key',
+        'codeforces_client_id',
+        'codeforces_client_secret',
+        'github_client_id',
+        'github_client_secret',
+        'google_client_id',
+        'google_client_secret',
+        'clist_client_id',
+        'clist_client_secret'
+    ]);
 
-export default defineEventHandler(async () => {
-    const redis = getRedis();
+    const turnstileEnabled =
+        config.turnstile_enabled === 'true' &&
+        !!config.turnstile_site_key.trim() &&
+        !!config.turnstile_secret_key.trim();
 
-    try {
-        const cached = await redis.get(CACHE_KEY);
-        if (cached) return JSON.parse(cached);
-    } catch {
-        // Redis unavailable
-    }
-
-    const turnstileEnabled = await getConfig('turnstile_enabled');
-    const turnstileSiteKey =
-        turnstileEnabled === 'true' ? await getConfig('turnstile_site_key') : '';
-    const siteTitle = await getConfig('site_title');
-    const registrationEnabled = await getConfig('registration_enabled');
-    const homeRecentUsersCountRaw = await getConfig('home_recent_users_count');
-    const codeforcesClientId = await getConfig('codeforces_client_id');
-    const githubClientId = await getConfig('github_client_id');
-    const googleClientId = await getConfig('google_client_id');
-    const clistClientId = await getConfig('clist_client_id');
-
-    const parsedHomeRecentUsersCount = Number.parseInt(homeRecentUsersCountRaw, 10);
-    const recentUsersCount = Number.isFinite(parsedHomeRecentUsersCount)
-        ? Math.min(20, Math.max(1, parsedHomeRecentUsersCount))
-        : 6;
-
-    const result = {
-        siteTitle,
-        registrationEnabled: registrationEnabled !== 'false',
-        recentUsersCount,
-        turnstileEnabled: turnstileEnabled === 'true',
-        turnstileSiteKey,
-        codeforcesLoginEnabled: codeforcesClientId.trim().length > 0,
-        githubLoginEnabled: githubClientId.trim().length > 0,
-        googleLoginEnabled: googleClientId.trim().length > 0,
-        clistLoginEnabled: clistClientId.trim().length > 0
+    return {
+        siteTitle: config.site_title,
+        registrationEnabled: config.registration_enabled === 'true',
+        recentUsersCount: Number(config.home_recent_users_count),
+        turnstileEnabled,
+        turnstileSiteKey: turnstileEnabled ? config.turnstile_site_key : '',
+        codeforcesLoginEnabled:
+            !!config.codeforces_client_id.trim() && !!config.codeforces_client_secret.trim(),
+        githubLoginEnabled:
+            !!config.github_client_id.trim() && !!config.github_client_secret.trim(),
+        googleLoginEnabled:
+            !!config.google_client_id.trim() && !!config.google_client_secret.trim(),
+        clistLoginEnabled: !!config.clist_client_id.trim() && !!config.clist_client_secret.trim()
     };
-
-    try {
-        await redis.set(CACHE_KEY, JSON.stringify(result), 'EX', CACHE_TTL);
-    } catch {
-        // Redis unavailable
-    }
-
-    return result;
 });

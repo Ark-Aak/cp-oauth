@@ -1,97 +1,76 @@
-import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
-import { getUserIdFromEvent } from '~/server/utils/auth';
-import { generateCode, isSafeOAuthRedirectUri, validateScopes } from '~/server/utils/oauth';
+import { getAuthContext } from '~/server/utils/auth';
+import { hashToken } from '~/server/utils/token-hash';
+import {
+    generateCode,
+    handleOAuthRequest,
+    OAuthProtocolError,
+    withOAuthGrantLock
+} from '~/server/utils/oauth';
+import {
+    readOAuthAuthorizationConsent,
+    validateOAuthAuthorization
+} from '~/server/utils/oauth-request';
 
-const logger = consola.withTag('oauth:authorize');
+export default defineEventHandler(event =>
+    handleOAuthRequest(
+        event,
+        async () => {
+            const request = await readOAuthAuthorizationConsent(event);
+            await validateOAuthAuthorization(request);
+            const callback = new URL(request.redirectUri);
+            if (request.state !== undefined) callback.searchParams.set('state', request.state);
+            if (!request.approved) {
+                callback.searchParams.set('error', 'access_denied');
+                return { redirect: callback.toString() };
+            }
 
-function buildCallbackUrl(redirectUri: string, params: Record<string, string | undefined>): string {
-    const url = new URL(redirectUri);
-    for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined) {
-            url.searchParams.set(key, value);
-        }
-    }
-    return url.toString();
-}
-
-export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-    const body = await readBody(event);
-
-    const {
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        scopes,
-        state,
-        code_challenge: codeChallenge,
-        code_challenge_method: codeChallengeMethod,
-        approved
-    } = body;
-
-    if (!clientId || !redirectUri || !scopes || !Array.isArray(scopes)) {
-        throw createError({ statusCode: 400, message: 'Missing required parameters' });
-    }
-
-    if (!validateScopes(scopes)) {
-        logger.warn(`Invalid scopes [${scopes.join(', ')}] from user ${userId}`);
-        throw createError({ statusCode: 400, message: 'Invalid scope(s)' });
-    }
-
-    const client = await prisma.oAuthClient.findUnique({ where: { clientId } });
-    if (!client) {
-        logger.warn(`Unknown client_id=${clientId} during consent from user ${userId}`);
-        throw createError({ statusCode: 404, message: 'Unknown client' });
-    }
-
-    if (!isSafeOAuthRedirectUri(redirectUri) || !client.redirectUris.includes(redirectUri)) {
-        logger.warn(`Invalid redirect_uri for client "${client.name}" from user ${userId}`);
-        throw createError({ statusCode: 400, message: 'Invalid redirect_uri' });
-    }
-
-    if (client.requireEmailVerified) {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { emailVerified: true }
-        });
-        if (!user) {
-            throw createError({ statusCode: 404, message: 'User not found' });
-        }
-        if (!user.emailVerified) {
-            logger.warn(
-                `User ${userId} denied authorization: email not verified, required by client "${client.name}"`
-            );
-            throw createError({
-                statusCode: 403,
-                data: { reason: 'email_not_verified' }
+            const auth = getAuthContext(event);
+            const code = generateCode();
+            await prisma.$transaction(async tx => {
+                await withOAuthGrantLock(tx, auth.userId, request.clientId);
+                const client = await tx.oAuthClient.findUnique({
+                    where: { clientId: request.clientId }
+                });
+                if (!client || !client.redirectUris.includes(request.redirectUri)) {
+                    throw new OAuthProtocolError(
+                        'invalid_request',
+                        'The OAuth client or redirect_uri is no longer valid'
+                    );
+                }
+                const user = await tx.user.findUnique({
+                    where: { id: auth.userId },
+                    select: { authVersion: true, emailVerified: true }
+                });
+                if (!user || user.authVersion !== auth.authVersion) {
+                    throw createError({ statusCode: 401, message: 'Please sign in again' });
+                }
+                if (client.requireEmailVerified && !user.emailVerified) {
+                    throw createError({
+                        statusCode: 403,
+                        message: 'Email verification is required',
+                        data: { reason: 'email_not_verified' }
+                    });
+                }
+                await tx.oAuthAuthorizationCode.create({
+                    data: {
+                        codeHash: hashToken(code),
+                        clientId: request.clientId,
+                        userId: auth.userId,
+                        scopes: request.scopes,
+                        redirectUri: request.redirectUri,
+                        codeChallengeHash:
+                            request.codeChallenge === undefined
+                                ? null
+                                : hashToken(request.codeChallenge),
+                        codeChallengeMethod: request.codeChallengeMethod ?? null,
+                        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                    }
+                });
             });
-        }
-    }
-
-    if (!approved) {
-        logger.info(`User ${userId} denied authorization for client_id=${clientId}`);
-        return { redirect: buildCallbackUrl(redirectUri, { error: 'access_denied', state }) };
-    }
-
-    const code = generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    await prisma.oAuthAuthorizationCode.create({
-        data: {
-            code,
-            clientId,
-            userId,
-            scopes,
-            redirectUri,
-            codeChallenge: codeChallenge || null,
-            codeChallengeMethod: codeChallengeMethod || null,
-            expiresAt
-        }
-    });
-
-    logger.success(
-        `Authorization code issued for user ${userId} → client "${client.name}" (${clientId}), scopes=[${scopes.join(', ')}]`
-    );
-
-    return { redirect: buildCallbackUrl(redirectUri, { code, state }) };
-});
+            callback.searchParams.set('code', code);
+            return { redirect: callback.toString() };
+        },
+        'invalid_request'
+    )
+);

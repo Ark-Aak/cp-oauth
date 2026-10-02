@@ -1,24 +1,48 @@
-import type { H3Event } from 'h3';
+import { createError, type H3Event } from 'h3';
+import { hasC0ControlCharacters } from '../../utils/control-characters';
+
+export function normalizeSiteOrigin(value: unknown): string {
+    const invalidOrigin = () =>
+        createError({
+            statusCode: 503,
+            message: 'NUXT_PUBLIC_SITE_ORIGIN must be an HTTPS origin (HTTP is loopback-only)'
+        });
+
+    if (
+        typeof value !== 'string' ||
+        !value ||
+        hasC0ControlCharacters(value) ||
+        value.includes('\u007f') ||
+        /[\\\s?#]/.test(value)
+    ) {
+        throw invalidOrigin();
+    }
+
+    let url: URL;
+    try {
+        url = new URL(value);
+    } catch {
+        throw invalidOrigin();
+    }
+
+    const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    if (
+        !url.hostname ||
+        url.username ||
+        url.password ||
+        url.pathname !== '/' ||
+        (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback))
+    ) {
+        throw invalidOrigin();
+    }
+
+    return url.origin;
+}
 
 /**
- * Returns the base URL for generating links in outgoing emails
- * (password reset, email verification, etc.).
- *
- * Always reads from the PUBLIC_BASE_URL runtime config.
- * The HTTP Host header is NOT trusted, to prevent Host Header Injection
- * attacks where a forged Host header would cause sensitive tokens
- * (e.g. password reset tokens) to be sent to attacker-controlled domains.
- *
- * @see https://owasp.org/www-community/attacks/Host_Header_Injection
+ * Canonical origin for emails, OAuth callbacks and public metadata.
+ * Request Host and forwarded headers never participate in link generation.
  */
 export function getPublicBaseUrl(_event?: H3Event): string {
-    const config = useRuntimeConfig();
-    const baseUrl = config.publicBaseUrl;
-    if (!baseUrl) {
-        throw createError({
-            statusCode: 500,
-            message: 'PUBLIC_BASE_URL is not configured'
-        });
-    }
-    return baseUrl.replace(/\/+$/, '');
+    return normalizeSiteOrigin(useRuntimeConfig().public.siteOrigin);
 }

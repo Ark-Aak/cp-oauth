@@ -41,7 +41,7 @@
     align-items: center;
     gap: 10px;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 14px;
     flex-wrap: wrap;
 
     &__link {

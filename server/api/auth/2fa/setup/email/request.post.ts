@@ -1,41 +1,11 @@
-import { getUserIdFromEvent } from '~/server/utils/auth';
-import prisma from '~/server/utils/prisma';
-import { sendTwoFactorEmailCode } from '~/server/utils/mailer';
-import {
-    build2faSetupEmailKey,
-    generateSixDigitCode,
-    hashCode,
-    setRedisJson
-} from '~/server/utils/security';
+import { z } from 'zod';
+import { parseBody } from '~/server/utils/validation';
+import { beginTwoFactorSetup } from '~/server/utils/two-factor';
 
 export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true }
-    });
-    if (!user?.email) {
-        throw createError({
-            statusCode: 400,
-            message: 'Email is required before enabling email OTP'
-        });
-    }
-
-    const code = generateSixDigitCode();
-    const sent = await sendTwoFactorEmailCode(user.email, code);
-    if (!sent) {
-        throw createError({ statusCode: 503, message: 'SMTP is not configured' });
-    }
-
-    await setRedisJson(
-        build2faSetupEmailKey(userId),
-        {
-            codeHash: await hashCode(code),
-            method: 'email_otp'
-        },
-        600
+    const body = await parseBody(
+        event,
+        z.object({ reauthToken: z.string().min(1).max(256) }).strict()
     );
-
-    return { success: true };
+    return beginTwoFactorSetup(event, 'email_otp', body.reauthToken);
 });

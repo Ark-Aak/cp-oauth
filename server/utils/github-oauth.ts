@@ -1,23 +1,22 @@
-interface GitHubTokenResponse {
-    access_token: string;
-    token_type?: string;
-    scope?: string;
-}
+import { createError } from 'h3';
+import { z } from 'zod';
 
-interface GitHubEmail {
-    email: string;
-    verified: boolean;
-    primary: boolean;
-    visibility: string | null;
-}
-
-interface GitHubUser {
-    id: number;
-    login: string;
-    name: string | null;
-    avatar_url: string | null;
-    email: string | null;
-}
+const tokenSchema = z.object({
+    access_token: z.string().min(1),
+    token_type: z.string().optional(),
+    scope: z.string().optional()
+});
+type GitHubTokenResponse = z.infer<typeof tokenSchema>;
+const userSchema = z.object({
+    id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    login: z.string().trim().min(1),
+    name: z.string().nullable(),
+    avatar_url: z.string().nullable(),
+    email: z.string().nullable()
+});
+const emailsSchema = z.array(
+    z.object({ email: z.string(), verified: z.boolean(), primary: z.boolean() })
+);
 
 export interface GitHubIdentity {
     platformUid: string;
@@ -52,62 +51,76 @@ export async function exchangeGitHubAuthorizationCode(params: {
     clientSecret: string;
     redirectUri: string;
 }): Promise<GitHubTokenResponse> {
-    const token = await $fetch<GitHubTokenResponse>(GITHUB_TOKEN_URL, {
-        method: 'POST',
-        headers: {
-            accept: 'application/json',
-            'content-type': 'application/json'
-        },
-        body: {
-            client_id: params.clientId,
-            client_secret: params.clientSecret,
-            code: params.code,
-            redirect_uri: params.redirectUri
-        }
-    });
-
-    if (!token.access_token) {
-        throw createError({
-            statusCode: 502,
-            message: 'GitHub token response missing access_token'
+    let response: unknown;
+    try {
+        response = await $fetch(GITHUB_TOKEN_URL, {
+            method: 'POST',
+            timeout: 10_000,
+            retry: 0,
+            headers: { accept: 'application/json', 'content-type': 'application/json' },
+            body: {
+                client_id: params.clientId,
+                client_secret: params.clientSecret,
+                code: params.code,
+                redirect_uri: params.redirectUri
+            }
         });
+    } catch {
+        throw createError({ statusCode: 502, message: 'GitHub token exchange failed' });
     }
 
-    return token;
+    const parsed = tokenSchema.safeParse(response);
+    if (!parsed.success)
+        throw createError({ statusCode: 502, message: 'Invalid GitHub token response' });
+    return parsed.data;
 }
 
 export async function resolveGitHubIdentity(accessToken: string): Promise<GitHubIdentity> {
-    const user = await $fetch<GitHubUser>(GITHUB_USER_URL, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28'
-        }
-    });
-
-    if (!user?.id || !user.login) {
-        throw createError({ statusCode: 502, message: 'Unable to resolve GitHub user identity' });
-    }
-
-    let email = user.email?.trim().toLowerCase() || null;
-    let emailVerified = false;
-
+    let response: unknown;
     try {
-        const emails = await $fetch<GitHubEmail[]>(GITHUB_EMAILS_URL, {
+        response = await $fetch(GITHUB_USER_URL, {
+            timeout: 10_000,
+            retry: 0,
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 accept: 'application/vnd.github+json',
                 'X-GitHub-Api-Version': '2022-11-28'
             }
         });
+    } catch {
+        throw createError({ statusCode: 502, message: 'GitHub identity is unavailable' });
+    }
+
+    const parsed = userSchema.safeParse(response);
+    if (!parsed.success)
+        throw createError({ statusCode: 502, message: 'Unable to resolve GitHub user identity' });
+    const user = parsed.data;
+
+    let email = user.email?.trim().toLowerCase() || null;
+    let emailVerified = false;
+
+    try {
+        const response = await $fetch(GITHUB_EMAILS_URL, {
+            timeout: 10_000,
+            retry: 0,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                accept: 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        });
+        const parsedEmails = emailsSchema.safeParse(response);
+        if (!parsedEmails.success)
+            throw createError({ statusCode: 502, message: 'Invalid GitHub email response' });
+        const emails = parsedEmails.data;
 
         const primary = emails.find(item => item.primary) || emails.find(item => item.verified);
         if (primary) {
             email = primary.email.trim().toLowerCase();
-            emailVerified = Boolean(primary.verified);
+            emailVerified = primary.verified === true;
         }
     } catch {
-        // ignore secondary email fetch failure
+        // An unavailable email endpoint cannot establish a verified email identity.
     }
 
     return {

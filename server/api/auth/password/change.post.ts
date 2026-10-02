@@ -1,55 +1,61 @@
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
+import { createError, defineEventHandler } from 'h3';
 import prisma from '~/server/utils/prisma';
-import { getUserIdFromEvent, revokeAllUserAuthSessions } from '~/server/utils/auth';
+import { assertAuthState, finishSensitiveMutation, lockAuthUser } from '~/server/utils/auth';
+import { requireFreshReauthentication } from '~/server/utils/auth-completion';
+import { parseBody } from '~/server/utils/validation';
+import { newPasswordSchema } from '~/utils/validation';
+
+const passwordChangeSchema = z.strictObject({
+    currentPassword: z.string().min(1).optional(),
+    newPassword: newPasswordSchema,
+    reauthToken: z.string().min(1).max(256).optional()
+});
 
 export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-    const body = await readBody(event);
-    const currentPassword = String(body?.currentPassword || '');
-    const newPassword = String(body?.newPassword || '');
+    const body = await parseBody(event, passwordChangeSchema);
+    const state = await requireFreshReauthentication(event, 'password_change', body.reauthToken);
 
-    if (!currentPassword || !newPassword) {
-        throw createError({
-            statusCode: 400,
-            message: 'Current password and new password are required'
+    if (body.currentPassword !== undefined) {
+        const user = await prisma.user.findUnique({
+            where: { id: state.userId },
+            select: { passwordHash: true }
         });
+        if (!user) throw createError({ statusCode: 404, message: 'User not found' });
+        if (!(await bcrypt.compare(body.currentPassword, user.passwordHash))) {
+            throw createError({ statusCode: 401, message: 'Current password is incorrect' });
+        }
     }
 
-    if (newPassword.length < 8) {
-        throw createError({ statusCode: 400, message: 'Password must be at least 8 characters' });
-    }
-
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, passwordHash: true }
-    });
-
-    if (!user) {
-        throw createError({ statusCode: 404, message: 'User not found' });
-    }
-
-    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) {
-        throw createError({ statusCode: 401, message: 'Current password is incorrect' });
-    }
-
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
-    await prisma.$transaction([
-        prisma.user.update({
-            where: { id: user.id },
+    const passwordHash = await bcrypt.hash(body.newPassword, 10);
+    const user = await prisma.$transaction(async tx => {
+        await lockAuthUser(tx, state.userId);
+        await assertAuthState(event, state);
+        const updated = await tx.user.update({
+            where: { id: state.userId },
             data: {
-                passwordHash: newPasswordHash
-            }
-        }),
-        prisma.oAuthAccessToken.deleteMany({
-            where: { userId: user.id }
-        }),
-        prisma.oAuthRefreshToken.updateMany({
-            where: { userId: user.id, revoked: false },
+                passwordHash,
+                passwordResetToken: null,
+                passwordResetExpiresAt: null,
+                pendingEmail: null,
+                pendingEmailTokenHash: null,
+                pendingEmailExpiresAt: null,
+                authVersion: { increment: 1 }
+            },
+            select: { authVersion: true }
+        });
+        await tx.oAuthAuthorizationCode.deleteMany({
+            where: { userId: state.userId, used: false }
+        });
+        await tx.oAuthAccessToken.deleteMany({ where: { userId: state.userId } });
+        await tx.oAuthRefreshToken.updateMany({
+            where: { userId: state.userId, revoked: false },
             data: { revoked: true }
-        })
-    ]);
-    await revokeAllUserAuthSessions(user.id);
+        });
+        return updated;
+    });
+    await finishSensitiveMutation(event, state.userId, user.authVersion);
 
     return { success: true };
 });

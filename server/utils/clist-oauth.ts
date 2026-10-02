@@ -1,24 +1,34 @@
-import crypto from 'crypto';
-import { consola } from 'consola';
-import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH, isValidUsername } from '~/utils/username';
+import { randomBytes, createHash } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
+import { createError, isError } from 'h3';
+import { z } from 'zod';
 import prisma from './prisma';
 import { clistFetch } from './clist-fetch';
 import { getConfig } from './config';
-
-const logger = consola.withTag('auth:clist');
+import { getRedis } from './redis';
+import { deleteRedisKeyIfValue } from './security';
+import { decryptLinkedAccountToken, encryptLinkedAccountTokens } from './linked-account-tokens';
 
 const CLIST_BASE_URL = 'https://clist.by';
 const CLIST_AUTH_URL = 'https://clist.by/o/authorize/';
 const CLIST_TOKEN_URL = 'https://clist.by/o/token/';
 const CLIST_CODER_ME_URL = 'https://clist.by/api/v4/json/coder/me/';
 
-interface ClistTokenResponse {
+export interface ClistTokenResponse {
     access_token: string;
     token_type?: string;
     expires_in?: number;
     refresh_token?: string;
     scope?: string;
 }
+
+const tokenResponseSchema = z.object({
+    access_token: z.string().min(1),
+    token_type: z.string().optional(),
+    expires_in: z.number().finite().positive().optional(),
+    refresh_token: z.string().optional(),
+    scope: z.string().optional()
+});
 
 export interface ClistIdentity {
     platformUid: string;
@@ -29,17 +39,13 @@ export interface ClistIdentity {
     avatarUrl: string | null;
 }
 
-// --- PKCE helpers ---
-
 export function generateCodeVerifier(): string {
-    return crypto.randomBytes(32).toString('base64url');
+    return randomBytes(32).toString('base64url');
 }
 
 export function generateCodeChallenge(verifier: string): string {
-    return crypto.createHash('sha256').update(verifier).digest('base64url');
+    return createHash('sha256').update(verifier).digest('base64url');
 }
-
-// --- Authorization URL ---
 
 export function buildClistAuthorizationUrl(params: {
     clientId: string;
@@ -58,7 +64,35 @@ export function buildClistAuthorizationUrl(params: {
     return url.toString();
 }
 
-// --- Token exchange ---
+async function requestClistJson<T extends z.ZodType>(
+    params: Parameters<typeof clistFetch>[0],
+    schema: T
+): Promise<z.output<T>> {
+    let result;
+    try {
+        result = await clistFetch(params);
+    } catch (error) {
+        const statusCode =
+            isError(error) && [503, 504].includes(error.statusCode) ? error.statusCode : 502;
+        throw createError({ statusCode, message: 'Clist provider request failed' });
+    }
+    if (result.error || result.status < 200 || result.status >= 300) {
+        throw createError({
+            statusCode: result.error === 'timeout' ? 504 : 502,
+            message: 'Clist provider request failed'
+        });
+    }
+    let value: unknown;
+    try {
+        value = JSON.parse(result.body);
+    } catch {
+        throw createError({ statusCode: 502, message: 'Invalid Clist provider response' });
+    }
+    const parsed = schema.safeParse(value);
+    if (!parsed.success)
+        throw createError({ statusCode: 502, message: 'Invalid Clist provider response' });
+    return parsed.data;
+}
 
 export async function exchangeClistAuthorizationCode(params: {
     code: string;
@@ -67,372 +101,184 @@ export async function exchangeClistAuthorizationCode(params: {
     redirectUri: string;
     codeVerifier: string;
 }): Promise<ClistTokenResponse> {
-    const formData: Record<string, string> = {
-        grant_type: 'authorization_code',
-        code: params.code,
-        client_id: params.clientId,
-        client_secret: params.clientSecret,
-        redirect_uri: params.redirectUri,
-        code_verifier: params.codeVerifier
-    };
-
-    let result;
-    try {
-        result = await clistFetch({
+    const token = await requestClistJson(
+        {
             method: 'POST',
             url: CLIST_TOKEN_URL,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 Accept: 'application/json'
             },
-            data: formData,
+            data: {
+                grant_type: 'authorization_code',
+                code: params.code,
+                client_id: params.clientId,
+                client_secret: params.clientSecret,
+                redirect_uri: params.redirectUri,
+                code_verifier: params.codeVerifier
+            },
             sessionInit: CLIST_BASE_URL
-        });
-    } catch (error: unknown) {
-        const err = error as { statusCode?: number; message?: string };
-        throw createError({
-            statusCode: err.statusCode || 502,
-            message: `Clist token exchange failed: ${err.message || 'Unknown error'}`
-        });
-    }
-
-    if (result.error) {
-        throw createError({
-            statusCode: 502,
-            message: `Clist token exchange failed: ${result.error}`
-        });
-    }
-
-    if (result.status >= 400) {
-        let detail = `HTTP ${result.status}`;
-        try {
-            const parsed = JSON.parse(result.body) as {
-                error?: string;
-                error_description?: string;
-            };
-            detail = parsed.error_description || parsed.error || detail;
-        } catch {
-            // body is not JSON
-        }
-        throw createError({
-            statusCode: result.status === 401 ? 401 : 502,
-            message: `Clist token exchange failed: ${detail}`
-        });
-    }
-
-    let token: ClistTokenResponse;
-    try {
-        token = JSON.parse(result.body) as ClistTokenResponse;
-    } catch {
-        throw createError({
-            statusCode: 502,
-            message: 'Clist token response is not valid JSON'
-        });
-    }
-
-    if (!token.access_token) {
-        throw createError({
-            statusCode: 502,
-            message: 'Clist token response missing access_token'
-        });
-    }
+        },
+        tokenResponseSchema
+    );
     return token;
 }
 
-// --- Token refresh ---
-
-/**
- * Use a refresh_token to obtain a new access_token from Clist.by.
- */
 export async function refreshClistAccessToken(refreshToken: string): Promise<ClistTokenResponse> {
-    const clientId = (await getConfig('clist_client_id')).trim();
-    const clientSecret = (await getConfig('clist_client_secret')).trim();
+    const config = await getConfig(['clist_client_id', 'clist_client_secret']);
+    const clientId = config.clist_client_id.trim();
+    const clientSecret = config.clist_client_secret.trim();
     if (!clientId || !clientSecret) {
         throw createError({ statusCode: 503, message: 'Clist OAuth is not configured' });
     }
-
-    const formData: Record<string, string> = {
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: clientId,
-        client_secret: clientSecret
-    };
-
-    let result;
-    try {
-        result = await clistFetch({
+    const token = await requestClistJson(
+        {
             method: 'POST',
             url: CLIST_TOKEN_URL,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 Accept: 'application/json'
             },
-            data: formData,
+            data: {
+                grant_type: 'refresh_token',
+                refresh_token: refreshToken,
+                client_id: clientId,
+                client_secret: clientSecret
+            },
             sessionInit: CLIST_BASE_URL
-        });
-    } catch (error: unknown) {
-        const err = error as { message?: string };
-        throw createError({
-            statusCode: 502,
-            message: `Clist token refresh failed: ${err.message || 'Unknown error'}`
-        });
-    }
-
-    if (result.error) {
-        throw createError({
-            statusCode: 502,
-            message: `Clist token refresh failed: ${result.error}`
-        });
-    }
-
-    if (result.status >= 400) {
-        let detail = `HTTP ${result.status}`;
-        try {
-            const parsed = JSON.parse(result.body) as {
-                error?: string;
-                error_description?: string;
-            };
-            detail = parsed.error_description || parsed.error || detail;
-        } catch {
-            // not JSON
-        }
-        throw createError({
-            statusCode: 502,
-            message: `Clist token refresh failed: ${detail}`
-        });
-    }
-
-    let token: ClistTokenResponse;
-    try {
-        token = JSON.parse(result.body) as ClistTokenResponse;
-    } catch {
-        throw createError({
-            statusCode: 502,
-            message: 'Clist token refresh response is not valid JSON'
-        });
-    }
-
-    if (!token.access_token) {
-        throw createError({
-            statusCode: 502,
-            message: 'Clist token refresh response missing access_token'
-        });
-    }
+        },
+        tokenResponseSchema
+    );
     return token;
 }
 
-/**
- * Get a valid Clist access token for a linked account.
- * If the token is expired and a refresh_token exists, refresh it and update the DB.
- * Returns the valid access token string, or null if unavailable.
- */
 export async function getValidClistAccessToken(linkedAccountId: string): Promise<string | null> {
-    const account = await prisma.linkedAccount.findUnique({
+    const query = {
         where: { id: linkedAccountId },
         select: {
+            platform: true,
             oauthAccessToken: true,
             oauthRefreshToken: true,
             oauthExpiresAt: true
         }
-    });
-
-    if (!account?.oauthAccessToken) {
-        return null;
-    }
-
-    // Check if token is still valid (with 60s buffer)
-    const isExpired =
-        account.oauthExpiresAt && account.oauthExpiresAt.getTime() < Date.now() + 60_000;
-
-    if (!isExpired) {
-        return account.oauthAccessToken;
-    }
-
-    // Token expired — try to refresh
-    if (!account.oauthRefreshToken) {
-        logger.warn(`Clist access token expired for account=${linkedAccountId}, no refresh token`);
-        return null;
-    }
-
-    logger.info(`Clist access token expired for account=${linkedAccountId}, refreshing...`);
-
+    } as const;
+    const account = await prisma.linkedAccount.findUnique(query);
+    if (!account || account.platform !== 'clist' || !account.oauthAccessToken) return null;
+    const accessToken = decryptLinkedAccountToken(
+        linkedAccountId,
+        'oauthAccessToken',
+        account.oauthAccessToken
+    );
+    if (!account.oauthExpiresAt || account.oauthExpiresAt.getTime() > Date.now() + 60_000)
+        return accessToken;
+    if (!account.oauthRefreshToken) return null;
+    const lockKey = `clist:refresh:${linkedAccountId}`;
+    const owner = randomBytes(32).toString('base64url');
+    let acquired: string | null;
     try {
-        const newToken = await refreshClistAccessToken(account.oauthRefreshToken);
-
+        acquired = await getRedis().set(lockKey, owner, 'PX', 30_000, 'NX');
+    } catch {
+        return null;
+    }
+    if (acquired !== 'OK') {
+        const deadline = Date.now() + 25_000;
+        while (Date.now() < deadline) {
+            await delay(250);
+            const current = await prisma.linkedAccount.findUnique(query);
+            if (!current?.oauthAccessToken || current.platform !== 'clist') return null;
+            if (!current.oauthExpiresAt || current.oauthExpiresAt.getTime() > Date.now() + 60_000) {
+                return decryptLinkedAccountToken(
+                    linkedAccountId,
+                    'oauthAccessToken',
+                    current.oauthAccessToken
+                );
+            }
+        }
+        return null;
+    }
+    try {
+        const current = await prisma.linkedAccount.findUnique(query);
+        if (!current?.oauthAccessToken || current.platform !== 'clist') return null;
+        if (!current.oauthExpiresAt || current.oauthExpiresAt.getTime() > Date.now() + 60_000) {
+            return decryptLinkedAccountToken(
+                linkedAccountId,
+                'oauthAccessToken',
+                current.oauthAccessToken
+            );
+        }
+        const refreshToken = decryptLinkedAccountToken(
+            linkedAccountId,
+            'oauthRefreshToken',
+            current.oauthRefreshToken
+        );
+        if (!refreshToken) return null;
+        let token: ClistTokenResponse;
+        try {
+            token = await refreshClistAccessToken(refreshToken);
+        } catch (error) {
+            if (isError(error) && error.statusCode === 503) throw error;
+            return null;
+        }
         const expiresAt =
-            typeof newToken.expires_in === 'number' && Number.isFinite(newToken.expires_in)
-                ? new Date(Date.now() + newToken.expires_in * 1000)
+            typeof token.expires_in === 'number' &&
+            Number.isFinite(token.expires_in) &&
+            token.expires_in > 0
+                ? new Date(Date.now() + token.expires_in * 1000)
                 : null;
-
-        await prisma.linkedAccount.update({
-            where: { id: linkedAccountId },
+        const updated = await prisma.linkedAccount.updateMany({
+            where: {
+                id: linkedAccountId,
+                oauthRefreshToken: current.oauthRefreshToken,
+                oauthAccessToken: current.oauthAccessToken
+            },
             data: {
-                oauthAccessToken: newToken.access_token,
-                oauthRefreshToken: newToken.refresh_token || account.oauthRefreshToken,
-                oauthExpiresAt: expiresAt
+                ...encryptLinkedAccountTokens(linkedAccountId, {
+                    oauthAccessToken: token.access_token,
+                    oauthRefreshToken: token.refresh_token || refreshToken
+                }),
+                oauthExpiresAt: expiresAt,
+                oauthTokenType: token.token_type || null,
+                oauthScope: token.scope || null
             }
         });
-
-        logger.info(`Clist token refreshed and saved for account=${linkedAccountId}`);
-        return newToken.access_token;
-    } catch (e: unknown) {
-        const err = e as { message?: string };
-        logger.warn(`Failed to refresh Clist token for account=${linkedAccountId}: ${err.message}`);
-        // Return the old token as a fallback — it might still work
-        return account.oauthAccessToken;
+        return updated.count === 1 ? token.access_token : null;
+    } finally {
+        try {
+            await deleteRedisKeyIfValue(lockKey, owner);
+        } catch {
+            // The bounded lock expires even if Redis disconnects after the database update.
+        }
     }
 }
 
-// --- Identity resolution ---
-
-interface ClistCoderMeResponse {
-    id?: number;
-    handle?: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    country?: string;
-    display_name?: string;
-    is_virtual?: boolean;
-}
+const coderResponseSchema = z.object({
+    id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    handle: z.string().trim().min(1),
+    first_name: z.string().nullish(),
+    last_name: z.string().nullish(),
+    email: z.string().nullish(),
+    display_name: z.string().nullish()
+});
 
 export async function resolveClistIdentity(accessToken: string): Promise<ClistIdentity> {
-    let result;
-    try {
-        result = await clistFetch({
+    const coder = await requestClistJson(
+        {
             method: 'GET',
             url: CLIST_CODER_ME_URL,
-            headers: {
-                Authorization: `Bearer ${accessToken}`
-            },
+            headers: { Authorization: `Bearer ${accessToken}` },
             sessionInit: CLIST_BASE_URL
-        });
-    } catch (error: unknown) {
-        const err = error as { statusCode?: number; message?: string };
-        logger.warn(`Failed to fetch Clist user info: ${err.message}`);
-        throw createError({
-            statusCode: err.statusCode || 502,
-            message: 'Failed to fetch Clist user info'
-        });
-    }
-
-    if (result.error) {
-        logger.warn(`Failed to fetch Clist user info: ${result.error}`);
-        throw createError({
-            statusCode: 502,
-            message: 'Failed to fetch Clist user info'
-        });
-    }
-
-    if (result.status >= 400) {
-        logger.warn(`Clist user info returned HTTP ${result.status}: ${result.body.slice(0, 200)}`);
-        throw createError({
-            statusCode: result.status === 401 ? 401 : 502,
-            message: 'Failed to fetch Clist user info'
-        });
-    }
-
-    let coder: ClistCoderMeResponse;
-    try {
-        const body = result.body.trim();
-        if (!body || body.startsWith('<!') || body.startsWith('<html')) {
-            throw new Error('Response is HTML, not JSON');
-        }
-        coder = JSON.parse(body) as ClistCoderMeResponse;
-    } catch (parseErr: unknown) {
-        const msg = parseErr instanceof Error ? parseErr.message : 'Unknown parse error';
-        logger.warn(
-            `Clist user info response is not valid JSON: ${msg}, body: ${result.body.slice(0, 300)}`
-        );
-        throw createError({
-            statusCode: 502,
-            message: 'Clist user info response is not valid JSON'
-        });
-    }
-
-    if (!coder.id && !coder.handle) {
-        throw createError({
-            statusCode: 502,
-            message: 'Unable to resolve Clist user identity'
-        });
-    }
-
-    const platformUid = String(coder.id || coder.handle);
-    const platformUsername = coder.handle || platformUid;
-    const firstName = coder.first_name?.trim() || '';
-    const lastName = coder.last_name?.trim() || '';
-    const displayName =
-        coder.display_name?.trim() || [firstName, lastName].filter(Boolean).join(' ') || null;
-    const email = coder.email?.trim().toLowerCase() || null;
-
+        },
+        coderResponseSchema
+    );
+    const firstName = typeof coder.first_name === 'string' ? coder.first_name.trim() : '';
+    const lastName = typeof coder.last_name === 'string' ? coder.last_name.trim() : '';
     return {
-        platformUid,
-        platformUsername,
-        email,
+        platformUid: String(coder.id),
+        platformUsername: coder.handle,
+        email: typeof coder.email === 'string' ? coder.email.trim().toLowerCase() || null : null,
         emailVerified: false,
-        displayName,
+        displayName:
+            coder.display_name?.trim() || [firstName, lastName].filter(Boolean).join(' ') || null,
         avatarUrl: null
     };
-}
-
-// --- Username helpers (reused pattern from codeforces-oauth.ts) ---
-
-function sanitizeUsername(candidate: string): string {
-    const normalized = candidate
-        .trim()
-        .toLowerCase()
-        .replace(/[^A-Za-z0-9_]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_+|_+$/g, '');
-
-    const fallback = normalized.length > 0 ? normalized : 'clist_user';
-    const clipped = fallback.slice(0, USERNAME_MAX_LENGTH);
-    if (clipped.length >= USERNAME_MIN_LENGTH) {
-        return clipped;
-    }
-    return `${clipped}${'x'.repeat(USERNAME_MIN_LENGTH - clipped.length)}`;
-}
-
-export async function getClistUniqueUsername(base: string): Promise<string> {
-    const sanitized = sanitizeUsername(base);
-    if (isValidUsername(sanitized)) {
-        const exists = await prisma.user.findFirst({
-            where: {
-                username: {
-                    equals: sanitized,
-                    mode: 'insensitive'
-                }
-            },
-            select: { id: true }
-        });
-        if (!exists) {
-            return sanitized;
-        }
-    }
-
-    for (let i = 1; i <= 9999; i += 1) {
-        const suffix = `_${i}`;
-        const head = sanitized.slice(0, USERNAME_MAX_LENGTH - suffix.length);
-        const candidate = `${head}${suffix}`;
-        if (!isValidUsername(candidate)) {
-            continue;
-        }
-        const exists = await prisma.user.findFirst({
-            where: {
-                username: {
-                    equals: candidate,
-                    mode: 'insensitive'
-                }
-            },
-            select: { id: true }
-        });
-        if (!exists) {
-            return candidate;
-        }
-    }
-
-    throw createError({
-        statusCode: 500,
-        message: 'Unable to allocate username for Clist user'
-    });
 }

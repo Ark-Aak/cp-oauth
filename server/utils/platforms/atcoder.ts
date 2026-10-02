@@ -1,7 +1,5 @@
-import { consola } from 'consola';
+import { createError } from 'h3';
 import type { PlatformVerifier, VerifyResult } from './types';
-
-const logger = consola.withTag('platform:atcoder');
 
 function decodeHtmlEntities(input: string): string {
     return input
@@ -51,13 +49,13 @@ export const atcoderVerifier: PlatformVerifier = {
 
         void credential;
 
-        logger.info(`Verifying AtCoder profile for username=${username}`);
-
         try {
             const html = await $fetch<string>(
                 `https://atcoder.jp/users/${encodeURIComponent(username)}`,
                 {
                     responseType: 'text',
+                    timeout: 10_000,
+                    retry: 0,
                     headers: {
                         'user-agent': 'CP-OAuth/1.0 (+https://atcoder.jp)'
                     }
@@ -66,7 +64,6 @@ export const atcoderVerifier: PlatformVerifier = {
 
             const affiliation = extractAffiliation(html);
             if (!affiliation) {
-                logger.warn(`Affiliation row not found for username=${username}`);
                 return {
                     success: false,
                     platformUid: username,
@@ -75,7 +72,6 @@ export const atcoderVerifier: PlatformVerifier = {
             }
 
             if (!affiliation.includes(code)) {
-                logger.warn(`Verification code not found in affiliation for username=${username}`);
                 return {
                     success: false,
                     platformUid: username,
@@ -83,26 +79,20 @@ export const atcoderVerifier: PlatformVerifier = {
                 };
             }
 
-            logger.success(`Verified: username=${username}`);
             return {
                 success: true,
                 platformUid: username,
                 platformUsername: username
             };
         } catch (e: unknown) {
-            const err = e as { statusCode?: number; message?: string };
-            if (err.statusCode === 404) {
+            if (e && typeof e === 'object' && 'statusCode' in e && e.statusCode === 404) {
                 return {
                     success: false,
                     platformUid: username,
                     error: 'AtCoder user not found'
                 };
             }
-            return {
-                success: false,
-                platformUid: username,
-                error: err.message || 'Verification failed'
-            };
+            throw createError({ statusCode: 502, message: 'Failed to fetch AtCoder profile' });
         }
     }
 };

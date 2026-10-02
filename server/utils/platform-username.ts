@@ -1,125 +1,112 @@
-import { consola } from 'consola';
-import { getCodeforcesDiscoveryMetadata, resolveCodeforcesIdentity } from './codeforces-oauth';
+import { createError } from 'h3';
+import { z } from 'zod';
 import { resolveGitHubIdentity } from './github-oauth';
 import { resolveClistIdentity } from './clist-oauth';
 
-const logger = consola.withTag('platform-username');
-const LUOGU_USER_AGENT = 'Mozilla/5.0 (compatible; CPOAuth/1.0)';
-
 export interface RefreshUsernameContext {
     platformUid: string;
+    platformUsername?: string | null;
     oauthAccessToken?: string | null;
-    oauthIdToken?: string | null;
-    oauthTokenType?: string | null;
 }
 
 type UsernameFetcher = (context: RefreshUsernameContext) => Promise<string | null>;
 
-interface LuoguLentilleResponse {
-    data: {
-        user: {
-            uid: number;
-            name: string;
-        };
-    };
-}
-
-interface CodeforcesUserInfoResponse {
-    status: string;
-    result: { handle: string }[];
-}
+const luoguUserSchema = z.object({
+    data: z.object({
+        user: z.object({
+            uid: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+            name: z.string().min(1)
+        })
+    })
+});
+const codeforcesUserSchema = z.object({
+    status: z.literal('OK'),
+    result: z.array(z.object({ handle: z.string().min(1) })).length(1)
+});
 
 async function fetchLuoguUsername(context: RefreshUsernameContext): Promise<string | null> {
-    const platformUid = context.platformUid;
+    let response: unknown;
     try {
-        const res = await $fetch<LuoguLentilleResponse>(
-            `https://www.luogu.com/user/${encodeURIComponent(platformUid)}`,
+        response = await $fetch(
+            `https://www.luogu.com/user/${encodeURIComponent(context.platformUid)}`,
             {
+                timeout: 10_000,
+                retry: 0,
                 headers: {
-                    'user-agent': LUOGU_USER_AGENT,
+                    'user-agent': 'Mozilla/5.0 (compatible; CPOAuth/1.0)',
                     'x-lentille-request': 'content-only'
                 }
             }
         );
-        return res.data?.user?.name || null;
-    } catch (e: unknown) {
-        const err = e as { statusCode?: number; message?: string };
-        logger.warn(`Failed to fetch Luogu username for uid=${platformUid}: ${err.message}`);
-        return null;
+    } catch (error) {
+        if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 404)
+            return null;
+        throw createError({ statusCode: 502, message: 'Failed to fetch Luogu username' });
     }
+    const parsed = luoguUserSchema.safeParse(response);
+    if (!parsed.success || String(parsed.data.data.user.uid) !== context.platformUid) {
+        throw createError({ statusCode: 502, message: 'Invalid Luogu user response' });
+    }
+    return parsed.data.data.user.name;
 }
 
 async function fetchCodeforcesUsername(context: RefreshUsernameContext): Promise<string | null> {
-    const platformUid = context.platformUid;
-    if (context.oauthAccessToken) {
-        try {
-            const discovery = await getCodeforcesDiscoveryMetadata();
-            const identity = await resolveCodeforcesIdentity({
-                token: {
-                    access_token: context.oauthAccessToken,
-                    id_token: context.oauthIdToken || undefined,
-                    token_type: context.oauthTokenType || undefined
-                },
-                discovery
-            });
-            return identity.platformUsername || null;
-        } catch (e: unknown) {
-            const err = e as { message?: string };
-            logger.warn(
-                `Failed to fetch Codeforces username via OAuth for uid=${platformUid}: ${err.message}`
-            );
-        }
+    // Numeric OIDC sub is not a handle, and a stored/expired id_token is never an identity source.
+    if (!context.platformUsername) {
+        throw createError({
+            statusCode: 502,
+            message: 'No previously verified Codeforces handle is available'
+        });
     }
-
+    let response: unknown;
     try {
-        const res = await $fetch<CodeforcesUserInfoResponse>(
-            `https://codeforces.com/api/user.info?handles=${encodeURIComponent(platformUid)}`
-        );
-        if (res.status === 'OK' && res.result?.length > 0) {
-            return res.result[0]?.handle || null;
-        }
-        return null;
-    } catch (e: unknown) {
-        const err = e as { statusCode?: number; message?: string };
-        logger.warn(
-            `Failed to fetch Codeforces username for handle=${platformUid}: ${err.message}`
-        );
-        return null;
+        response = await $fetch('https://codeforces.com/api/user.info', {
+            query: { handles: context.platformUsername },
+            timeout: 10_000,
+            retry: 0
+        });
+    } catch {
+        throw createError({ statusCode: 502, message: 'Failed to confirm Codeforces handle' });
     }
+    const parsed = codeforcesUserSchema.safeParse(response);
+    const handle = parsed.success ? parsed.data.result[0]!.handle : null;
+    if (!handle || handle.toLowerCase() !== context.platformUsername.toLowerCase()) {
+        throw createError({
+            statusCode: 502,
+            message: 'Unable to confirm the previously verified Codeforces handle'
+        });
+    }
+    return handle;
 }
 
 async function fetchGithubUsername(context: RefreshUsernameContext): Promise<string | null> {
-    const platformUid = context.platformUid;
-    if (!context.oauthAccessToken) {
-        logger.warn(`Missing GitHub access token for uid=${platformUid}`);
-        return null;
-    }
-
-    try {
-        const identity = await resolveGitHubIdentity(context.oauthAccessToken);
-        return identity.platformUsername || null;
-    } catch (e: unknown) {
-        const err = e as { message?: string };
-        logger.warn(`Failed to fetch GitHub username for uid=${platformUid}: ${err.message}`);
-        return null;
-    }
+    if (!context.oauthAccessToken)
+        throw createError({
+            statusCode: 409,
+            message: 'Sign in with your linked GitHub account to refresh its credentials'
+        });
+    const identity = await resolveGitHubIdentity(context.oauthAccessToken);
+    if (identity.platformUid !== context.platformUid)
+        throw createError({
+            statusCode: 502,
+            message: 'GitHub credentials do not match the linked account'
+        });
+    return identity.platformUsername;
 }
 
 async function fetchClistUsername(context: RefreshUsernameContext): Promise<string | null> {
-    const platformUid = context.platformUid;
-    if (!context.oauthAccessToken) {
-        logger.warn(`Missing Clist access token for uid=${platformUid}`);
-        return null;
-    }
-
-    try {
-        const identity = await resolveClistIdentity(context.oauthAccessToken);
-        return identity.platformUsername || null;
-    } catch (e: unknown) {
-        const err = e as { message?: string };
-        logger.warn(`Failed to fetch Clist username for uid=${platformUid}: ${err.message}`);
-        return null;
-    }
+    if (!context.oauthAccessToken)
+        throw createError({
+            statusCode: 502,
+            message: 'A valid Clist access token is unavailable'
+        });
+    const identity = await resolveClistIdentity(context.oauthAccessToken);
+    if (identity.platformUid !== context.platformUid)
+        throw createError({
+            statusCode: 502,
+            message: 'Clist credentials do not match the linked account'
+        });
+    return identity.platformUsername;
 }
 
 const fetchers: Record<string, UsernameFetcher> = {
@@ -130,16 +117,17 @@ const fetchers: Record<string, UsernameFetcher> = {
 };
 
 export function canRefreshUsername(platform: string): boolean {
-    return platform in fetchers;
+    return Object.hasOwn(fetchers, platform);
 }
 
 export async function fetchPlatformUsername(
     platform: string,
     context: RefreshUsernameContext
 ): Promise<string | null> {
-    const fetcher = fetchers[platform];
-    if (!fetcher) {
-        return null;
-    }
-    return fetcher(context);
+    if (!Object.hasOwn(fetchers, platform))
+        throw createError({
+            statusCode: 400,
+            message: 'Username refresh is not supported for this platform'
+        });
+    return fetchers[platform]!(context);
 }

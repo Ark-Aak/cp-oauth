@@ -1,5 +1,23 @@
 import prisma from '~/server/utils/prisma';
 import { getRedis } from '~/server/utils/redis';
+import { httpUrlSchema } from '~/utils/validation';
+
+interface PublicShowcaseItem {
+    id: string;
+    category: string;
+    name: string;
+    description: string;
+    url: string | null;
+    iconUrl: string | null;
+}
+
+function sanitizeUrls(item: PublicShowcaseItem): PublicShowcaseItem {
+    return {
+        ...item,
+        url: httpUrlSchema.safeParse(item.url).success ? item.url : null,
+        iconUrl: httpUrlSchema.safeParse(item.iconUrl).success ? item.iconUrl : null
+    };
+}
 
 const CACHE_KEY = 'public:showcase';
 const CACHE_TTL = 300; // 5 minutes
@@ -9,7 +27,16 @@ export default defineEventHandler(async () => {
 
     try {
         const cached = await redis.get(CACHE_KEY);
-        if (cached) return JSON.parse(cached);
+        if (cached) {
+            const result = JSON.parse(cached) as {
+                sites: PublicShowcaseItem[];
+                projects: PublicShowcaseItem[];
+            };
+            return {
+                sites: result.sites.map(sanitizeUrls),
+                projects: result.projects.map(sanitizeUrls)
+            };
+        }
     } catch {
         // Redis unavailable
     }
@@ -27,8 +54,8 @@ export default defineEventHandler(async () => {
     });
 
     const result = {
-        sites: items.filter(i => i.category === 'site'),
-        projects: items.filter(i => i.category === 'project')
+        sites: items.filter(i => i.category === 'site').map(sanitizeUrls),
+        projects: items.filter(i => i.category === 'project').map(sanitizeUrls)
     };
 
     try {

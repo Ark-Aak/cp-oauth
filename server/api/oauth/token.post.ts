@@ -1,271 +1,210 @@
-import { consola } from 'consola';
+import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import type { Prisma } from '@prisma/client';
 import prisma from '~/server/utils/prisma';
-import { verifyPKCE, generateRefreshToken, authenticateOAuthClient } from '~/server/utils/oauth';
+import { hashToken } from '~/server/utils/token-hash';
+import {
+    authenticateOAuthClient,
+    generateRefreshToken,
+    handleOAuthRequest,
+    OAuthProtocolError,
+    PKCE_VERIFIER_PATTERN,
+    validateScopes,
+    verifyPKCE,
+    withOAuthGrantLock
+} from '~/server/utils/oauth';
+import {
+    parseOAuthScopes,
+    readOAuthTokenBody,
+    requireOAuthParameter
+} from '~/server/utils/oauth-request';
 
-const logger = consola.withTag('oauth:token');
+const ACCESS_TOKEN_EXPIRES_IN = 3600;
+const REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 3600;
 
-const ACCESS_TOKEN_EXPIRES_IN = 3600; // 1 hour
-const REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 3600; // 30 days
-type TokenTransaction = Prisma.TransactionClient;
-
-function issueAccessToken(userId: string, clientId: string, scopes: string[]) {
-    const config = useRuntimeConfig();
+/** Called only after conditional grant consumption, and rolled back with that consumption. */
+async function issueOAuthTokens(
+    tx: Prisma.TransactionClient,
+    grant: { userId: string; clientId: string; scopes: string[]; clientAuthRequired: boolean }
+) {
+    const now = Date.now();
     const accessToken = jwt.sign(
         {
-            sub: userId,
-            client_id: clientId,
-            scopes,
+            sub: grant.userId,
+            client_id: grant.clientId,
+            scopes: grant.scopes,
             type: 'oauth_access'
         },
-        config.jwtSecret,
-        { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+        useRuntimeConfig().jwtSecret,
+        {
+            algorithm: 'HS256',
+            jwtid: randomUUID(),
+            expiresIn: ACCESS_TOKEN_EXPIRES_IN
+        }
     );
-    return accessToken;
-}
-
-async function handleAuthorizationCode(body: Record<string, string>) {
-    const {
-        code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        client_secret: clientSecret,
-        code_verifier: codeVerifier
-    } = body;
-
-    if (!code || !redirectUri || !clientId) {
-        logger.warn('Rejected: missing required parameters in token request');
-        throw createError({
-            statusCode: 400,
-            message: 'Missing required parameters: code, redirect_uri, client_id'
-        });
-    }
-
-    const authCode = await prisma.oAuthAuthorizationCode.findUnique({ where: { code } });
-    if (!authCode) {
-        logger.warn(`Rejected: invalid authorization code from client_id=${clientId}`);
-        throw createError({ statusCode: 400, message: 'Invalid authorization code' });
-    }
-
-    if (authCode.used) {
-        logger.warn(
-            `Rejected: code reuse attempt from client_id=${clientId}, user=${authCode.userId}`
-        );
-        throw createError({ statusCode: 400, message: 'Authorization code already used' });
-    }
-
-    if (authCode.expiresAt < new Date()) {
-        logger.warn(`Rejected: expired code from client_id=${clientId}, user=${authCode.userId}`);
-        throw createError({ statusCode: 400, message: 'Authorization code expired' });
-    }
-
-    if (authCode.clientId !== clientId || authCode.redirectUri !== redirectUri) {
-        logger.warn(
-            `Rejected: parameter mismatch for client_id=${clientId}, user=${authCode.userId}`
-        );
-        throw createError({ statusCode: 400, message: 'Parameter mismatch' });
-    }
-
-    // PKCE or client_secret verification
-    if (authCode.codeChallenge) {
-        if (!codeVerifier) {
-            logger.warn(`Rejected: missing code_verifier for PKCE flow, client_id=${clientId}`);
-            throw createError({ statusCode: 400, message: 'code_verifier required for PKCE' });
-        }
-        if (!verifyPKCE(codeVerifier, authCode.codeChallenge, authCode.codeChallengeMethod)) {
-            logger.warn(
-                `Rejected: invalid code_verifier for client_id=${clientId}, user=${authCode.userId}`
-            );
-            throw createError({ statusCode: 400, message: 'Invalid code_verifier' });
-        }
-        logger.debug(`PKCE verified for client_id=${clientId}`);
-    } else {
-        await authenticateOAuthClient(clientId, clientSecret);
-    }
-
-    // Create access token as JWT
-    const accessToken = issueAccessToken(authCode.userId, authCode.clientId, authCode.scopes);
-
-    // Create refresh token (opaque)
-    const refreshTokenValue = generateRefreshToken();
-
-    await prisma.$transaction(async tx => {
-        const consumeResult = await tx.oAuthAuthorizationCode.updateMany({
-            where: {
-                id: authCode.id,
-                used: false
-            },
-            data: { used: true }
-        });
-
-        if (consumeResult.count !== 1) {
-            logger.warn(
-                `Rejected: concurrent code reuse attempt from client_id=${clientId}, user=${authCode.userId}`
-            );
-            throw createError({ statusCode: 400, message: 'Authorization code already used' });
-        }
-
-        await persistOAuthTokens(tx, {
-            accessToken,
-            refreshToken: refreshTokenValue,
-            clientId: authCode.clientId,
-            userId: authCode.userId,
-            scopes: authCode.scopes
-        });
-    });
-
-    logger.success(
-        `Tokens issued: user=${authCode.userId}, client_id=${clientId}, scopes=[${authCode.scopes.join(', ')}], access_expires_in=${ACCESS_TOKEN_EXPIRES_IN}s, refresh_expires_in=${REFRESH_TOKEN_EXPIRES_IN}s`
-    );
-
-    return {
-        access_token: accessToken,
-        token_type: 'Bearer',
-        expires_in: ACCESS_TOKEN_EXPIRES_IN,
-        refresh_token: refreshTokenValue,
-        scope: authCode.scopes.join(' ')
-    };
-}
-
-async function persistOAuthTokens(
-    tx: TokenTransaction,
-    params: {
-        accessToken: string;
-        refreshToken: string;
-        clientId: string;
-        userId: string;
-        scopes: string[];
-    }
-) {
+    const refreshToken = generateRefreshToken();
     await tx.oAuthAccessToken.create({
         data: {
-            token: params.accessToken,
-            clientId: params.clientId,
-            userId: params.userId,
-            scopes: params.scopes,
-            expiresAt: new Date(Date.now() + ACCESS_TOKEN_EXPIRES_IN * 1000)
+            ...grant,
+            tokenHash: hashToken(accessToken),
+            expiresAt: new Date(now + ACCESS_TOKEN_EXPIRES_IN * 1000)
         }
     });
     await tx.oAuthRefreshToken.create({
         data: {
-            token: params.refreshToken,
-            clientId: params.clientId,
-            userId: params.userId,
-            scopes: params.scopes,
-            expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN * 1000)
+            ...grant,
+            tokenHash: hashToken(refreshToken),
+            expiresAt: new Date(now + REFRESH_TOKEN_EXPIRES_IN * 1000)
         }
     });
-}
-
-async function handleRefreshToken(body: Record<string, string>) {
-    const { refresh_token: refreshToken, client_id: clientId, client_secret: clientSecret } = body;
-
-    if (!refreshToken || !clientId) {
-        logger.warn('Rejected: missing refresh_token or client_id');
-        throw createError({
-            statusCode: 400,
-            message: 'Missing required parameters: refresh_token, client_id'
-        });
-    }
-
-    // Find the refresh token
-    const storedRefreshToken = await prisma.oAuthRefreshToken.findUnique({
-        where: { token: refreshToken }
-    });
-
-    if (!storedRefreshToken) {
-        logger.warn(`Rejected: invalid refresh_token from client_id=${clientId}`);
-        throw createError({ statusCode: 400, message: 'Invalid refresh_token' });
-    }
-
-    if (storedRefreshToken.revoked) {
-        logger.warn(
-            `Rejected: revoked refresh_token from client_id=${clientId}, user=${storedRefreshToken.userId}`
-        );
-        throw createError({ statusCode: 400, message: 'Refresh token has been revoked' });
-    }
-
-    if (storedRefreshToken.expiresAt < new Date()) {
-        logger.warn(
-            `Rejected: expired refresh_token from client_id=${clientId}, user=${storedRefreshToken.userId}`
-        );
-        throw createError({ statusCode: 400, message: 'Refresh token expired' });
-    }
-
-    if (storedRefreshToken.clientId !== clientId) {
-        logger.warn(
-            `Rejected: client_id mismatch for refresh_token, expected=${storedRefreshToken.clientId}, got=${clientId}`
-        );
-        throw createError({ statusCode: 400, message: 'client_id mismatch' });
-    }
-
-    // Authenticate the client (RFC 6749 §2.3.1)
-    await authenticateOAuthClient(clientId, clientSecret);
-
-    // Rotation: revoke old refresh token and issue new ones
-    const newAccessToken = issueAccessToken(
-        storedRefreshToken.userId,
-        storedRefreshToken.clientId,
-        storedRefreshToken.scopes
-    );
-    const newRefreshTokenValue = generateRefreshToken();
-
-    await prisma.$transaction(async tx => {
-        const revokeResult = await tx.oAuthRefreshToken.updateMany({
-            where: {
-                id: storedRefreshToken.id,
-                revoked: false
-            },
-            data: { revoked: true }
-        });
-
-        if (revokeResult.count !== 1) {
-            logger.warn(
-                `Rejected: concurrent refresh_token reuse from client_id=${clientId}, user=${storedRefreshToken.userId}`
-            );
-            throw createError({ statusCode: 400, message: 'Refresh token has been revoked' });
-        }
-
-        await persistOAuthTokens(tx, {
-            accessToken: newAccessToken,
-            refreshToken: newRefreshTokenValue,
-            clientId: storedRefreshToken.clientId,
-            userId: storedRefreshToken.userId,
-            scopes: storedRefreshToken.scopes
-        });
-    });
-
-    logger.success(
-        `Tokens refreshed: user=${storedRefreshToken.userId}, client_id=${clientId}, scopes=[${storedRefreshToken.scopes.join(', ')}]`
-    );
-
     return {
-        access_token: newAccessToken,
+        access_token: accessToken,
         token_type: 'Bearer',
         expires_in: ACCESS_TOKEN_EXPIRES_IN,
-        refresh_token: newRefreshTokenValue,
-        scope: storedRefreshToken.scopes.join(' ')
+        refresh_token: refreshToken,
+        scope: grant.scopes.join(' ')
     };
 }
 
-export default defineEventHandler(async event => {
-    const body = await readBody(event);
-    const { grant_type: grantType, client_id: clientId } = body;
-
-    logger.info(`Token request: client_id=${clientId}, grant_type=${grantType}`);
-
-    if (grantType === 'authorization_code') {
-        return handleAuthorizationCode(body);
+async function exchangeAuthorizationCode(body: Record<string, string>) {
+    const codeHash = hashToken(requireOAuthParameter(body, 'code'));
+    const clientId = requireOAuthParameter(body, 'client_id');
+    const redirectUri = requireOAuthParameter(body, 'redirect_uri');
+    if (body.code_verifier !== undefined && !PKCE_VERIFIER_PATTERN.test(body.code_verifier)) {
+        throw new OAuthProtocolError('invalid_request', 'Invalid code_verifier format');
     }
-
-    if (grantType === 'refresh_token') {
-        return handleRefreshToken(body);
-    }
-
-    logger.warn(`Rejected: unsupported grant_type="${grantType}" from client_id=${clientId}`);
-    throw createError({
-        statusCode: 400,
-        message: 'Unsupported grant_type. Use "authorization_code" or "refresh_token".'
+    const candidate = await prisma.oAuthAuthorizationCode.findUnique({
+        where: { codeHash },
+        select: { userId: true, clientId: true }
     });
-});
+    if (!candidate || candidate.clientId !== clientId) {
+        throw new OAuthProtocolError('invalid_grant', 'Invalid authorization code');
+    }
+    return prisma.$transaction(
+        async tx => {
+            await withOAuthGrantLock(tx, candidate.userId, clientId);
+            const code = await tx.oAuthAuthorizationCode.findUnique({ where: { codeHash } });
+            if (
+                !code ||
+                code.used ||
+                code.clientId !== clientId ||
+                code.redirectUri !== redirectUri ||
+                code.expiresAt.getTime() <= Date.now()
+            ) {
+                throw new OAuthProtocolError('invalid_grant', 'Invalid authorization code');
+            }
+            const clientAuthRequired = !code.codeChallengeHash || body.client_secret !== undefined;
+            await authenticateOAuthClient(clientId, body.client_secret, clientAuthRequired, tx);
+            if (code.codeChallengeHash) {
+                if (body.code_verifier === undefined) {
+                    throw new OAuthProtocolError('invalid_request', 'code_verifier is required');
+                }
+                if (
+                    !verifyPKCE(
+                        body.code_verifier,
+                        code.codeChallengeHash,
+                        code.codeChallengeMethod
+                    )
+                ) {
+                    throw new OAuthProtocolError('invalid_grant', 'Invalid code_verifier');
+                }
+            }
+            if (!validateScopes(code.scopes)) {
+                throw new OAuthProtocolError('invalid_scope', 'Invalid authorization scopes');
+            }
+            const consumed = await tx.oAuthAuthorizationCode.updateMany({
+                where: {
+                    id: code.id,
+                    clientId,
+                    userId: candidate.userId,
+                    redirectUri,
+                    used: false,
+                    expiresAt: { gt: new Date() }
+                },
+                data: { used: true }
+            });
+            if (consumed.count !== 1) {
+                throw new OAuthProtocolError('invalid_grant', 'Invalid authorization code');
+            }
+            return issueOAuthTokens(tx, {
+                userId: code.userId,
+                clientId,
+                scopes: code.scopes,
+                clientAuthRequired
+            });
+        },
+        { maxWait: 10000, timeout: 15000 }
+    );
+}
+
+async function rotateRefreshToken(body: Record<string, string>) {
+    const tokenHash = hashToken(requireOAuthParameter(body, 'refresh_token'));
+    const clientId = requireOAuthParameter(body, 'client_id');
+    const candidate = await prisma.oAuthRefreshToken.findUnique({
+        where: { tokenHash },
+        select: { userId: true, clientId: true }
+    });
+    if (!candidate || candidate.clientId !== clientId) {
+        throw new OAuthProtocolError('invalid_grant', 'Invalid refresh token');
+    }
+    return prisma.$transaction(
+        async tx => {
+            await withOAuthGrantLock(tx, candidate.userId, clientId);
+            const refresh = await tx.oAuthRefreshToken.findUnique({ where: { tokenHash } });
+            if (
+                !refresh ||
+                refresh.revoked ||
+                refresh.clientId !== clientId ||
+                refresh.expiresAt.getTime() <= Date.now()
+            ) {
+                throw new OAuthProtocolError('invalid_grant', 'Invalid refresh token');
+            }
+            await authenticateOAuthClient(
+                clientId,
+                body.client_secret,
+                refresh.clientAuthRequired,
+                tx
+            );
+            const scopes = body.scope === undefined ? refresh.scopes : parseOAuthScopes(body.scope);
+            if (!validateScopes(scopes) || !scopes.every(scope => refresh.scopes.includes(scope))) {
+                throw new OAuthProtocolError(
+                    'invalid_scope',
+                    'Refresh scopes must be a subset of the original grant'
+                );
+            }
+            const consumed = await tx.oAuthRefreshToken.updateMany({
+                where: {
+                    id: refresh.id,
+                    clientId,
+                    userId: candidate.userId,
+                    revoked: false,
+                    expiresAt: { gt: new Date() }
+                },
+                data: { revoked: true }
+            });
+            if (consumed.count !== 1) {
+                throw new OAuthProtocolError('invalid_grant', 'Invalid refresh token');
+            }
+            return issueOAuthTokens(tx, {
+                userId: refresh.userId,
+                clientId,
+                scopes,
+                clientAuthRequired: refresh.clientAuthRequired
+            });
+        },
+        { maxWait: 10000, timeout: 15000 }
+    );
+}
+
+export default defineEventHandler(event =>
+    handleOAuthRequest(event, async () => {
+        const body = await readOAuthTokenBody(event);
+        const grantType = requireOAuthParameter(body, 'grant_type');
+        if (body.client_secret === '') {
+            throw new OAuthProtocolError('invalid_client', 'Invalid client credentials');
+        }
+        if (grantType === 'authorization_code') return exchangeAuthorizationCode(body);
+        if (grantType === 'refresh_token') return rotateRefreshToken(body);
+        throw new OAuthProtocolError('unsupported_grant_type', 'Unsupported grant_type');
+    })
+);

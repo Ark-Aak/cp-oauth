@@ -47,7 +47,7 @@ export function formatCSTTime(input: DateInput, options: FormatCSTOptions = {}):
 
     const { year, month, day, hour, minute, second } = getCSTParts(date);
     const dateText = `${year}-${month}-${day}`;
-    const timezoneSuffix = options.withTimezone ? ' CST' : '';
+    const timezoneSuffix = options.withTimezone ? ' UTC+08:00' : '';
 
     if (options.dateOnly) {
         return `${dateText}${timezoneSuffix}`;

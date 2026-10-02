@@ -1,18 +1,21 @@
-interface GoogleTokenResponse {
-    access_token: string;
-    token_type?: string;
-    expires_in?: number;
-    id_token?: string;
-    scope?: string;
-}
+import { createError } from 'h3';
+import { z } from 'zod';
 
-interface GoogleUserInfo {
-    sub: string;
-    email?: string;
-    email_verified?: boolean;
-    name?: string;
-    picture?: string;
-}
+const tokenSchema = z.object({
+    access_token: z.string().min(1),
+    token_type: z.string().optional(),
+    expires_in: z.number().finite().positive().optional(),
+    id_token: z.string().optional(),
+    scope: z.string().optional()
+});
+type GoogleTokenResponse = z.infer<typeof tokenSchema>;
+const userSchema = z.object({
+    sub: z.string().trim().min(1),
+    email: z.string().optional(),
+    email_verified: z.boolean().optional(),
+    name: z.string().optional(),
+    picture: z.string().optional()
+});
 
 export interface GoogleIdentity {
     platformUid: string;
@@ -55,34 +58,41 @@ export async function exchangeGoogleAuthorizationCode(params: {
         grant_type: 'authorization_code'
     });
 
-    const token = await $fetch<GoogleTokenResponse>(GOOGLE_TOKEN_URL, {
-        method: 'POST',
-        headers: {
-            'content-type': 'application/x-www-form-urlencoded'
-        },
-        body: form.toString()
-    });
-
-    if (!token.access_token) {
-        throw createError({
-            statusCode: 502,
-            message: 'Google token response missing access_token'
+    let response: unknown;
+    try {
+        response = await $fetch(GOOGLE_TOKEN_URL, {
+            method: 'POST',
+            timeout: 10_000,
+            retry: 0,
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            body: form.toString()
         });
+    } catch {
+        throw createError({ statusCode: 502, message: 'Google token exchange failed' });
     }
 
-    return token;
+    const parsed = tokenSchema.safeParse(response);
+    if (!parsed.success)
+        throw createError({ statusCode: 502, message: 'Invalid Google token response' });
+    return parsed.data;
 }
 
 export async function resolveGoogleIdentity(accessToken: string): Promise<GoogleIdentity> {
-    const user = await $fetch<GoogleUserInfo>(GOOGLE_USERINFO_URL, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`
-        }
-    });
-
-    if (!user?.sub) {
-        throw createError({ statusCode: 502, message: 'Unable to resolve Google user identity' });
+    let response: unknown;
+    try {
+        response = await $fetch(GOOGLE_USERINFO_URL, {
+            timeout: 10_000,
+            retry: 0,
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+    } catch {
+        throw createError({ statusCode: 502, message: 'Google identity is unavailable' });
     }
+
+    const parsed = userSchema.safeParse(response);
+    if (!parsed.success)
+        throw createError({ statusCode: 502, message: 'Unable to resolve Google user identity' });
+    const user = parsed.data;
 
     const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : null;
 
@@ -90,7 +100,7 @@ export async function resolveGoogleIdentity(accessToken: string): Promise<Google
         platformUid: user.sub,
         platformUsername: email || `google_${user.sub}`,
         email,
-        emailVerified: Boolean(user.email_verified),
+        emailVerified: user.email_verified === true,
         displayName: user.name || null,
         avatarUrl: user.picture || null
     };

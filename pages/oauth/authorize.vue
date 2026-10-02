@@ -1,140 +1,329 @@
 <template>
     <div class="consent">
-        <el-card v-if="clientData" class="consent__card" shadow="never">
-            <h1 class="consent__title">{{ $t('oauth.consent.title') }}</h1>
-            <p class="consent__app">
-                <strong>{{ clientData.client.name }}</strong>
-                {{ $t('oauth.consent.wants_access') }}
-            </p>
+        <section class="consent__surface">
+            <AppPageHeader :title="$t('oauth.consent.title')" />
+            <AppAsyncState
+                :pending="authorizationPending"
+                :error="loadError"
+                @retry="refreshAuthorization()"
+            >
+                <template v-if="clientData">
+                    <p class="consent__request">
+                        <strong>{{ clientData.client.name }}</strong>
+                        {{ $t('oauth.consent.wants_access') }}
+                    </p>
 
-            <div class="consent__scopes">
-                <p class="consent__scopes-label">{{ $t('oauth.consent.permissions') }}</p>
-                <div v-for="scope in clientData.scopes" :key="scope" class="consent__scope-item">
-                    <Shield :size="15" :stroke-width="1.5" />
-                    <span>{{ $t(`oauth.scopes.${scope.replace(':', '_')}`) }}</span>
-                </div>
-            </div>
+                    <section
+                        class="consent__destination"
+                        aria-labelledby="consent-destination-title"
+                    >
+                        <h2 id="consent-destination-title">
+                            {{ $t('oauth.consent.callback_destination') }}
+                        </h2>
+                        <code class="consent__origin">{{ callbackOrigin }}</code>
+                        <details class="consent__exact-uri">
+                            <summary>{{ $t('oauth.consent.exact_callback') }}</summary>
+                            <code>{{ clientData.redirectUri }}</code>
+                        </details>
+                    </section>
 
-            <div class="consent__actions">
-                <el-button @click="handleDecision(false)">
-                    {{ $t('oauth.consent.deny') }}
-                </el-button>
-                <el-button type="primary" @click="handleDecision(true)">
-                    {{ $t('oauth.consent.authorize') }}
-                </el-button>
-            </div>
-        </el-card>
+                    <section
+                        class="consent__permissions"
+                        aria-labelledby="consent-permissions-title"
+                    >
+                        <h2 id="consent-permissions-title">
+                            {{ $t('oauth.consent.permissions') }}
+                        </h2>
+                        <ul class="consent__scope-list">
+                            <li
+                                v-for="scope in clientData.scopes"
+                                :key="scope"
+                                class="consent__scope"
+                            >
+                                <Shield :size="18" :stroke-width="1.5" aria-hidden="true" />
+                                <div>
+                                    <p>{{ $t(`oauth.scopes.${scope.replace(':', '_')}`) }}</p>
+                                    <code>{{ scope }}</code>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
 
-        <el-card v-else-if="loadError" class="consent__card" shadow="never">
-            <el-result icon="error" :sub-title="loadError">
-                <template v-if="loadErrorData?.reason === 'email_not_verified'" #extra>
-                    <el-button type="primary" @click="goVerifyEmail">
-                        {{ $t('oauth.consent.go_verify_email') }}
-                    </el-button>
+                    <section class="consent__account" aria-labelledby="consent-account-title">
+                        <h2 id="consent-account-title">
+                            {{ $t('oauth.consent.current_account') }}
+                        </h2>
+                        <template v-if="user && status === 'authenticated'">
+                            <p class="consent__account-name">
+                                <strong>{{ user.displayName || user.username }}</strong>
+                                <span>{{ '@' + user.username }}</span>
+                            </p>
+                            <el-button
+                                native-type="button"
+                                :disabled="controlsPending || identityPending"
+                                :loading="switchPending"
+                                @click="switchAccount"
+                            >
+                                {{ $t('oauth.consent.switch_account') }}
+                            </el-button>
+                        </template>
+                        <p v-else-if="status === 'anonymous'" class="consent__account-hint">
+                            {{ $t('oauth.consent.signed_out_hint') }}
+                        </p>
+                        <div v-if="authError" class="consent__notice" role="alert">
+                            <p>{{ $t('identity.identity_unavailable') }}</p>
+                            <el-button
+                                native-type="button"
+                                :disabled="controlsPending || identityPending"
+                                :loading="identityPending"
+                                @click="loadIdentity(true)"
+                            >
+                                {{ $t('identity.retry') }}
+                            </el-button>
+                        </div>
+                    </section>
+
+                    <div v-if="needsEmailVerification" class="consent__notice" role="status">
+                        <p>{{ $t('oauth.consent.email_verification_required') }}</p>
+                        <NuxtLink :to="verificationPath" class="consent__task-link">
+                            {{ $t('oauth.consent.go_verify_email') }}
+                        </NuxtLink>
+                        <p class="consent__account-hint">
+                            {{ $t('oauth.consent.verification_return_hint') }}
+                        </p>
+                    </div>
+                    <p
+                        v-if="decisionError"
+                        ref="decisionErrorElement"
+                        tabindex="-1"
+                        class="consent__notice"
+                        role="alert"
+                    >
+                        {{ decisionError }}
+                    </p>
+
+                    <div class="consent__actions">
+                        <el-button
+                            native-type="button"
+                            :disabled="controlsPending"
+                            :loading="decisionPending && decisionApproved === false"
+                            @click="handleDecision(false)"
+                        >
+                            {{ $t('oauth.consent.deny') }}
+                        </el-button>
+                        <el-button
+                            type="primary"
+                            native-type="button"
+                            :disabled="
+                                controlsPending ||
+                                identityPending ||
+                                needsEmailVerification ||
+                                status === 'error'
+                            "
+                            :loading="decisionPending && decisionApproved === true"
+                            @click="handleDecision(true)"
+                        >
+                            {{
+                                $t(
+                                    status === 'anonymous'
+                                        ? 'oauth.consent.sign_in_authorize'
+                                        : 'oauth.consent.authorize'
+                                )
+                            }}
+                        </el-button>
+                    </div>
                 </template>
-            </el-result>
-        </el-card>
-        <div v-else v-loading="true" class="consent__loading" />
+            </AppAsyncState>
+        </section>
 
-        <a
-            class="consent__rainyun-float"
-            href="https://www.rainyun.com/federico_?s=oauth"
-            aria-label="由雨云提供计算服务"
-        >
-            <img
-                class="consent__rainyun-logo"
-                src="https://www.rainyun.com/img/logo.d193755d.png"
-                alt="Rainyun"
-            />
-            <span>由雨云提供计算服务</span>
+        <a class="consent__sponsor" href="https://www.rainyun.com/federico_?s=oauth">
+            {{ $t('app.footer.compute_service') }}
+            <ArrowUpRight :size="16" aria-hidden="true" />
         </a>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Shield } from 'lucide-vue-next';
-import { ElMessage } from 'element-plus';
+import { ArrowUpRight, Shield } from 'lucide-vue-next';
+import type { OAuthAuthorizationResponse } from '~/types/api';
+import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 definePageMeta({ layout: 'auth' });
-
 const { t } = useI18n();
-
-useHead({ title: () => `${t('oauth.consent.title')} - CP OAuth` });
 const route = useRoute();
-const loadError = ref('');
-const loadErrorData = ref<{ reason?: string } | null>(null);
+const api = useApi();
+const { user, status, error: authError, load, logout } = useAuth();
+useHead({ title: () => `${t('oauth.consent.title')} - CP OAuth` });
+const identityPending = ref(false);
+const switchPending = ref(false);
+const decisionPending = ref(false);
+const decisionApproved = ref<boolean | null>(null);
+const decisionError = ref('');
+const decisionErrorElement = ref<HTMLElement | null>(null);
+const emailVerificationRequired = ref(false);
+const controlsPending = computed(() => decisionPending.value || switchPending.value);
+const authorizationPath = computed(() => getSafeRedirectTarget(route.fullPath));
+const verificationPath = computed(() => ({
+    path: '/profile',
+    query: { tab: 'basic', redirect: authorizationPath.value }
+}));
 
-interface ClientData {
-    client: { name: string; clientId: string; requireEmailVerified: boolean };
-    scopes: string[];
-    redirectUri: string;
-    state: string | null;
-    codeChallenge: string | null;
-    codeChallengeMethod: string | null;
+type RequestFailure = {
+    status?: number;
+    statusCode?: number;
+    response?: { status?: number };
+    data?: {
+        message?: string;
+        error_description?: string;
+        reason?: string;
+        data?: { reason?: string };
+    };
+};
+
+function errorMessage(cause: unknown, fallback: string) {
+    const failure = cause as RequestFailure | null;
+    const code = failure?.response?.status ?? failure?.statusCode ?? failure?.status;
+    if (code === 403) return t('identity.permission_denied');
+    if (code && code >= 500) return t('identity.network_error');
+    return failure?.data?.error_description || failure?.data?.message || fallback;
 }
 
-const clientData = ref<ClientData | null>(null);
-
-try {
-    const data = await $fetch<ClientData>('/api/oauth/authorize', {
-        params: {
-            client_id: route.query.client_id,
-            redirect_uri: route.query.redirect_uri,
-            response_type: route.query.response_type,
-            scope: route.query.scope,
-            state: route.query.state,
-            code_challenge: route.query.code_challenge,
-            code_challenge_method: route.query.code_challenge_method
-        }
-    });
-    clientData.value = data;
-} catch (e: unknown) {
-    const err = e as { data?: { message?: string; reason?: string } };
-    loadError.value = err.data?.message || t('oauth.consent.error');
-    loadErrorData.value = { reason: err.data?.reason };
+async function loadIdentity(force = false) {
+    if (identityPending.value) return;
+    identityPending.value = true;
+    try {
+        await load(force);
+        emailVerificationRequired.value = false;
+    } catch {
+        // Identity failures do not prevent a server-validated anonymous denial.
+    } finally {
+        identityPending.value = false;
+    }
 }
 
-const token = useCookie('auth_token');
+const authorization = useAsyncData(
+    () => `oauth:authorization:${route.fullPath}`,
+    () =>
+        api<OAuthAuthorizationResponse>('/api/oauth/authorize', {
+            params: {
+                client_id: route.query.client_id,
+                redirect_uri: route.query.redirect_uri,
+                response_type: route.query.response_type,
+                scope: route.query.scope,
+                state: route.query.state,
+                code_challenge: route.query.code_challenge,
+                code_challenge_method: route.query.code_challenge_method
+            }
+        }),
+    { deep: false }
+);
+await Promise.all([loadIdentity(), authorization]);
+const {
+    data: clientData,
+    pending: authorizationPending,
+    error: authorizationError,
+    refresh: refreshAuthorization
+} = authorization;
+const loadError = computed(() =>
+    authorizationError.value
+        ? errorMessage(authorizationError.value, t('oauth.consent.error'))
+        : null
+);
+const callbackOrigin = computed(() =>
+    clientData.value ? new URL(clientData.value.redirectUri).origin : ''
+);
+const needsEmailVerification = computed(
+    () =>
+        emailVerificationRequired.value ||
+        (!!clientData.value?.client.requireEmailVerified &&
+            !!user.value &&
+            !user.value.emailVerified)
+);
 
-function goVerifyEmail() {
-    navigateTo('/profile');
+watch(
+    () => route.fullPath,
+    () => {
+        decisionError.value = '';
+        emailVerificationRequired.value = false;
+    }
+);
+
+async function showDecisionError(message: string) {
+    decisionError.value = message;
+    await nextTick();
+    decisionErrorElement.value?.focus();
+}
+
+async function switchAccount() {
+    if (controlsPending.value || identityPending.value) return;
+    const loginPath = buildLoginPath(authorizationPath.value);
+    switchPending.value = true;
+    decisionError.value = '';
+    try {
+        await logout(loginPath);
+    } catch (cause) {
+        await showDecisionError(errorMessage(cause, t('identity.network_error')));
+    } finally {
+        switchPending.value = false;
+    }
 }
 
 async function handleDecision(approved: boolean) {
-    if (!clientData.value) return;
-
-    if (!token.value) {
-        navigateTo(`/login?redirect=${encodeURIComponent(route.fullPath)}`);
+    const request = clientData.value;
+    if (!request || authorizationPending.value || authorizationError.value || controlsPending.value)
         return;
-    }
-
+    if (
+        approved &&
+        (needsEmailVerification.value || identityPending.value || status.value === 'error')
+    )
+        return;
+    const returnPath = authorizationPath.value;
+    decisionPending.value = true;
+    decisionApproved.value = approved;
+    decisionError.value = '';
     try {
-        const result = await $fetch<{ redirect: string }>('/api/oauth/authorize', {
+        if (approved) {
+            await load();
+            if (status.value === 'anonymous') {
+                await navigateTo(buildLoginPath(returnPath));
+                return;
+            }
+            if (!user.value) {
+                await showDecisionError(t('identity.identity_unavailable'));
+                return;
+            }
+            if (request.client.requireEmailVerified && !user.value.emailVerified) {
+                emailVerificationRequired.value = true;
+                return;
+            }
+        }
+        const result = await api<{ redirect: string }>('/api/oauth/authorize', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token.value}` },
             body: {
-                client_id: clientData.value.client.clientId,
-                redirect_uri: clientData.value.redirectUri,
-                scopes: clientData.value.scopes,
-                state: clientData.value.state,
-                code_challenge: clientData.value.codeChallenge,
-                code_challenge_method: clientData.value.codeChallengeMethod,
+                client_id: request.client.clientId,
+                redirect_uri: request.redirectUri,
+                scopes: request.scopes,
+                state: request.state,
+                code_challenge: request.codeChallenge,
+                code_challenge_method: request.codeChallengeMethod,
                 approved
             }
         });
-        window.location.href = result.redirect;
-    } catch (e: unknown) {
-        const err = e as {
-            data?: { data?: { reason?: string; message?: string }; message?: string };
-        };
-        if (err.data?.data?.reason === 'email_not_verified') {
-            loadError.value =
-                err.data.data.message || t('oauth.consent.email_verification_required');
-            loadErrorData.value = { reason: 'email_not_verified' };
-            clientData.value = null;
+        await navigateTo(result.redirect, { external: true });
+    } catch (cause) {
+        const failure = cause as RequestFailure;
+        const reason = failure.data?.data?.reason ?? failure.data?.reason;
+        const code = failure.response?.status ?? failure.statusCode ?? failure.status;
+        if (approved && reason === 'email_not_verified') {
+            emailVerificationRequired.value = true;
+        } else if (approved && code === 401 && status.value === 'anonymous') {
+            await navigateTo(buildLoginPath(returnPath));
         } else {
-            ElMessage.error(err.data?.message || t('oauth.consent.error'));
+            await showDecisionError(errorMessage(cause, t('identity.network_error')));
         }
+    } finally {
+        decisionPending.value = false;
+        decisionApproved.value = null;
     }
 }
 </script>
@@ -142,127 +331,174 @@ async function handleDecision(approved: boolean) {
 <style scoped lang="scss">
 .consent {
     width: 100%;
-    max-width: 400px;
+    min-width: 0;
 
-    &__card {
+    &__surface {
+        min-width: 0;
+        padding: var(--space-5);
+        background: var(--card-bg);
         border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
     }
 
-    &__loading {
-        min-height: 200px;
-    }
-
-    &__title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--text-primary);
-    }
-
-    &__app {
-        font-size: 13px;
+    &__request {
+        margin-bottom: var(--space-5);
         color: var(--text-secondary);
-        margin-bottom: 20px;
+        overflow-wrap: anywhere;
 
         strong {
             color: var(--text-primary);
         }
     }
 
-    &__scopes {
-        margin-bottom: 24px;
+    h2 {
+        margin-bottom: var(--space-2);
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.5;
     }
 
-    &__email-notice {
-        margin-bottom: 16px;
+    &__destination,
+    &__permissions,
+    &__account {
+        margin-bottom: var(--space-5);
     }
 
-    &__scopes-label {
-        font-size: 12px;
-        color: var(--text-muted);
-        font-weight: 500;
-        margin-bottom: 8px;
+    code {
+        font-family: monospace;
+        font-size: 14px;
+        color: var(--text-secondary);
+        overflow-wrap: anywhere;
+        white-space: normal;
     }
 
-    &__scope-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 0;
-        font-size: 13px;
+    &__origin {
+        display: block;
         color: var(--text-primary);
-        border-bottom: 1px solid var(--border-color);
+    }
 
-        &:last-child {
-            border-bottom: none;
+    &__exact-uri summary {
+        min-height: 44px;
+        padding-block: var(--space-3);
+        color: var(--accent);
+        cursor: pointer;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    &__exact-uri code {
+        display: block;
+        padding-block: var(--space-2);
+    }
+
+    &__scope-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    &__scope {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr);
+        align-items: start;
+        gap: var(--space-3);
+        padding-block: var(--space-3);
+        border-bottom: 1px solid var(--border-color);
+        overflow-wrap: anywhere;
+
+        svg {
+            margin-top: var(--space-1);
+            color: var(--accent);
         }
+    }
+
+    &__account {
+        padding-block: var(--space-4);
+        border-block: 1px solid var(--border-color);
+    }
+
+    &__account-name {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--space-2);
+        margin-bottom: var(--space-3);
+        overflow-wrap: anywhere;
+
+        span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+    }
+
+    &__account-hint {
+        color: var(--text-secondary);
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    &__notice {
+        margin-bottom: var(--space-4);
+        padding: var(--space-4);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        color: var(--text-primary);
+        overflow-wrap: anywhere;
+    }
+
+    &__notice .el-button {
+        margin-top: var(--space-3);
+    }
+
+    &__task-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        margin-block: var(--space-2);
+        color: var(--accent);
+        text-decoration: underline;
+        overflow-wrap: anywhere;
     }
 
     &__actions {
-        display: flex;
-        gap: 10px;
-
-        .el-button {
-            flex: 1;
-        }
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--space-3);
     }
 
-    &__rainyun-float {
-        position: fixed;
-        right: 20px;
-        bottom: 20px;
-        z-index: 1000;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        border-radius: var(--card-radius);
-        border: 1px solid rgba(0, 0, 0, 0.12);
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-        text-decoration: none;
-        color: #111111;
-        font-size: 13px;
-        font-weight: 500;
-        line-height: 1;
-        transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease,
-            background-color 0.2s ease;
-
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-            background: rgba(255, 255, 255, 0.98);
-        }
-    }
-
-    &__rainyun-logo {
-        width: 56px;
+    &__actions :deep(.el-button) {
+        margin: 0;
+        min-height: 44px;
         height: auto;
-        border-radius: 4px;
-        object-fit: contain;
-        object-position: center;
-        display: block;
-        flex-shrink: 0;
+        padding-block: var(--space-3);
+        white-space: normal;
     }
-}
 
-@media (max-width: 640px) {
-    .consent {
-        &__rainyun-float {
-            right: 12px;
-            bottom: 12px;
-            padding: 9px 12px;
-            font-size: 12px;
-            gap: 8px;
+    &__sponsor {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: 44px;
+        margin-top: var(--space-4);
+        color: var(--text-secondary);
+        font-size: 14px;
+        text-align: center;
+        overflow-wrap: anywhere;
+
+        svg {
+            flex-shrink: 0;
+        }
+    }
+
+    @media (max-width: 480px) {
+        &__surface {
+            padding: var(--space-4);
         }
 
-        &__rainyun-logo {
-            width: 48px;
-            height: auto;
+        &__actions {
+            grid-template-columns: minmax(0, 1fr);
         }
     }
 }

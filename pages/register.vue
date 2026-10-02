@@ -1,181 +1,257 @@
 <template>
-    <el-card class="register-card" shadow="never">
-        <p class="register-card__brand">{{ siteTitle }}</p>
-        <h1 class="register-card__title">{{ $t('auth.register.title') }}</h1>
+    <el-card class="auth-card" shadow="never" :aria-busy="pending">
+        <p class="auth-card__brand">{{ siteTitle }}</p>
+        <h1 class="auth-card__title">{{ $t('auth.register.title') }}</h1>
+        <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
+            {{ errorMessage }}
+        </p>
+        <template v-if="configError">
+            <p class="auth-card__error" role="alert">{{ $t('auth.flow.config_error') }}</p>
+            <el-button :loading="configPending" :disabled="pending" @click="refreshConfig()">
+                {{ $t('common.retry') }}
+            </el-button>
+        </template>
+        <p v-else-if="configPending || !publicConfig" class="auth-card__status" role="status">
+            {{ $t('auth.flow.config_loading') }}
+        </p>
+        <p v-else-if="!registrationEnabled" class="auth-card__desc" role="status">
+            {{ $t('auth.flow.registration_closed') }}
+        </p>
         <el-form
+            v-else
             ref="formRef"
+            method="post"
+            :disabled="!hydrationReady"
             :model="form"
             :rules="rules"
             label-position="top"
-            @submit.prevent="handleRegister"
+            @submit.prevent="register"
         >
-            <el-form-item prop="username">
+            <el-form-item
+                prop="username"
+                :label="$t('auth.register.username')"
+                for="register-username"
+            >
                 <el-input
+                    id="register-username"
                     v-model="form.username"
-                    :placeholder="$t('auth.register.username')"
+                    :aria-label="$t('auth.register.username')"
+                    name="username"
+                    autocomplete="username"
+                    :disabled="!hydrationReady || pending"
                     size="large"
                 />
             </el-form-item>
-            <el-form-item prop="email">
+            <el-form-item prop="email" :label="$t('auth.register.email')" for="register-email">
                 <el-input
+                    id="register-email"
                     v-model="form.email"
+                    :aria-label="$t('auth.register.email')"
                     type="email"
-                    :placeholder="$t('auth.register.email')"
+                    name="email"
+                    autocomplete="email"
+                    :disabled="!hydrationReady || pending"
                     size="large"
                 />
             </el-form-item>
-            <el-form-item prop="password">
+            <el-form-item
+                prop="password"
+                :label="$t('auth.register.password')"
+                for="register-password"
+            >
                 <el-input
+                    id="register-password"
                     v-model="form.password"
-                    type="password"
-                    :placeholder="$t('auth.register.password')"
+                    :aria-label="$t('auth.register.password')"
+                    :type="passwordVisible ? 'text' : 'password'"
+                    name="password"
+                    autocomplete="new-password"
+                    :disabled="!hydrationReady || pending"
                     size="large"
-                    show-password
-                />
+                >
+                    <template #suffix>
+                        <el-button
+                            class="auth-card__password-toggle"
+                            text
+                            native-type="button"
+                            :aria-label="
+                                $t(
+                                    passwordVisible
+                                        ? 'auth.flow.hide_password'
+                                        : 'auth.flow.show_password'
+                                )
+                            "
+                            :aria-pressed="passwordVisible"
+                            :disabled="!hydrationReady || pending"
+                            @click="passwordVisible = !passwordVisible"
+                        >
+                            <EyeOff v-if="passwordVisible" :size="18" aria-hidden="true" />
+                            <Eye v-else :size="18" aria-hidden="true" />
+                        </el-button>
+                    </template>
+                </el-input>
             </el-form-item>
-            <div v-if="turnstileEnabled" ref="turnstileEl" class="register-card__turnstile" />
+            <p class="auth-card__desc">{{ $t('auth.flow.password_rule') }}</p>
+            <div v-if="turnstileEnabled" class="auth-card__captcha">
+                <div ref="turnstileEl" class="auth-card__captcha-widget" />
+                <p class="auth-card__status" role="status">{{ captchaMessage }}</p>
+                <el-button
+                    v-if="turnstileStatus === 'error'"
+                    :disabled="pending"
+                    @click="retryTurnstile()"
+                >
+                    {{ $t('common.retry') }}
+                </el-button>
+            </div>
             <el-form-item>
                 <el-button
                     type="primary"
                     native-type="submit"
-                    :loading="loading"
+                    :loading="pending"
+                    :disabled="!hydrationReady || pending || !captchaReady"
                     size="large"
-                    class="register-card__btn"
+                    class="auth-card__button"
                 >
-                    {{ loading ? $t('auth.register.loading') : $t('auth.register.submit') }}
+                    {{ pending ? $t('auth.register.loading') : $t('auth.register.submit') }}
                 </el-button>
             </el-form-item>
         </el-form>
-
-        <p class="register-card__footer">
+        <p class="auth-card__footer">
             {{ $t('auth.register.footer') }}
-            <NuxtLink to="/login">{{ $t('auth.register.login_link') }}</NuxtLink>
+            <NuxtLink :to="loginPath">{{ $t('auth.register.login_link') }}</NuxtLink>
         </p>
     </el-card>
 </template>
 
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus';
-import { ElMessage } from 'element-plus';
+import type { AuthResult } from '~/types/auth';
+import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 import { isValidUsername, normalizeUsername } from '~/utils/username';
+import { Eye, EyeOff } from 'lucide-vue-next';
+import { newPasswordSchema } from '~/utils/validation';
 
 definePageMeta({ layout: 'auth' });
+const hydrationReady = useHydrationReady();
 
 const { t } = useI18n();
-
-interface PublicConfigResponse {
-    siteTitle?: string;
-    turnstileEnabled?: boolean;
-    turnstileSiteKey?: string;
-}
-
-useHead({ title: () => `${t('auth.register.title')} - CP OAuth` });
+const route = useRoute();
+const api = useApi();
+const { accept, clearPending } = useAuth();
+const passwordVisible = ref(false);
+const {
+    data: publicConfig,
+    pending: configPending,
+    error: configError,
+    refresh: refreshConfig
+} = await usePublicConfig();
 const formRef = ref<FormInstance>();
-const loading = ref(false);
-
-const form = reactive({
-    username: '',
-    email: '',
-    password: ''
+const form = reactive({ username: '', email: '', password: '' });
+const pending = ref(false);
+const errorMessage = ref('');
+const errorEl = ref<HTMLElement | null>(null);
+const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
+const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
+const loginPath = computed(() => buildLoginPath(redirectTarget.value));
+const registrationEnabled = computed(() => publicConfig.value?.registrationEnabled === true);
+const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled === true);
+const turnstileSiteKey = computed(() =>
+    turnstileEnabled.value ? publicConfig.value?.turnstileSiteKey || '' : ''
+);
+const {
+    token: turnstileToken,
+    el: turnstileEl,
+    reset: resetTurnstile,
+    status: turnstileStatus,
+    error: turnstileError,
+    retry: retryTurnstile
+} = useTurnstile(turnstileSiteKey, { action: 'register' });
+const captchaReady = computed(
+    () => !turnstileEnabled.value || (turnstileStatus.value === 'ready' && !!turnstileToken.value)
+);
+const captchaMessage = computed(() => {
+    if (turnstileStatus.value === 'error')
+        return turnstileError.value || t('auth.flow.captcha_error');
+    if (captchaReady.value) return t('auth.flow.captcha_ready');
+    return t(
+        turnstileStatus.value === 'loading'
+            ? 'auth.flow.captcha_loading'
+            : 'auth.flow.captcha_waiting'
+    );
 });
-
 const rules = computed<FormRules>(() => ({
     username: [
         { required: true, message: t('auth.register.username'), trigger: 'blur' },
         {
             validator: (_rule, value: string, callback) => {
-                if (!isValidUsername(normalizeUsername(value))) {
-                    callback(new Error(t('profile.username_invalid')));
-                    return;
-                }
-                callback();
+                callback(
+                    isValidUsername(normalizeUsername(value))
+                        ? undefined
+                        : new Error(t('profile.username_invalid'))
+                );
             },
             trigger: 'blur'
         }
     ],
-    email: [{ required: true, message: t('auth.register.email'), trigger: 'blur' }],
-    password: [{ required: true, message: t('auth.register.password'), trigger: 'blur' }]
+    email: [
+        { required: true, message: t('auth.flow.email_invalid'), trigger: 'blur' },
+        { type: 'email', message: t('auth.flow.email_invalid'), trigger: 'blur' }
+    ],
+    password: [
+        {
+            validator: (_rule, value: string, callback) => {
+                callback(
+                    newPasswordSchema.safeParse(value).success
+                        ? undefined
+                        : new Error(t('auth.flow.password_rule'))
+                );
+            },
+            trigger: 'blur'
+        }
+    ]
 }));
 
-const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
-const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
-const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
-const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
-const {
-    token: turnstileToken,
-    el: turnstileEl,
-    reset: resetTurnstile
-} = useTurnstile(turnstileSiteKey);
+useHead({ title: () => `${t('auth.register.title')} - ${siteTitle.value}` });
+watch(errorMessage, async message => {
+    if (!message) return;
+    await nextTick();
+    errorEl.value?.focus();
+});
 
-async function handleRegister() {
-    if (!formRef.value) return;
-    const valid = await formRef.value.validate().catch(() => false);
-    if (!valid) return;
-
-    loading.value = true;
+async function register() {
+    if (
+        pending.value ||
+        !registrationEnabled.value ||
+        configPending.value ||
+        configError.value ||
+        !captchaReady.value ||
+        !formRef.value
+    )
+        return;
+    pending.value = true;
+    errorMessage.value = '';
+    clearPending();
     try {
-        const data = await $fetch('/api/auth/register', {
+        const valid = await formRef.value.validate().catch(() => false);
+        if (!valid) return;
+        const result = await api<AuthResult>('/api/auth/register', {
             method: 'POST',
             body: {
                 username: normalizeUsername(form.username),
-                email: form.email,
+                email: form.email.trim(),
                 password: form.password,
+                redirect: redirectTarget.value,
                 turnstileToken: turnstileToken.value || undefined
             }
         });
-        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = data.token;
-        await navigateTo('/');
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.register.error'));
-        resetTurnstile();
+        form.password = '';
+        await accept(result);
+    } catch (error) {
+        const err = error as { data?: { message?: string } };
+        errorMessage.value = err.data?.message || t('auth.register.error');
     } finally {
-        loading.value = false;
+        resetTurnstile();
+        pending.value = false;
     }
 }
 </script>
-
-<style scoped lang="scss">
-.register-card {
-    width: 100%;
-    max-width: 380px;
-    border: 1px solid var(--border-color);
-
-    &__brand {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-muted);
-        letter-spacing: -0.01em;
-        margin-bottom: 14px;
-    }
-
-    &__title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 20px;
-        color: var(--text-primary);
-    }
-
-    &__turnstile {
-        display: flex;
-        justify-content: center;
-        margin: 4px 0 14px;
-    }
-
-    &__btn {
-        width: 100%;
-    }
-
-    &__footer {
-        margin-top: 6px;
-        text-align: center;
-        font-size: 13px;
-        color: var(--text-muted);
-
-        a {
-            color: var(--text-primary);
-            text-decoration: underline;
-        }
-    }
-}
-</style>

@@ -1,241 +1,166 @@
 <template>
-    <el-aside width="240px" class="app-sidebar" :class="{ 'is-open': open }">
-        <div class="app-sidebar__logo">
-            <img src="/favicon.svg" alt="CP OAuth logo" class="app-sidebar__logo-image" />
+    <div class="app-sidebar">
+        <NuxtLink to="/" class="app-sidebar__brand" @click="$emit('navigate')">
+            <img src="/favicon.svg" alt="" width="26" height="26" />
             <span>{{ $t('app.name') }}</span>
-        </div>
-        <el-menu :default-active="activeRoute" router class="app-sidebar__menu" @select="handleNav">
-            <el-menu-item index="/">
-                <Home :size="17" :stroke-width="1.5" />
-                <span>{{ $t('nav.home') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/developer">
-                <Code :size="17" :stroke-width="1.5" />
-                <span>{{ $t('nav.developer') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/showcase">
-                <Globe :size="17" :stroke-width="1.5" />
-                <span>{{ $t('nav.showcase') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/about">
-                <BookOpen :size="17" :stroke-width="1.5" />
-                <span>{{ $t('nav.about') }}</span>
-            </el-menu-item>
-            <el-menu-item v-if="isAdmin" index="/admin">
-                <Shield :size="17" :stroke-width="1.5" />
-                <span>{{ $t('nav.admin') }}</span>
-            </el-menu-item>
-        </el-menu>
-        <div class="app-sidebar__footer">
-            <div v-if="isLoggedIn" class="app-sidebar__user">
-                <AppUserAvatar
-                    :size="34"
-                    :src="avatarUrl || undefined"
-                    :name="displayName || username || 'U'"
-                    class="app-sidebar__avatar"
-                />
-                <div class="app-sidebar__user-text">
-                    <p class="app-sidebar__user-label">{{ $t('nav.signed_in_as') }}</p>
-                    <p class="app-sidebar__user-name">{{ displayName || username }}</p>
-                </div>
-            </div>
-            <el-menu
-                :default-active="activeRoute"
-                router
-                class="app-sidebar__menu"
-                @select="handleNav"
+        </NuxtLink>
+        <nav class="app-sidebar__nav" :aria-label="$t('app.name')">
+            <NuxtLink
+                v-for="item in navigation"
+                :key="item.path"
+                :to="item.path"
+                class="app-sidebar__link"
+                :class="{ 'is-active': active(item.path) }"
+                :aria-current="active(item.path) ? 'page' : undefined"
+                @click="$emit('navigate')"
             >
-                <el-menu-item v-if="isLoggedIn" index="/profile">
-                    <UserCircle :size="17" :stroke-width="1.5" />
-                    <span>{{ $t('nav.my_profile') }}</span>
-                </el-menu-item>
-            </el-menu>
-            <div v-if="isLoggedIn" class="app-sidebar__logout" @click="$emit('logout')">
-                <LogOut :size="17" :stroke-width="1.5" />
-                <span>{{ $t('nav.logout') }}</span>
-            </div>
-            <el-menu v-if="!isLoggedIn" router class="app-sidebar__menu" @select="handleNav">
-                <el-menu-item index="/login">
-                    <LogIn :size="17" :stroke-width="1.5" />
-                    <span>{{ $t('nav.login') }}</span>
-                </el-menu-item>
-            </el-menu>
+                <component :is="item.icon" :size="19" :stroke-width="1.6" aria-hidden="true" />
+                <span>{{ $t(item.label) }}</span>
+            </NuxtLink>
+        </nav>
+        <div class="app-sidebar__account">
+            <template v-if="user">
+                <NuxtLink to="/profile" class="app-sidebar__identity" @click="$emit('navigate')">
+                    <AppUserAvatar
+                        :size="38"
+                        :src="user.avatarUrl"
+                        :name="user.displayName || user.username"
+                    />
+                    <span class="app-sidebar__identity-text"
+                        ><strong>{{ user.displayName || user.username }}</strong
+                        ><span>@{{ user.username }}</span></span
+                    >
+                </NuxtLink>
+                <button
+                    type="button"
+                    class="app-sidebar__link app-sidebar__logout"
+                    :disabled="logoutPending"
+                    :aria-busy="logoutPending"
+                    @click="$emit('logout')"
+                >
+                    <LogOut :size="19" aria-hidden="true" /><span>{{ $t('nav.logout') }}</span>
+                </button>
+            </template>
+            <NuxtLink
+                v-else-if="anonymous"
+                to="/login"
+                class="app-sidebar__link"
+                @click="$emit('navigate')"
+                ><LogIn :size="19" aria-hidden="true" />{{ $t('nav.login') }}</NuxtLink
+            >
         </div>
-    </el-aside>
+    </div>
 </template>
 
 <script setup lang="ts">
 import { Home, LogOut, LogIn, Code, BookOpen, UserCircle, Shield, Globe } from 'lucide-vue-next';
-
-defineProps<{
-    isLoggedIn: boolean;
-    isAdmin: boolean;
-    open: boolean;
-    username: string;
-    displayName: string;
-    avatarUrl: string;
+import type { MeResponse } from '~/types/api';
+const props = defineProps<{
+    user: MeResponse | null;
+    anonymous: boolean;
+    logoutPending: boolean;
 }>();
-const emit = defineEmits<{ logout: []; navigate: [] }>();
-
+defineEmits<{ logout: []; navigate: [] }>();
 const route = useRoute();
-const activeRoute = computed(() => route.path);
-
-function handleNav() {
-    emit('navigate');
+const navigation = computed(() => {
+    const items = [{ path: '/', label: 'nav.home', icon: Home }];
+    if (props.user) items.push({ path: '/profile', label: 'nav.my_profile', icon: UserCircle });
+    items.push(
+        { path: '/developer', label: 'nav.developer', icon: Code },
+        { path: '/showcase', label: 'nav.showcase', icon: Globe },
+        { path: '/about', label: 'nav.about', icon: BookOpen }
+    );
+    if (props.user?.role === 'admin')
+        items.push({ path: '/admin', label: 'nav.admin', icon: Shield });
+    return items;
+});
+function active(path: string) {
+    return path === '/admin' ? route.path.startsWith('/admin') : route.path === path;
 }
 </script>
 
 <style scoped lang="scss">
 .app-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    background: var(--bg-primary);
-    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    z-index: 20;
-
-    &__logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 20px 20px 20px;
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text-primary);
-        letter-spacing: -0.01em;
-    }
-
-    &__logo-image {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-    }
-
-    &__menu {
-        border-right: none;
-        background: transparent;
-        flex: 1;
-
-        :deep(.el-menu-item) {
-            height: 38px;
-            line-height: 38px;
-            margin: 1px 8px;
-            border-radius: 6px;
-            font-size: 14px;
-            color: var(--text-secondary);
-            gap: 9px;
-            transition:
-                background 0.15s ease,
-                color 0.15s ease;
-
-            &:hover {
-                background: var(--bg-secondary);
-                color: var(--text-primary);
-            }
-
-            &.is-active {
-                background: var(--bg-primary);
-                color: var(--accent);
-                font-weight: 500;
-                position: relative;
-
-                &::before {
-                    content: '';
-                    position: absolute;
-                    left: 0;
-                    top: 7px;
-                    bottom: 7px;
-                    width: 3px;
-                    border-radius: 2px;
-                    background: var(--accent);
-                }
-            }
-        }
-    }
-
-    &__footer {
-        border-top: 1px solid var(--border-color);
-        padding-top: 6px;
-        margin-top: auto;
-        padding-bottom: 10px;
-
-        .app-sidebar__menu {
-            flex: unset;
-        }
-    }
-
-    &__user {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 8px 12px 10px;
-        padding: 8px;
-        border-radius: var(--card-radius);
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        box-shadow: var(--card-shadow);
-    }
-
-    &__avatar {
-        font-size: 13px;
-    }
-
-    &__user-text {
-        min-width: 0;
-    }
-
-    &__user-label {
-        font-size: 11px;
-        color: var(--text-muted);
-        margin: 0;
-        line-height: 1.2;
-    }
-
-    &__user-name {
-        margin: 2px 0 0;
-        font-size: 13px;
-        color: var(--text-primary);
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 150px;
-    }
-
-    &__logout {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        height: 38px;
-        padding: 0 20px;
-        margin: 1px 8px;
-        border-radius: 6px;
-        font-size: 14px;
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition:
-            background 0.15s ease,
-            color 0.15s ease;
-
-        &:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-    }
+    height: 100%;
+    min-height: 0;
+    padding: var(--space-5) var(--space-3) var(--space-4);
+    background: var(--bg-primary);
 }
-
-@media (max-width: 768px) {
-    .app-sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-
-        &.is-open {
-            transform: translateX(0);
-        }
-    }
+.app-sidebar__brand {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    padding: 0 var(--space-3) var(--space-5);
+    min-height: 52px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+.app-sidebar__nav {
+    display: grid;
+    gap: var(--space-1);
+}
+.app-sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 10px var(--space-3);
+    min-height: 48px;
+    border-radius: var(--card-radius);
+    font-size: 16px;
+    color: var(--text-secondary);
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    text-decoration: none;
+    transition:
+        background 140ms ease,
+        color 140ms ease;
+}
+.app-sidebar__link:hover {
+    color: var(--accent);
+    background: var(--bg-secondary);
+}
+.app-sidebar__link.is-active {
+    color: var(--accent);
+    background: var(--accent-subtle);
+    font-weight: 600;
+}
+.app-sidebar__account {
+    margin-top: auto;
+    padding-top: var(--space-5);
+}
+.app-sidebar__identity {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-3);
+    border-top: 1px solid var(--border-color);
+}
+.app-sidebar__identity-text {
+    min-width: 0;
+    display: grid;
+}
+.app-sidebar__identity-text strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 600;
+}
+.app-sidebar__identity-text > span {
+    color: var(--text-muted);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+.app-sidebar__logout {
+    width: 100%;
+}
+.app-sidebar__logout:disabled {
+    cursor: wait;
 }
 </style>

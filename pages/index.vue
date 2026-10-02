@@ -1,158 +1,202 @@
 <template>
     <div class="home">
-        <section class="home__hero">
-            <h1 class="home__title">{{ homeTitle }}</h1>
-            <p class="home__subtitle">{{ $t('home.subtitle') }}</p>
+        <AppPageHeader :title="homeTitle" :description="$t('home.task_description')" />
+
+        <section class="home__tasks" :aria-label="$t('home.account_tasks')">
+            <AppAsyncState
+                :pending="identityPending"
+                :error="authStatus === 'error' ? $t('identity.identity_unavailable') : null"
+                @retry="retryIdentity"
+            >
+                <template v-if="me">
+                    <div class="home__identity">
+                        <AppUserAvatar
+                            :size="48"
+                            :src="me.avatarUrl || undefined"
+                            :name="me.displayName || me.username"
+                        />
+                        <div class="home__identity-text">
+                            <p>
+                                {{ $t('nav.signed_in_as') }}
+                                <strong>{{ me.displayName || me.username }}</strong>
+                            </p>
+                            <p class="home__handle">@{{ me.username }}</p>
+                        </div>
+                    </div>
+                    <div v-if="!me.emailVerified" class="home__verification" role="status">
+                        <p>{{ $t('profile.email_unverified') }}</p>
+                        <NuxtLink to="/profile?tab=basic">{{
+                            $t('profile.send_verify_email')
+                        }}</NuxtLink>
+                    </div>
+                    <div class="home__actions">
+                        <NuxtLink to="/profile?tab=bindings" class="el-button el-button--primary">
+                            {{ $t('binding.link_account') }}
+                        </NuxtLink>
+                        <NuxtLink to="/profile?tab=authorized_apps" class="el-button">
+                            {{ $t('home.manage_authorizations') }}
+                        </NuxtLink>
+                    </div>
+                </template>
+                <template v-else-if="authStatus === 'anonymous'">
+                    <div class="home__actions">
+                        <NuxtLink to="/login" class="el-button el-button--primary">
+                            {{ $t('auth.login.title') }}
+                        </NuxtLink>
+                        <NuxtLink
+                            v-if="publicConfig?.registrationEnabled"
+                            to="/register"
+                            class="el-button"
+                        >
+                            {{ $t('auth.register.title') }}
+                        </NuxtLink>
+                        <NuxtLink to="/developer" class="home__text-action">
+                            {{ $t('home.developer_path') }}
+                            <ArrowRight :size="18" aria-hidden="true" />
+                        </NuxtLink>
+                    </div>
+                    <p v-if="publicConfig?.registrationEnabled === false" class="home__hint">
+                        {{ $t('auth.flow.registration_closed') }}
+                    </p>
+                </template>
+            </AppAsyncState>
+            <AppAsyncState
+                v-if="publicConfigError"
+                :pending="false"
+                :error="$t('identity.network_error')"
+                @retry="refreshConfig()"
+            />
         </section>
 
         <div class="home__layout">
-            <main class="home__main">
-                <section class="home__section">
-                    <h2 class="home__section-title">{{ $t('home.announcements') }}</h2>
-                    <div v-loading="noticePending">
-                        <div v-if="notices && notices.length" class="home__notices">
-                            <article
-                                v-for="notice in notices"
-                                :key="notice.id"
-                                class="home__notice-card"
-                            >
-                                <header class="home__notice-header">
-                                    <h3 class="home__notice-title">{{ notice.title }}</h3>
-                                    <el-tag v-if="notice.pinned" size="small" type="warning">
-                                        {{ $t('home.pinned') }}
-                                    </el-tag>
-                                </header>
-                                <div class="home__notice-content" v-html="notice.content" />
-                                <p class="home__notice-time">
-                                    {{ formatNoticeTime(notice.publishedAt) }}
-                                </p>
-                            </article>
-                        </div>
-                        <el-empty
-                            v-else-if="!noticePending"
-                            :description="$t('home.no_announcements')"
-                        />
+            <section class="home__announcements" aria-labelledby="home-announcements">
+                <h2 id="home-announcements">{{ $t('home.announcements') }}</h2>
+                <AppAsyncState
+                    :pending="noticePending"
+                    :error="noticeError ? $t('identity.network_error') : null"
+                    :empty="!notices?.length"
+                    :empty-text="$t('home.no_announcements')"
+                    @retry="refreshNotices()"
+                >
+                    <div class="home__notices">
+                        <article v-for="notice in notices" :key="notice.id" class="home__notice">
+                            <header class="home__notice-header">
+                                <h3>{{ notice.title }}</h3>
+                                <span v-if="notice.pinned" class="home__notice-pinned">
+                                    <Pin :size="14" aria-hidden="true" /> {{ $t('home.pinned') }}
+                                </span>
+                            </header>
+                            <div class="home__notice-content" v-html="notice.content" />
+                            <p class="home__notice-time">
+                                <time :datetime="notice.publishedAt">{{
+                                    formatNoticeTime(notice.publishedAt)
+                                }}</time>
+                            </p>
+                        </article>
                     </div>
-                </section>
-            </main>
+                </AppAsyncState>
+            </section>
 
             <aside class="home__side">
-                <section class="home__section">
-                    <h2 class="home__section-title">{{ $t('home.quote') }}</h2>
-                    <div v-loading="quotePending" class="home__quote-card">
-                        <p class="home__quote-text">
-                            {{ quote?.text || $t('home.quote_fallback') }}
-                        </p>
-                        <p class="home__quote-source">
-                            {{ $t('home.quote_source') }}: {{ quoteSource }}
-                        </p>
-                    </div>
-                </section>
-
-                <section class="home__section">
-                    <h2 class="home__section-title">{{ $t('home.stats') }}</h2>
-                    <div v-loading="statsPending" class="home__stats-card">
-                        <div class="home__stats-grid">
-                            <div v-for="item in statItems" :key="item.key" class="home__stat-cell">
-                                <span class="home__stat-value">{{ formatNumber(item.value) }}</span>
-                                <span class="home__stat-label">{{ item.label }}</span>
+                <section class="home__section" aria-labelledby="home-stats">
+                    <h2 id="home-stats">{{ $t('home.stats') }}</h2>
+                    <AppAsyncState
+                        :pending="statsPending"
+                        :error="statsError || !stats ? $t('identity.network_error') : null"
+                        @retry="refreshStats()"
+                    >
+                        <dl class="home__stats">
+                            <div v-for="item in statItems" :key="item.key" class="home__stat">
+                                <dt>{{ item.label }}</dt>
+                                <dd>{{ formatNumber(item.value) }}</dd>
                             </div>
-                        </div>
-                    </div>
+                        </dl>
+                    </AppAsyncState>
                 </section>
 
-                <section class="home__section">
-                    <h2 class="home__section-title">{{ $t('home.recent_users') }}</h2>
-                    <div v-loading="pending" class="home__users-card">
-                        <div v-if="recentUsers.length" class="home__users">
-                            <NuxtLink
-                                v-for="u in recentUsers"
-                                :key="u.id"
-                                :to="`/user/${u.username}`"
-                                class="home__user-card"
-                            >
-                                <AppUserAvatar
-                                    :size="42"
-                                    :src="u.avatarUrl || undefined"
-                                    :name="u.displayName || u.username"
-                                    class="home__avatar"
-                                />
-                                <div class="home__user-info">
-                                    <p class="home__user-name">{{ u.displayName || u.username }}</p>
-                                    <p class="home__user-handle">@{{ u.username }}</p>
-                                    <p v-if="u.bio" class="home__user-bio">{{ u.bio }}</p>
-                                </div>
-                            </NuxtLink>
-                        </div>
-                        <el-empty v-else-if="!pending" :description="$t('home.no_users')" />
-                    </div>
+                <section class="home__section" aria-labelledby="home-recent-users">
+                    <h2 id="home-recent-users">{{ $t('home.recent_users') }}</h2>
+                    <AppAsyncState
+                        :pending="usersPending"
+                        :error="usersError ? $t('identity.network_error') : null"
+                        :empty="!recentUsers.length"
+                        :empty-text="$t('home.no_users')"
+                        @retry="refreshUsers()"
+                    >
+                        <ul class="home__users">
+                            <li v-for="u in recentUsers" :key="u.id">
+                                <NuxtLink :to="`/user/${u.username}`" class="home__user">
+                                    <AppUserAvatar
+                                        :size="40"
+                                        :src="u.avatarUrl || undefined"
+                                        :name="u.displayName || u.username"
+                                    />
+                                    <div class="home__user-info">
+                                        <p class="home__user-name">
+                                            {{ u.displayName || u.username }}
+                                        </p>
+                                        <p class="home__handle">@{{ u.username }}</p>
+                                        <p v-if="u.bio" class="home__user-bio">{{ u.bio }}</p>
+                                    </div>
+                                </NuxtLink>
+                            </li>
+                        </ul>
+                    </AppAsyncState>
                 </section>
             </aside>
         </div>
+
+        <section class="home__quote" aria-labelledby="home-quote">
+            <h2 id="home-quote">{{ $t('home.quote') }}</h2>
+            <AppAsyncState
+                :pending="quotePending || (!quote && !quoteError)"
+                :error="quoteError ? $t('identity.network_error') : null"
+                @retry="refreshQuote()"
+            >
+                <blockquote>
+                    <p>{{ quote?.text || $t('home.quote_fallback') }}</p>
+                    <footer>{{ $t('home.quote_source') }}: {{ quoteSource }}</footer>
+                </blockquote>
+            </AppAsyncState>
+        </section>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ArrowRight, Pin } from 'lucide-vue-next';
 import { formatCSTTime } from '~/utils/time';
+import type { NoticeSummary, QuoteSummary, SiteStatsResponse, UserSummary } from '~/types/api';
 
-const { t } = useI18n();
-
+const { t, locale } = useI18n();
 useHead({ title: () => `${t('home.title')} - CP OAuth` });
 
-interface UserSummary {
-    id: string;
-    username: string;
-    displayName: string | null;
-    bio: string | null;
-    avatarUrl: string | null;
-    createdAt: string;
-}
-
-interface QuoteSummary {
-    text: string;
-    source: string;
-    fromWho: string | null;
-}
-
-interface NoticeSummary {
-    id: string;
-    title: string;
-    content: string;
-    pinned: boolean;
-    publishedAt: string;
-}
-
-interface PublicConfigResponse {
-    recentUsersCount?: number;
-}
-
-interface SiteStatsResponse {
-    users: number;
-    linkedAccounts: number;
-    oauthClients: number;
-    oauthLoginRequestsToday: number;
-}
-
-interface MeSummary {
-    username: string;
-    displayName: string | null;
-}
+const api = useApi();
+const { user: me, status: authStatus, load } = useAuth();
+const identityPending = ref(true);
 
 const DEFAULT_RECENT_USERS_LIMIT = 6;
 
-const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
-const token = useCookie('auth_token');
-const me = ref<MeSummary | null>(null);
-
-if (token.value) {
-    try {
-        me.value = await $fetch<MeSummary>('/api/auth/me', {
-            headers: { Authorization: `Bearer ${token.value}` }
-        });
-    } catch {
-        me.value = null;
+const configRequest = usePublicConfig();
+const statsRequest = useAsyncData('public:stats', () =>
+    api<SiteStatsResponse>('/api/public/stats')
+);
+const noticesRequest = useAsyncData('public:notices', async () => {
+    const entries = await api<NoticeSummary[]>('/api/public/notices');
+    for (const notice of entries) {
+        notice.content = notice.content.replace(
+            /<(\/?)h([1-6])>/g,
+            (_tag, closing: string, level: string) =>
+                `<${closing}h${Math.min(6, Number(level) + 3)}>`
+        );
     }
-}
+    return entries;
+});
+const identityRequest = retryIdentity();
+const {
+    data: publicConfig,
+    error: publicConfigError,
+    refresh: refreshConfig
+} = await configRequest;
 
 const homeTitle = computed(() => {
     if (me.value?.username || me.value?.displayName) {
@@ -169,39 +213,57 @@ const recentUsersLimit = computed(() => {
     return Math.min(20, Math.max(1, Math.trunc(raw)));
 });
 
-const { data: users, pending } = await useFetch<UserSummary[]>('/api/users', {
-    query: { limit: recentUsersLimit.value }
+const [usersState, statsState, noticesState] = await Promise.all([
+    useAsyncData(
+        'public:recent-users',
+        () => api<UserSummary[]>('/api/users', { query: { limit: recentUsersLimit.value } }),
+        { watch: [recentUsersLimit] }
+    ),
+    statsRequest,
+    noticesRequest
+]);
+const { data: users, pending: usersPending, error: usersError, refresh: refreshUsers } = usersState;
+const { data: stats, pending: statsPending, error: statsError, refresh: refreshStats } = statsState;
+const {
+    data: notices,
+    pending: noticePending,
+    error: noticeError,
+    refresh: refreshNotices
+} = noticesState;
+await identityRequest;
+const {
+    data: quote,
+    pending: quotePending,
+    error: quoteError,
+    refresh: refreshQuote
+} = await useLazyAsyncData('public:hitokoto', () => api<QuoteSummary>('/api/public/hitokoto'), {
+    server: false
 });
-const { data: stats, pending: statsPending } =
-    await useFetch<SiteStatsResponse>('/api/public/stats');
-const { data: quote, pending: quotePending } = await useFetch<QuoteSummary>('/api/public/hitokoto');
-const { data: notices, pending: noticePending } =
-    await useFetch<NoticeSummary[]>('/api/public/notices');
 
 const recentUsers = computed(() => (users.value ?? []).slice(0, recentUsersLimit.value));
 
-const statItems = computed(() => [
-    {
-        key: 'users',
-        label: t('home.stat_users'),
-        value: stats.value?.users ?? 0
-    },
-    {
-        key: 'linkedAccounts',
-        label: t('home.stat_linked_accounts'),
-        value: stats.value?.linkedAccounts ?? 0
-    },
-    {
-        key: 'oauthClients',
-        label: t('home.stat_oauth_clients'),
-        value: stats.value?.oauthClients ?? 0
-    },
-    {
-        key: 'oauthLoginRequestsToday',
-        label: t('home.stat_oauth_requests_today'),
-        value: stats.value?.oauthLoginRequestsToday ?? 0
-    }
-]);
+const statItems = computed(() =>
+    stats.value
+        ? [
+              { key: 'users', label: t('home.stat_users'), value: stats.value.users },
+              {
+                  key: 'linkedAccounts',
+                  label: t('home.stat_linked_accounts'),
+                  value: stats.value.linkedAccounts
+              },
+              {
+                  key: 'oauthClients',
+                  label: t('home.stat_oauth_clients'),
+                  value: stats.value.oauthClients
+              },
+              {
+                  key: 'oauthLoginRequestsToday',
+                  label: t('home.stat_oauth_requests_today'),
+                  value: stats.value.oauthLoginRequestsToday
+              }
+          ]
+        : []
+);
 
 const quoteSource = computed(() => {
     if (!quote.value) {
@@ -213,264 +275,263 @@ const quoteSource = computed(() => {
         : quote.value.source;
 });
 
+async function retryIdentity(): Promise<void> {
+    identityPending.value = true;
+    try {
+        await load(authStatus.value === 'error');
+    } catch {
+        // Preserve the shared error state; a network failure is not a sign-out.
+    } finally {
+        identityPending.value = false;
+    }
+}
+
 function formatNoticeTime(raw: string): string {
     return formatCSTTime(raw, { withSeconds: true, withTimezone: true });
 }
 
 function formatNumber(value: number): string {
-    return new Intl.NumberFormat().format(value);
+    return new Intl.NumberFormat(locale.value).format(value);
 }
 </script>
 
 <style scoped lang="scss">
 .home {
-    width: 100%;
-    max-width: none;
-    --home-strong: #111827;
-    --home-body: #374151;
-    --home-muted: #6b7280;
-    --home-faint: #9ca3af;
+    min-width: 0;
 
-    &__layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 40px;
-        align-items: start;
+    &__tasks {
+        padding-bottom: var(--space-6);
+        margin-bottom: var(--space-6);
+        border-bottom: 1px solid var(--border-color);
     }
 
-    &__hero {
-        margin-bottom: 36px;
+    &__identity {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
     }
 
-    &__title {
-        font-size: 22px;
-        font-weight: 600;
-        color: var(--text-primary);
-        letter-spacing: -0.02em;
+    &__identity-text,
+    &__user-info {
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 
-    &__subtitle {
-        color: var(--text-secondary);
-        margin-top: 4px;
+    &__handle,
+    &__hint {
+        color: var(--text-muted);
         font-size: 14px;
     }
 
-    &__section-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--home-strong);
-        margin-bottom: 12px;
+    &__hint {
+        margin-top: var(--space-3);
     }
 
-    &__section {
-        margin-bottom: 30px;
+    &__verification {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2) var(--space-4);
+        margin-top: var(--space-3);
+        color: var(--text-secondary);
+        font-size: 14px;
 
-        &:last-child {
-            margin-bottom: 0;
+        a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            color: var(--accent);
+            text-decoration: underline;
+            text-underline-offset: 3px;
         }
     }
 
-    &__notices {
+    &__actions {
         display: flex;
-        flex-direction: column;
-        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+
+        .el-button {
+            min-height: 44px;
+            height: auto;
+            margin: 0;
+            white-space: normal;
+            text-align: center;
+        }
     }
 
-    &__notice-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: var(--card-radius);
-        padding: 16px 18px;
-        box-shadow: var(--card-shadow);
+    &__text-action {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: 44px;
+        color: var(--accent);
+        font-size: 14px;
+    }
+
+    &__layout {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+        gap: var(--space-6);
+        align-items: start;
+    }
+
+    &__announcements,
+    &__side,
+    &__section {
+        min-width: 0;
+    }
+
+    &__side {
+        display: grid;
+        gap: var(--space-6);
+    }
+
+    h2 {
+        margin-bottom: var(--space-4);
+    }
+
+    &__notice {
+        padding: var(--space-5) 0;
+        border-bottom: 1px solid var(--border-color);
+
+        &:first-child {
+            padding-top: 0;
+        }
+
+        &:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
     }
 
     &__notice-header {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: var(--space-2) var(--space-3);
+
+        h3 {
+            overflow-wrap: anywhere;
+        }
     }
 
-    &__notice-title {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--home-strong);
+    &__notice-pinned {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        color: var(--text-muted);
+        font-size: 14px;
     }
 
     &__notice-content {
-        margin: 8px 0 6px;
-        color: var(--home-body);
-        font-size: 13px;
-        line-height: 1.65;
+        margin: var(--space-3) 0;
+        color: var(--text-secondary);
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
 
-        :deep(a) {
-            color: var(--el-color-primary);
+        :deep(a[href]) {
+            color: var(--accent);
             text-decoration: underline;
-            text-underline-offset: 2px;
+            text-underline-offset: 3px;
+        }
+
+        :deep(img) {
+            max-width: 100%;
+            height: auto;
         }
     }
 
     &__notice-time {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+
+    &__stats {
         margin: 0;
-        font-size: 11px;
-        color: var(--home-faint);
     }
 
-    &__stats-card {
-        overflow: hidden;
-        border: 1px solid var(--card-border);
-        border-radius: var(--card-radius);
-        background: var(--card-bg);
-        box-shadow: var(--card-shadow);
-    }
-
-    &__stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    &__stat-cell {
+    &__stat {
         display: flex;
-        flex-direction: column;
-        gap: 3px;
-        min-height: 86px;
-        padding: 18px;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-4);
+        padding: var(--space-3) 0;
+        border-bottom: 1px solid var(--border-color);
 
-        &:nth-child(odd) {
-            border-right: 1px dashed var(--divider-subtle);
+        dt {
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
-        &:nth-child(-n + 2) {
-            border-bottom: 1px dashed var(--divider-subtle);
+        dd {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
         }
-    }
-
-    &__stat-value {
-        color: var(--home-strong);
-        font-size: 20px;
-        font-weight: 600;
-        line-height: 1.2;
-    }
-
-    &__stat-label {
-        color: var(--home-muted);
-        font-size: 11px;
-        line-height: 1.45;
-    }
-
-    &__quote-card {
-        padding: 4px 0 4px 18px;
-        border-left: 3px solid var(--accent);
-    }
-
-    &__quote-text {
-        font-size: 15px;
-        line-height: 1.8;
-        color: var(--home-strong);
-        letter-spacing: 0.06em;
-        margin: 0;
-    }
-
-    &__quote-source {
-        margin-top: 10px;
-        color: var(--home-faint);
-        font-size: 11px;
-        text-align: right;
-    }
-
-    &__users-card {
-        padding: 6px;
-        border: 1px solid var(--card-border);
-        border-radius: var(--card-radius);
-        background: var(--card-bg);
-        box-shadow: var(--card-shadow);
     }
 
     &__users {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-    }
+        list-style: none;
+        margin: 0;
+        padding: 0;
 
-    &__user-card {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 12px;
-        border-radius: var(--card-radius);
-        transition: background 0.15s ease;
-
-        &:hover {
-            background: var(--accent-subtle);
+        li + li {
+            border-top: 1px solid var(--border-color);
         }
     }
 
-    &__avatar {
-        font-size: 14px;
-    }
-
-    &__user-info {
-        min-width: 0;
+    &__user {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-3);
+        min-height: 64px;
+        padding: var(--space-3) 0;
     }
 
     &__user-name {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--home-strong);
-    }
-
-    &__user-handle {
-        font-size: 12px;
-        color: var(--home-muted);
+        font-weight: 600;
     }
 
     &__user-bio {
-        font-size: 12px;
-        color: var(--home-body);
-        margin-top: 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin-top: var(--space-1);
+    }
+
+    &__quote {
+        margin-top: var(--space-6);
+        padding-top: var(--space-5);
+        border-top: 1px solid var(--border-color);
+
+        blockquote {
+            margin: 0;
+            padding-left: var(--space-4);
+            border-left: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+        }
+
+        footer {
+            margin-top: var(--space-2);
+            font-size: 14px;
+            color: var(--text-muted);
+        }
     }
 }
 
-:global(.dark) .home {
-    --home-strong: #f5f5f5;
-    --home-body: #d4d4d8;
-    --home-muted: #a1a1aa;
-    --home-faint: #71717a;
-}
-
-@media (max-width: 1080px) {
-    .home {
-        &__layout {
-            grid-template-columns: 1fr;
-        }
+@media (max-width: 767px) {
+    .home__layout {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
-@media (max-width: 640px) {
-    .home {
-        &__layout {
-            gap: 16px;
-        }
-
-        &__stats-grid {
-            grid-template-columns: 1fr;
-        }
-
-        &__stat-cell {
-            border-right: none;
-
-            &:nth-child(-n + 2) {
-                border-bottom: none;
-            }
-
-            &:not(:last-child) {
-                border-bottom: 1px dashed var(--divider-subtle);
-            }
-        }
+@media (max-width: 479px) {
+    .home__actions > .el-button {
+        width: 100%;
     }
 }
 </style>

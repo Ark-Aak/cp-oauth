@@ -1,36 +1,32 @@
-import jwt from 'jsonwebtoken';
-import { buildAuthSessionKey } from '~/server/utils/auth';
-import { getRedis } from '~/server/utils/redis';
+import { getRequestURL, defineEventHandler } from 'h3';
+import { loadAuthSession } from '~/server/utils/auth';
 
-const SESSION_OPTIONAL_PATH_PREFIXES = ['/api/oauth/userinfo'];
+const PUBLIC_PATHS: Record<string, true> = {
+    '/api/healthz': true,
+    '/api/readyz': true,
+    '/api/public/config': true,
+    '/api/public/stats': true,
+    '/api/public/notices': true,
+    '/api/public/showcase': true,
+    '/api/public/hitokoto': true,
+    '/api/users': true,
+    '/api/oauth/token': true,
+    '/api/oauth/revoke': true,
+    '/api/oauth/userinfo': true
+};
 
 export default defineEventHandler(async event => {
-    const auth = getHeader(event, 'authorization');
-    if (!auth?.startsWith('Bearer ')) {
+    const path = getRequestURL(event).pathname;
+    if (
+        !path.startsWith('/api/') ||
+        Object.hasOwn(PUBLIC_PATHS, path) ||
+        /^\/api\/users\/[^/]+(?:\/(?:card\.svg|stats))?$/.test(path)
+    )
         return;
-    }
-    if (SESSION_OPTIONAL_PATH_PREFIXES.some(path => event.path.startsWith(path))) {
-        return;
-    }
-
-    const token = auth.slice(7);
-    const config = useRuntimeConfig();
-
-    let payload: { userId?: unknown; sid?: unknown };
     try {
-        payload = jwt.verify(token, config.jwtSecret) as { userId?: unknown; sid?: unknown };
+        await loadAuthSession(event);
     } catch {
-        throw createError({ statusCode: 401, message: 'Invalid token' });
+        // Primary endpoints may continue; protected handlers fail closed via getAuthContext.
+        event.context.authUnavailable = true;
     }
-
-    if (typeof payload.sid !== 'string' || typeof payload.userId !== 'string') {
-        throw createError({ statusCode: 401, message: 'Invalid token' });
-    }
-
-    const sessionUserId = await getRedis().get(buildAuthSessionKey(payload.sid));
-    if (sessionUserId !== payload.userId) {
-        throw createError({ statusCode: 401, message: 'Invalid token' });
-    }
-
-    event.context.authUserId = payload.userId;
 });

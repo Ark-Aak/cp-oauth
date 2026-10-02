@@ -1,42 +1,40 @@
-import { consola } from 'consola';
+import { createError, defineEventHandler, getRouterParam } from 'h3';
+import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
-import { requireAdmin } from '~/server/utils/admin';
-
-const logger = consola.withTag('admin:users:delete');
+import {
+    requireAdminInTransaction,
+    requireAnotherAdmin,
+    rethrowAdminError
+} from '~/server/utils/admin';
+import { clearAuthCookies, getAuthContext, lockAuthUser } from '~/server/utils/auth';
+import { lockAdminRole } from '~/server/utils/role';
+import { parseInput } from '~/server/utils/validation';
 
 export default defineEventHandler(async event => {
-    const adminId = await requireAdmin(event);
-    const id = getRouterParam(event, 'id');
+    try {
+        const auth = getAuthContext(event);
+        const { id } = parseInput(z.object({ id: z.string().min(1) }), {
+            id: getRouterParam(event, 'id')
+        });
 
-    if (!id) {
-        throw createError({ statusCode: 400, message: 'User ID required' });
-    }
-
-    if (id === adminId) {
-        throw createError({ statusCode: 400, message: 'Cannot delete your own account' });
-    }
-
-    const target = await prisma.user.findUnique({
-        where: { id },
-        select: { id: true, role: true, username: true }
-    });
-
-    if (!target) {
-        throw createError({ statusCode: 404, message: 'User not found' });
-    }
-
-    await prisma.$transaction(async tx => {
-        if (target.role === 'admin') {
-            const adminCount = await tx.user.count({ where: { role: 'admin' } });
-            if (adminCount <= 1) {
-                throw createError({ statusCode: 400, message: 'Cannot delete the last admin' });
+        await prisma.$transaction(async tx => {
+            await lockAdminRole(tx);
+            for (const userId of [...new Set([auth.userId, id])].sort()) {
+                await lockAuthUser(tx, userId);
             }
-        }
+            await requireAdminInTransaction(tx, auth);
+            const target = await tx.user.findUnique({
+                where: { id },
+                select: { role: true }
+            });
+            if (!target) throw createError({ statusCode: 404, message: 'User not found' });
+            if (target.role === 'admin') await requireAnotherAdmin(tx);
+            await tx.user.delete({ where: { id } });
+        });
 
-        await tx.user.delete({ where: { id } });
-    });
-
-    logger.info(`User deleted by admin ${adminId}: ${target.username} (${target.id})`);
-
-    return { success: true };
+        if (id === auth.userId) clearAuthCookies(event);
+        return { success: true };
+    } catch (error) {
+        rethrowAdminError(error, 'User');
+    }
 });

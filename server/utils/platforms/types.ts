@@ -22,6 +22,8 @@ export interface VerifyResult {
     platformUid: string;
     /** Platform username if available */
     platformUsername?: string;
+    /** Public avatar supplied by the same verified profile response */
+    avatarUrl?: string | null;
     /** Error message if verification failed */
     error?: string;
 }

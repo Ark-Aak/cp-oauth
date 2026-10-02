@@ -1,65 +1,80 @@
-/* Element Plus Light Mode Overrides - Monochrome */
+/* Task workstation — blue-gray, inspired by the requested Luogu reference. */
 :root {
-    --el-color-primary: #0f4c5c;
-    --el-color-primary-light-3: #2b6472;
-    --el-color-primary-light-5: #5f8d97;
-    --el-color-primary-light-7: #9ab9c0;
-    --el-color-primary-light-8: #bfd3d8;
-    --el-color-primary-light-9: #e6f0f2;
-    --el-color-primary-dark-2: #0a3945;
+    --el-color-primary: #2f6db5;
+    --el-color-primary-light-3: #285f9d;
+    --el-color-primary-light-5: #7fa4ce;
+    --el-color-primary-light-7: #c2d5ea;
+    --el-color-primary-light-8: #dbe7f4;
+    --el-color-primary-light-9: #eef4fb;
+    --el-color-primary-dark-2: #24558e;
+    --el-color-danger: #b42318;
+    --el-color-danger-light-3: #912018;
+    --el-color-danger-light-9: #fff1ef;
+    --el-color-danger-dark-2: #8f1c14;
+    --el-color-warning: #925d0a;
+    --el-color-warning-light-3: #784b08;
+    --el-color-warning-dark-2: #684108;
+    --el-color-warning-light-9: #fff8e9;
+    --el-color-success: #157f50;
+    --el-color-success-light-3: #10683f;
+    --el-color-success-dark-2: #0e5b37;
+    --el-color-success-light-9: #edf8f1;
+    --el-color-info: #64748b;
+    --el-color-info-light-3: #52647c;
+    --el-color-info-dark-2: #3e5068;
 
     --el-bg-color: #ffffff;
-    --el-bg-color-page: #f7f7f8;
+    --el-bg-color-page: #f6f9fd;
     --el-bg-color-overlay: #ffffff;
 
-    --el-text-color-primary: #111827;
-    --el-text-color-regular: #374151;
-    --el-text-color-secondary: #6b7280;
-    --el-text-color-placeholder: #9ca3af;
-    --el-text-color-disabled: #c0c0c0;
+    --el-text-color-primary: #10233f;
+    --el-text-color-regular: #475569;
+    --el-text-color-secondary: #64748b;
+    --el-text-color-placeholder: #64748b;
+    --el-text-color-disabled: #94a3b8;
 
-    --el-border-color: #e4e4e7;
-    --el-border-color-light: #e9e9ec;
-    --el-border-color-lighter: #eeeeef;
-    --el-border-color-extra-light: #f4f4f5;
-    --el-border-color-dark: #d4d4d8;
-    --el-border-color-darker: #a1a1aa;
+    --el-border-color: #dbe5ef;
+    --el-border-color-light: #e4ecf5;
+    --el-border-color-lighter: #eaf0f7;
+    --el-border-color-extra-light: #f0f5fb;
+    --el-border-color-dark: #bccbdb;
+    --el-border-color-darker: #94a3b8;
 
-    --el-fill-color: #f4f4f5;
-    --el-fill-color-light: #f7f7f8;
-    --el-fill-color-lighter: #fafafa;
-    --el-fill-color-extra-light: #fafafa;
-    --el-fill-color-dark: #e8e8e8;
-    --el-fill-color-darker: #e0e0e0;
+    --el-fill-color: #f0f5fb;
+    --el-fill-color-light: #f6f9fd;
+    --el-fill-color-lighter: #fbfcfe;
+    --el-fill-color-extra-light: #fbfcfe;
+    --el-fill-color-dark: #e4edf7;
+    --el-fill-color-darker: #dbe5ef;
     --el-fill-color-blank: #ffffff;
 
     --el-mask-color: rgba(255, 255, 255, 0.9);
     --el-mask-color-extra-light: rgba(255, 255, 255, 0.3);
 
-    --el-box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.025);
-    --el-box-shadow-light: 0 3px 10px 0 rgba(0, 0, 0, 0.022);
-    --el-box-shadow-lighter: 0 2px 8px 0 rgba(0, 0, 0, 0.018);
-    --el-box-shadow-dark: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+    --el-box-shadow: none;
+    --el-box-shadow-light: 0 8px 30px rgba(16, 35, 63, 0.1);
+    --el-box-shadow-lighter: 0 3px 10px rgba(16, 35, 63, 0.08);
+    --el-box-shadow-dark: 0 12px 44px rgba(16, 35, 63, 0.14);
 }
 
-/* Element Plus Dark Mode Overrides - Monochrome */
+/* Dark mode keeps text and focus contrast independent of the reference site. */
 .dark {
     --el-bg-color: #141414;
     --el-bg-color-page: #0a0a0a;
     --el-bg-color-overlay: #1e1e1e;
 
-    --el-text-color-primary: #e5e5e5;
-    --el-text-color-regular: #a0a0a0;
-    --el-text-color-secondary: #666666;
-    --el-text-color-placeholder: #525252;
-    --el-text-color-disabled: #3a3a3a;
+    --el-text-color-primary: #f3f4f6;
+    --el-text-color-regular: #d1d5db;
+    --el-text-color-secondary: #9ca3af;
+    --el-text-color-placeholder: #9ca3af;
+    --el-text-color-disabled: #6b7280;
 
-    --el-border-color: #2a2a2a;
-    --el-border-color-light: #222222;
-    --el-border-color-lighter: #1e1e1e;
-    --el-border-color-extra-light: #1a1a1a;
-    --el-border-color-dark: #333333;
-    --el-border-color-darker: #3a3a3a;
+    --el-border-color: #374151;
+    --el-border-color-light: #303a49;
+    --el-border-color-lighter: #283240;
+    --el-border-color-extra-light: #222c39;
+    --el-border-color-dark: #4b5563;
+    --el-border-color-darker: #6b7280;
 
     --el-fill-color: #1e1e1e;
     --el-fill-color-light: #1a1a1a;
@@ -76,11 +91,27 @@
     --el-color-primary-light-8: #1d353b;
     --el-color-primary-light-9: #16292e;
     --el-color-primary-dark-2: #8ccedf;
+    --el-color-danger: #fda29b;
+    --el-color-danger-light-3: #fdb6b0;
+    --el-color-danger-light-9: #381c1a;
+    --el-color-danger-dark-2: #fec9c4;
+    --el-color-warning: #fcd34d;
+    --el-color-warning-light-3: #fddc7b;
+    --el-color-warning-dark-2: #fde7a6;
+    --el-color-warning-light-9: #332b14;
+    --el-color-success: #75d4a3;
+    --el-color-success-light-3: #97dfbc;
+    --el-color-success-dark-2: #a8e7c8;
+    --el-color-success-light-9: #162e24;
+    --el-color-info: #9ca3af;
+    --el-color-info-light-3: #b1bac8;
+    --el-color-info-light-9: #232b36;
+    --el-color-info-dark-2: #c4ccd7;
 
     --el-mask-color: rgba(0, 0, 0, 0.8);
     --el-mask-color-extra-light: rgba(0, 0, 0, 0.3);
 
-    --el-box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.3);
+    --el-box-shadow: none;
     --el-box-shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
     --el-box-shadow-lighter: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
     --el-box-shadow-dark: 0 2px 8px 0 rgba(0, 0, 0, 0.4);
@@ -115,29 +146,18 @@
     --el-button-active-border-color: var(--el-color-primary-dark-2);
 }
 
-:root .el-button--primary {
-    --el-button-text-color: var(--el-bg-color);
-    --el-button-hover-text-color: var(--el-bg-color);
-    --el-button-active-text-color: var(--el-bg-color);
+.dark .el-button--primary:not(.is-plain),
+.dark .el-button--danger:not(.is-plain),
+.dark .el-button--success:not(.is-plain),
+.dark .el-button--warning:not(.is-plain),
+.dark .el-button--info:not(.is-plain) {
+    --el-button-text-color: var(--el-bg-color-page);
+    --el-button-hover-text-color: var(--el-bg-color-page);
+    --el-button-active-text-color: var(--el-bg-color-page);
 }
-
-.dark .el-button--primary {
-    color: var(--el-bg-color-page) !important;
-
-    &:hover,
-    &:focus {
-        color: var(--el-bg-color-page) !important;
-    }
-
-    &:active {
-        color: var(--el-bg-color-page) !important;
-    }
-
-    &.is-disabled {
-        color: var(--el-text-color-disabled) !important;
-        background-color: var(--el-fill-color-dark) !important;
-        border-color: var(--el-fill-color-dark) !important;
-    }
+.dark .el-button.is-plain {
+    --el-button-hover-text-color: var(--el-bg-color-page);
+    --el-button-active-text-color: var(--el-bg-color-page);
 }
 
 /* Card — subtle shadow, tighter padding */
@@ -156,6 +176,38 @@
 /* Dialog */
 .el-dialog {
     --el-dialog-bg-color: var(--el-bg-color-overlay);
+}
+
+.el-dialog,
+.el-drawer {
+    box-shadow: var(--el-box-shadow-dark);
+}
+.el-button {
+    min-height: 44px;
+    font-size: 14px;
+}
+.el-select__wrapper,
+.el-input__wrapper {
+    min-height: 44px;
+}
+.el-checkbox,
+.el-radio,
+.el-dropdown-menu__item {
+    min-height: 44px;
+}
+.el-form-item__label {
+    color: var(--text-primary);
+}
+.el-dialog {
+    max-width: calc(100vw - 32px);
+}
+.el-form-item__error {
+    position: static;
+    width: 100%;
+    line-height: 1.5;
+    font-size: 14px;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 /* Table — transparent */

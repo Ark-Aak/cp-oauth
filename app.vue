@@ -14,12 +14,18 @@
 
 <script setup lang="ts">
 const colorMode = useColorMode();
+const { locale } = useI18n();
+const config = useRuntimeConfig();
+const analyticsToken = config.public.cloudflareAnalyticsToken.trim();
 
 const loadingIndicatorColor = computed(() =>
     colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(0, 0, 0, 0.92)'
 );
 
-useHead({
+useHead(() => ({
+    htmlAttrs: {
+        lang: locale.value === 'zh' ? 'zh-CN' : locale.value === 'ja' ? 'ja' : 'en'
+    },
     script: [
         {
             key: 'website-json-ld',
@@ -28,15 +34,19 @@ useHead({
                 '@context': 'https://schema.org',
                 '@type': 'WebSite',
                 name: 'CP OAuth',
-                url: 'https://www.cpoauth.com/'
+                url: new URL('/', config.public.siteOrigin).href
             })
         },
-        {
-            key: 'cloudflare-web-analytics',
-            defer: true,
-            src: 'https://static.cloudflareinsights.com/beacon.min.js',
-            'data-cf-beacon': '{"token": "c2d855fe9c6947b29c73141ce9d31d8b"}'
-        }
+        ...(analyticsToken
+            ? [
+                  {
+                      key: 'cloudflare-web-analytics',
+                      defer: true,
+                      src: 'https://static.cloudflareinsights.com/beacon.min.js',
+                      'data-cf-beacon': JSON.stringify({ token: analyticsToken })
+                  }
+              ]
+            : [])
     ]
-});
+}));
 </script>

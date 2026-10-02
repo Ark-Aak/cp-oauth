@@ -1,6 +1,9 @@
 import { consola } from 'consola';
+import { createError } from 'h3';
+import { z } from 'zod';
 import { clistFetch } from './clist-fetch';
 import { getRedis } from './redis';
+import { hashToken } from './token-hash';
 
 const logger = consola.withTag('clist-api');
 
@@ -13,20 +16,6 @@ const ACCOUNTS_CACHE_TTL = 24 * 60 * 60; // 1 day
 const STATISTICS_CACHE_TTL = 24 * 60 * 60; // 1 day
 const CODER_ME_CACHE_TTL = 24 * 60 * 60; // 1 day
 
-// --- Clist resource name → local platform name ---
-
-export const RESOURCE_TO_PLATFORM: Record<string, string> = {
-    'codeforces.com': 'codeforces',
-    'atcoder.jp': 'atcoder',
-    'luogu.com.cn': 'luogu'
-};
-
-export const PLATFORM_TO_RESOURCE: Record<string, string> = Object.fromEntries(
-    Object.entries(RESOURCE_TO_PLATFORM).map(([k, v]) => [v, k])
-);
-
-// Some resources on Clist map to the same local platform but should be shown
-// separately in stats. This maps them to a distinct display name.
 export const RESOURCE_DISPLAY_NAMES: Record<string, string> = {
     'codeforces.com': 'Codeforces',
     'atcoder.jp': 'AtCoder',
@@ -86,7 +75,7 @@ export function getEffectiveResourceDisplayName(effectiveResource: string): stri
 export interface ClistAccount {
     id: number;
     resource: string;
-    resource_id: number;
+    resource_id?: number;
     handle: string;
     name: string | null;
     rating: number | null;
@@ -109,165 +98,205 @@ export interface ClistStatistic {
     rating_change: number | null;
 }
 
-interface ClistListResponse<T> {
-    meta?: {
-        limit?: number;
-        offset?: number;
-        total_count?: number;
-    };
-    objects?: T[];
-}
-
 // --- Fetch helpers ---
 
-async function fetchClistJson<T>(url: string, accessToken: string): Promise<T> {
+async function fetchClistJson<T extends z.ZodType>(
+    url: string,
+    accessToken: string,
+    schema: T
+): Promise<z.output<T>> {
     const result = await clistFetch({
         method: 'GET',
         url,
-        headers: {
-            Authorization: `Bearer ${accessToken}`
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
         sessionInit: CLIST_BASE_URL
     });
-
-    if (result.error) {
-        throw new Error(`Clist API error: ${result.error}`);
+    if (result.error || result.status < 200 || result.status >= 300) {
+        logger.warn(
+            result.error
+                ? `Clist request failed: ${result.error}`
+                : `Clist HTTP response: ${Math.floor(result.status / 100)}xx`
+        );
+        throw createError({
+            statusCode: result.error === 'timeout' ? 504 : 502,
+            message: 'Clist data is unavailable'
+        });
     }
-
-    if (result.status >= 400) {
-        throw new Error(`Clist API returned HTTP ${result.status}`);
+    let value: unknown;
+    try {
+        value = JSON.parse(result.body);
+    } catch {
+        throw createError({ statusCode: 502, message: 'Invalid Clist response' });
     }
-
-    const body = result.body.trim();
-    if (!body || body.startsWith('<!') || body.startsWith('<html')) {
-        throw new Error('Clist API returned HTML instead of JSON');
+    const parsed = schema.safeParse(value);
+    if (!parsed.success) {
+        throw createError({ statusCode: 502, message: 'Invalid Clist response' });
     }
-
-    return JSON.parse(body) as T;
+    return parsed.data;
 }
 
-// --- Redis cache helpers ---
+const accountSchema = z.object({
+    id: z.number().int().positive(),
+    resource: z.string().min(1),
+    resource_id: z.number().int().optional(),
+    handle: z.string().min(1),
+    name: z.string().nullable().optional().default(null),
+    rating: z.number().finite().nullable().optional().default(null),
+    n_contests: z.number().int().nonnegative(),
+    resource_rank: z.number().int().nullable().optional().default(null),
+    last_activity: z.string().nullable().optional().default(null)
+});
+const statisticSchema = z.object({
+    id: z.number().int().positive(),
+    account_id: z.number().int().positive(),
+    handle: z.string(),
+    contest_id: z.number().int().positive(),
+    event: z.string(),
+    date: z.string().refine(value => Number.isFinite(Date.parse(value))),
+    place: z.number().nullable(),
+    score: z.number().nullable().optional().default(null),
+    new_rating: z.number().finite().nullable(),
+    old_rating: z.number().finite().nullable().optional().default(null),
+    rating_change: z.number().finite().nullable()
+});
+const coderSchema = z.object({
+    id: z.number().int().positive(),
+    accounts: z.array(accountSchema)
+});
+
+const inFlight = new Map<string, Promise<unknown>>();
+
+async function cachedClist<T extends z.ZodType>(
+    key: string,
+    ttl: number,
+    schema: T,
+    load: () => Promise<z.output<T>>
+): Promise<z.output<T>> {
+    const pending = inFlight.get(key);
+    if (pending) return pending as Promise<z.output<T>>;
+    const request = (async () => {
+        try {
+            const raw = await getRedis().get(key);
+            if (raw) {
+                const cached = schema.safeParse(JSON.parse(raw));
+                if (cached.success) return cached.data;
+            }
+        } catch {
+            // Data cache outages do not turn a provider success into a failure.
+        }
+        const data = await load();
+        try {
+            await getRedis().set(key, JSON.stringify(data), 'EX', ttl);
+        } catch {
+            // Skip the cache when Redis is unavailable.
+        }
+        return data;
+    })();
+    inFlight.set(key, request);
+    try {
+        return await request;
+    } finally {
+        inFlight.delete(key);
+    }
+}
 
 function cacheKey(prefix: string, accessToken: string, extra?: string): string {
-    // Hash the token to avoid storing raw tokens as Redis keys
-    const hash = accessToken.slice(-12);
-    return extra ? `clist:${prefix}:${hash}:${extra}` : `clist:${prefix}:${hash}`;
+    const key = `clist:v2:${prefix}:${hashToken(accessToken)}`;
+    return extra ? `${key}:${extra}` : key;
 }
 
-async function getCached<T>(key: string): Promise<T | null> {
-    try {
-        const raw = await getRedis().get(key);
-        if (raw) {
-            logger.debug(`Cache hit: ${key}`);
-            return JSON.parse(raw) as T;
-        }
-    } catch {
-        // Redis error — skip cache
-    }
-    return null;
-}
-
-async function setCache(key: string, data: unknown, ttl: number): Promise<void> {
-    try {
-        await getRedis().set(key, JSON.stringify(data), 'EX', ttl);
-    } catch {
-        // Redis error — skip
-    }
-}
-
-interface ClistCoderMe {
-    id?: number;
-    handle?: string;
-    accounts?: ClistAccount[];
-}
-
-/**
- * Get the authenticated user's coder info from /coder/me/.
- */
-async function fetchClistCoderMe(accessToken: string): Promise<ClistCoderMe> {
-    const key = cacheKey('coder-me', accessToken);
-    const cached = await getCached<ClistCoderMe>(key);
-    if (cached) return cached;
-
-    const url = `${CLIST_CODER_ME_URL}?with_accounts=true`;
-    const coder = await fetchClistJson<ClistCoderMe>(url, accessToken);
-    if (!coder.id) {
-        throw new Error('Clist coder/me/ did not return an id');
-    }
-    logger.info(
-        `Clist coder/me/ resolved: id=${coder.id}, handle=${coder.handle}, accounts=${(coder.accounts || []).length}`
+async function fetchClistCoderMe(accessToken: string): Promise<z.output<typeof coderSchema>> {
+    return cachedClist(cacheKey('coder-me', accessToken), CODER_ME_CACHE_TTL, coderSchema, () =>
+        fetchClistJson(`${CLIST_CODER_ME_URL}?with_accounts=true`, accessToken, coderSchema)
     );
-    await setCache(key, coder, CODER_ME_CACHE_TTL);
-    return coder;
 }
 
-/**
- * Fetch all accounts linked to the authenticated Clist user.
- */
 export async function fetchClistAccounts(accessToken: string): Promise<ClistAccount[]> {
-    const key = cacheKey('accounts', accessToken);
-    const cached = await getCached<ClistAccount[]>(key);
-    if (cached) return cached;
-
-    try {
-        const coder = await fetchClistCoderMe(accessToken);
-        const accounts = coder.accounts || [];
-        logger.info(
-            `Clist accounts fetched: ${accounts.length} accounts for coder id=${coder.id}, raw: ${JSON.stringify(accounts.map(a => ({ id: a.id, resource: a.resource, handle: a.handle, rating: a.rating, n_contests: a.n_contests })))}`
-        );
-        await setCache(key, accounts, ACCOUNTS_CACHE_TTL);
-        return accounts;
-    } catch (e: unknown) {
-        const err = e as { message?: string };
-        logger.warn(`Failed to fetch Clist accounts: ${err.message}`);
-        throw e;
-    }
+    return cachedClist(
+        cacheKey('accounts', accessToken),
+        ACCOUNTS_CACHE_TTL,
+        z.array(accountSchema),
+        async () => {
+            const { accounts } = await fetchClistCoderMe(accessToken);
+            logger.info(`Clist accounts fetched: ${accounts.length}`);
+            return accounts;
+        }
+    );
 }
 
-/**
- * Fetch contest statistics (rating history) for the authenticated Clist user.
- */
 export async function fetchClistStatistics(
     accessToken: string,
     opts?: { limit?: number }
 ): Promise<ClistStatistic[]> {
-    const limit = opts?.limit || 200;
-    const key = cacheKey('stats', accessToken, String(limit));
-    const cached = await getCached<ClistStatistic[]>(key);
-    if (cached) return cached;
-
-    try {
-        const coderId = (await fetchClistCoderMe(accessToken)).id!;
-        const url = `${CLIST_STATISTICS_URL}?coder_id=${coderId}&limit=${limit}&new_rating__isnull=0&rating_change__isnull=0&order_by=-date&with_problems=false`;
-        const data = await fetchClistJson<ClistListResponse<ClistStatistic>>(url, accessToken);
-        const stats = data.objects || [];
-        logger.info(
-            `Clist statistics fetched: ${stats.length} entries for coder_id=${coderId}, first 3: ${JSON.stringify(stats.slice(0, 3).map(s => ({ id: s.id, event: s.event, handle: s.handle, new_rating: s.new_rating, rating_change: s.rating_change })))}`
-        );
-        await setCache(key, stats, STATISTICS_CACHE_TTL);
-        return stats;
-    } catch (e: unknown) {
-        const err = e as { message?: string };
-        logger.warn(`Failed to fetch Clist statistics: ${err.message}`);
-        throw e;
-    }
-}
-
-/**
- * Filter Clist accounts to only those whose resource matches a locally-bound platform.
- */
-export function filterAccountsByBoundPlatforms(
-    clistAccounts: ClistAccount[],
-    boundPlatforms: string[]
-): ClistAccount[] {
-    const boundResources = new Set(
-        boundPlatforms.map(p => PLATFORM_TO_RESOURCE[p]).filter(Boolean)
+    const limit = opts?.limit ?? 200;
+    return cachedClist(
+        cacheKey('stats', accessToken, String(limit)),
+        STATISTICS_CACHE_TTL,
+        z.array(statisticSchema),
+        async () => {
+            const { id } = await fetchClistCoderMe(accessToken);
+            const url = `${CLIST_STATISTICS_URL}?coder_id=${id}&limit=${limit}&new_rating__isnull=0&rating_change__isnull=0&order_by=-date&with_problems=false`;
+            const data = await fetchClistJson(
+                url,
+                accessToken,
+                z.object({ objects: z.array(statisticSchema) })
+            );
+            logger.info(`Clist statistics fetched: ${data.objects.length}`);
+            return data.objects;
+        }
     );
-    return clistAccounts.filter(account => boundResources.has(account.resource));
+}
+
+export interface BoundIdentity {
+    platform: string;
+    platformUid: string;
+    platformUsername: string | null;
+}
+
+function canonicalDecimal(value: string): string | null {
+    return /^\d+$/.test(value) ? value.replace(/^0+(?=\d)/, '') : null;
+}
+
+export function isMatchableBoundIdentity(binding: BoundIdentity): boolean {
+    return (
+        (binding.platform === 'codeforces' && Boolean(binding.platformUsername)) ||
+        (binding.platform === 'atcoder' && Boolean(binding.platformUid)) ||
+        (binding.platform === 'luogu' && canonicalDecimal(binding.platformUid) !== null)
+    );
+}
+
+/** Only verifiable identities on the exact supported resource may be disclosed. */
+export function filterAccountsByBoundIdentities(
+    accounts: ClistAccount[],
+    bindings: BoundIdentity[]
+): ClistAccount[] {
+    const handles: Record<string, Set<string>> = {
+        'codeforces.com': new Set(),
+        'atcoder.jp': new Set(),
+        'luogu.com.cn': new Set()
+    };
+    for (const binding of bindings) {
+        if (binding.platform === 'codeforces' && binding.platformUsername) {
+            handles['codeforces.com']!.add(binding.platformUsername.toLowerCase());
+        } else if (binding.platform === 'atcoder' && binding.platformUid) {
+            handles['atcoder.jp']!.add(binding.platformUid.toLowerCase());
+        } else if (binding.platform === 'luogu') {
+            const uid = canonicalDecimal(binding.platformUid);
+            if (uid !== null) handles['luogu.com.cn']!.add(uid);
+        }
+    }
+    return accounts.filter(account => {
+        if (!Object.hasOwn(handles, account.resource)) return false;
+        const handle =
+            account.resource === 'luogu.com.cn'
+                ? canonicalDecimal(account.handle)
+                : account.handle.toLowerCase();
+        return handle !== null && handles[account.resource]!.has(handle);
+    });
 }
 
 /**
- * Filter Clist statistics to only those from accounts whose resource matches a locally-bound platform.
+ * Filter statistics by the IDs of identity-matched accounts.
  */
 export function filterStatisticsByBoundAccounts(
     statistics: ClistStatistic[],

@@ -1,85 +1,91 @@
 <template>
-    <el-card class="verified-card" shadow="never">
-        <h1 class="verified-card__title">
-            {{
-                isSuccess
-                    ? $t('auth.verify_result.success_title')
-                    : $t('auth.verify_result.error_title')
-            }}
-        </h1>
-        <p class="verified-card__desc">
-            {{
-                isSuccess
-                    ? $t('auth.verify_result.success_desc')
-                    : $t('auth.verify_result.error_desc')
-            }}
+    <el-card class="auth-card" shadow="never">
+        <p class="auth-card__brand">{{ siteTitle }}</p>
+        <h1 class="auth-card__title">{{ $t(titleKey) }}</h1>
+        <p class="auth-card__desc" :role="outcome === 'success' ? 'status' : 'alert'">
+            {{ $t(descriptionKey) }}
         </p>
-
-        <div class="verified-card__actions">
-            <el-button type="primary" @click="goLogin">
+        <p v-if="identityError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
+            {{ identityError }}
+        </p>
+        <div class="auth-card__actions">
+            <NuxtLink :to="redirectTarget" class="auth-card__link">
+                {{ $t('auth.flow.return_task') }}
+            </NuxtLink>
+            <NuxtLink :to="loginPath" class="auth-card__link">
                 {{ $t('auth.verify_result.go_login') }}
-            </el-button>
-            <el-button @click="closeTab">
-                {{ $t('auth.verify_result.close_tab') }}
-            </el-button>
+            </NuxtLink>
+            <NuxtLink v-if="outcome !== 'success'" :to="verificationPath" class="auth-card__link">
+                {{ $t('auth.flow.verification_request_again') }}
+            </NuxtLink>
         </div>
-        <p class="verified-card__hint">{{ $t('auth.verify_result.close_hint') }}</p>
     </el-card>
 </template>
 
 <script setup lang="ts">
+import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+
 definePageMeta({ layout: 'auth' });
 
 const { t } = useI18n();
 const route = useRoute();
-const isSuccess = computed(() => route.query.status === 'success');
-
-useHead({
-    title: () =>
-        isSuccess.value
-            ? `${t('auth.verify_result.success_title')} - CP OAuth`
-            : `${t('auth.verify_result.error_title')} - CP OAuth`
+const { load, clearPending } = useAuth();
+const { data: publicConfig } = await usePublicConfig();
+const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
+const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
+const outcome = computed(() => {
+    const value = Array.isArray(route.query.status) ? route.query.status[0] : route.query.status;
+    return value === 'success' || value === 'expired' || value === 'conflict' ? value : 'error';
 });
+const titleKey = computed(
+    () =>
+        ({
+            success: 'auth.verify_result.success_title',
+            error: 'auth.verify_result.error_title',
+            expired: 'auth.flow.verification_expired_title',
+            conflict: 'auth.flow.verification_conflict_title'
+        })[outcome.value]
+);
+const descriptionKey = computed(
+    () =>
+        ({
+            success: 'auth.flow.verification_success',
+            error: 'auth.verify_result.error_desc',
+            expired: 'auth.flow.verification_expired',
+            conflict: 'auth.flow.verification_conflict'
+        })[outcome.value]
+);
+const loginPath = computed(() => ({
+    path: '/login',
+    query: {
+        redirect: redirectTarget.value,
+        ...(outcome.value === 'success' ? { verified: 'true' } : {})
+    }
+}));
+const verificationPath = computed(() => ({
+    path: '/profile',
+    query: { tab: 'basic', redirect: redirectTarget.value }
+}));
+const identityError = ref('');
+const errorEl = ref<HTMLElement | null>(null);
 
-function goLogin() {
-    navigateTo('/login');
+if (import.meta.server && outcome.value === 'conflict') {
+    const event = useRequestEvent();
+    if (event) event.node.res.statusCode = 409;
 }
-
-function closeTab() {
-    window.close();
-}
+useHead({ title: () => `${t(titleKey.value)} - ${siteTitle.value}` });
+watch(identityError, async message => {
+    if (!message) return;
+    await nextTick();
+    errorEl.value?.focus();
+});
+onMounted(async () => {
+    if (outcome.value !== 'success') return;
+    clearPending();
+    try {
+        await load(true);
+    } catch {
+        identityError.value = t('identity.identity_unavailable');
+    }
+});
 </script>
-
-<style scoped lang="scss">
-.verified-card {
-    width: 100%;
-    max-width: 420px;
-    border: 1px solid var(--border-color);
-
-    &__title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 10px;
-        color: var(--text-primary);
-    }
-
-    &__desc {
-        font-size: 13px;
-        color: var(--text-secondary);
-        line-height: 1.6;
-        margin-bottom: 16px;
-    }
-
-    &__actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    &__hint {
-        margin-top: 10px;
-        font-size: 12px;
-        color: var(--text-muted);
-    }
-}
-</style>

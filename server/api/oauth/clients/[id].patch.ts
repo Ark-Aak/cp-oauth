@@ -1,75 +1,53 @@
-import { consola } from 'consola';
 import prisma from '~/server/utils/prisma';
 import { getUserIdFromEvent } from '~/server/utils/auth';
-import { normalizeOAuthRedirectUris } from '~/server/utils/oauth';
-
-const logger = consola.withTag('oauth:clients');
+import { setOAuthNoStore } from '~/server/utils/oauth';
+import { oauthClientPatchSchema } from '~/server/utils/oauth-request';
+import { parseBody } from '~/server/utils/validation';
 
 export default defineEventHandler(async event => {
+    setOAuthNoStore(event);
     const userId = getUserIdFromEvent(event);
     const id = getRouterParam(event, 'id');
-
-    if (!id) {
-        throw createError({ statusCode: 400, message: 'Client ID required' });
-    }
-
-    const client = await prisma.oAuthClient.findUnique({ where: { id } });
-    if (!client || client.userId !== userId) {
-        logger.warn(`Edit rejected: client id=${id} not found or not owned by user ${userId}`);
-        throw createError({ statusCode: 404, message: 'Client not found' });
-    }
-
-    const body = await readBody(event);
-    const { name, redirectUris, requireEmailVerified } = body;
-
-    const data: Record<string, unknown> = {};
-
-    if (name !== undefined) {
-        if (typeof name !== 'string' || name.trim().length === 0) {
-            throw createError({ statusCode: 400, message: 'name must be a non-empty string' });
-        }
-        data.name = name.trim();
-    }
-
-    if (redirectUris !== undefined) {
-        const normalizedRedirectUris = normalizeOAuthRedirectUris(redirectUris);
-        if (!normalizedRedirectUris) {
+    if (!id) throw createError({ statusCode: 400, message: 'Client ID required' });
+    const data = await parseBody(event, oauthClientPatchSchema);
+    try {
+        return await prisma.$transaction(async tx => {
+            const updated = await tx.oAuthClient.updateMany({ where: { id, userId }, data });
+            if (updated.count !== 1) {
+                throw createError({
+                    statusCode: 404,
+                    message: 'Client not found',
+                    data: { code: 'CLIENT_NOT_FOUND' }
+                });
+            }
+            return tx.oAuthClient.findUniqueOrThrow({
+                where: { id },
+                select: {
+                    id: true,
+                    clientId: true,
+                    name: true,
+                    redirectUris: true,
+                    requireEmailVerified: true,
+                    createdAt: true
+                }
+            });
+        });
+    } catch (error) {
+        const code = (error as { code?: string } | null)?.code;
+        if (code === 'P2002') {
             throw createError({
-                statusCode: 400,
-                message: 'redirectUris must contain at least one valid http(s) URL'
+                statusCode: 409,
+                message: 'Client update conflict',
+                data: { code: 'CLIENT_CONFLICT' }
             });
         }
-        data.redirectUris = normalizedRedirectUris;
-    }
-
-    if (requireEmailVerified !== undefined) {
-        if (typeof requireEmailVerified !== 'boolean') {
+        if (code === 'P2003' || code === 'P2025') {
             throw createError({
-                statusCode: 400,
-                message: 'requireEmailVerified must be a boolean'
+                statusCode: 404,
+                message: 'Client not found',
+                data: { code: 'CLIENT_NOT_FOUND' }
             });
         }
-        data.requireEmailVerified = requireEmailVerified;
+        throw error;
     }
-
-    if (Object.keys(data).length === 0) {
-        throw createError({ statusCode: 400, message: 'No fields to update' });
-    }
-
-    const updated = await prisma.oAuthClient.update({
-        where: { id },
-        data,
-        select: {
-            id: true,
-            clientId: true,
-            name: true,
-            redirectUris: true,
-            requireEmailVerified: true,
-            createdAt: true
-        }
-    });
-
-    logger.success(`Client updated: "${updated.name}" (${updated.clientId}) by user ${userId}`);
-
-    return updated;
 });

@@ -3,19 +3,22 @@ import Redis from 'ioredis';
 
 const logger = consola.withTag('redis');
 
-let redis: Redis | null = null;
+const infrastructure = globalThis as typeof globalThis & { cpOAuthRedis?: Redis };
 
 export function getRedis(): Redis {
-    if (!redis) {
+    if (!infrastructure.cpOAuthRedis) {
         const config = useRuntimeConfig();
-        logger.info(`Connecting to Redis: ${config.redisUrl}`);
-        redis = new Redis(config.redisUrl, {
-            maxRetriesPerRequest: 3,
+        const redis = new Redis(config.redisUrl, {
+            enableOfflineQueue: false,
+            connectTimeout: 1000,
+            commandTimeout: 1000,
+            maxRetriesPerRequest: 1,
             lazyConnect: true
         });
+        infrastructure.cpOAuthRedis = redis;
         redis.on('connect', () => logger.success('Redis connected'));
         redis.on('error', err => logger.error('Redis error:', err.message));
         redis.connect().catch(() => {});
     }
-    return redis;
+    return infrastructure.cpOAuthRedis;
 }

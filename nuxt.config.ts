@@ -1,7 +1,4 @@
-const cdnUrl =
-    process.env.NODE_ENV === 'production'
-        ? process.env.NUXT_APP_CDN_URL || process.env.CDN_URL || ''
-        : '';
+const cdnUrl = process.env.NODE_ENV === 'production' ? process.env.NUXT_APP_CDN_URL || '' : '';
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-03-21',
@@ -15,13 +12,13 @@ export default defineNuxtConfig({
     },
     modules: [
         '@nuxt/eslint',
-        '@pinia/nuxt',
         '@nuxtjs/i18n',
         '@nuxtjs/color-mode',
         ['@element-plus/nuxt', { importStyle: false }]
     ],
     css: [
         'element-plus/dist/index.css',
+        '@fontsource-variable/source-sans-3',
         '~/assets/scss/main.scss',
         '~/assets/scss/element-overrides.scss'
     ],
@@ -33,8 +30,7 @@ export default defineNuxtConfig({
         ],
         defaultLocale: 'en',
         langDir: 'locales/',
-        strategy: 'no_prefix',
-        baseUrl: cdnUrl || undefined
+        strategy: 'no_prefix'
     },
     colorMode: {
         preference: 'system',
@@ -58,8 +54,7 @@ export default defineNuxtConfig({
                 'rehype-stringify',
                 '@shikijs/rehype',
                 '@element-plus/icons-vue',
-                'chart.js',
-                'chart.js/auto'
+                'chart.js'
             ]
         },
         css: {
@@ -71,26 +66,19 @@ export default defineNuxtConfig({
         }
     },
     runtimeConfig: {
-        jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
-        databaseUrl: process.env.DATABASE_URL || '',
-        redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
-        publicBaseUrl: process.env.PUBLIC_BASE_URL || '',
+        jwtSecret: '',
+        redisUrl: '',
+        dataEncryptionKey: '',
+        trustProxy: '',
         public: {
             appName: 'CP OAuth',
-            i18n: {
-                baseUrl: cdnUrl || undefined
-            }
+            siteOrigin: '',
+            cloudflareAnalyticsToken: ''
         }
     },
     nitro: {
         externals: {
             external: ['@prisma/client', '.prisma/client']
-        },
-        prerender: {
-            routes: ['/about']
         }
-    },
-    routeRules: {
-        '/about': { prerender: true }
     }
 });

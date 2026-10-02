@@ -1,90 +1,65 @@
-import { consola } from 'consola';
-import { getUserIdFromEvent } from '~/server/utils/auth';
-import { getPlatformVerifier } from '~/server/utils/platforms';
-import { getRedis } from '~/server/utils/redis';
+import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
 import prisma from '~/server/utils/prisma';
-import { deleteRedisKeyIfValue } from '~/server/utils/security';
+import { parseBody } from '~/server/utils/validation';
+import { assertAuthState, lockAuthUser, finishSensitiveMutation } from '~/server/utils/auth';
+import {
+    platformChallengeIdSchema,
+    readPlatformChallenge,
+    verifyPlatformChallenge,
+    consumePlatformChallenge
+} from '~/server/utils/platform-flow';
+import { rethrowIdentityMutationError } from '~/server/utils/identity-errors';
 
-const logger = consola.withTag('account:bind');
+const verifySchema = z.strictObject({
+    requestId: platformChallengeIdSchema,
+    credential: z.string().trim().max(2048).default('')
+});
 
 export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-    const body = await readBody(event);
-    const { platform, credential } = body;
-
-    if (!platform) {
-        throw createError({ statusCode: 400, message: 'Platform is required' });
-    }
-
-    const normalizedCredential = typeof credential === 'string' ? credential : '';
-    if (platform !== 'atcoder' && !normalizedCredential) {
+    const body = await parseBody(event, verifySchema);
+    const pending = await readPlatformChallenge(event, body.requestId, { mode: 'bind' });
+    const auth = pending.state.auth;
+    if (!auth) throw createError({ statusCode: 400, message: 'Invalid binding challenge' });
+    if (pending.state.platform !== 'atcoder' && !body.credential) {
         throw createError({ statusCode: 400, message: 'Credential is required' });
     }
-
-    const verifier = getPlatformVerifier(platform);
-    if (!verifier) {
-        throw createError({ statusCode: 400, message: `Unsupported platform: ${platform}` });
-    }
-
-    // Retrieve pending bind request from Redis
-    const redis = getRedis();
-    const key = `bind:${userId}:${platform}`;
-    const raw = await redis.get(key);
-    if (!raw) {
-        logger.warn(
-            `Bind verify failed: no pending request for user=${userId}, platform=${platform}`
-        );
-        throw createError({
-            statusCode: 400,
-            message: 'No pending bind request found or it has expired'
+    const result = await verifyPlatformChallenge(event, pending, body.credential);
+    try {
+        const linked = await prisma.$transaction(async tx => {
+            await lockAuthUser(tx, auth.userId);
+            await assertAuthState(event, auth);
+            await consumePlatformChallenge(event, pending);
+            const account = await tx.linkedAccount.create({
+                data: {
+                    id: randomUUID(),
+                    userId: auth.userId,
+                    platform: pending.state.platform,
+                    platformUid: result.platformUid,
+                    platformUsername: result.platformUsername || null
+                },
+                select: {
+                    id: true,
+                    platform: true,
+                    platformUid: true,
+                    platformUsername: true,
+                    verifiedAt: true
+                }
+            });
+            const updated = await tx.user.updateMany({
+                where: { id: auth.userId, authVersion: auth.authVersion },
+                data: { authVersion: { increment: 1 } }
+            });
+            if (updated.count !== 1)
+                throw createError({
+                    statusCode: 409,
+                    message: 'Your session changed; please authenticate again'
+                });
+            return account;
         });
+        await finishSensitiveMutation(event, auth.userId, auth.authVersion + 1);
+        return linked;
+    } catch (error) {
+        rethrowIdentityMutationError(error);
     }
-
-    const { code, platformUid } = JSON.parse(raw) as {
-        code: string;
-        platformUid: string;
-    };
-
-    // Call platform verifier
-    logger.info(`Verifying bind: user=${userId}, platform=${platform}, uid=${platformUid}`);
-    const result = await verifier.verify({ platformUid, code, credential: normalizedCredential });
-
-    if (!result.success) {
-        logger.warn(
-            `Bind verification failed: user=${userId}, platform=${platform}, uid=${platformUid}, error=${result.error}`
-        );
-        throw createError({
-            statusCode: 400,
-            message: result.error || 'Verification failed'
-        });
-    }
-
-    const consumed = await deleteRedisKeyIfValue(key, raw);
-    if (!consumed) {
-        throw createError({
-            statusCode: 400,
-            message: 'No pending bind request found or it has expired'
-        });
-    }
-
-    // Save to database
-    const linked = await prisma.linkedAccount.create({
-        data: {
-            userId,
-            platform,
-            platformUid: result.platformUid,
-            platformUsername: result.platformUsername || null
-        }
-    });
-
-    logger.success(
-        `Account linked: user=${userId}, platform=${platform}, uid=${result.platformUid}, username=${result.platformUsername}`
-    );
-
-    return {
-        id: linked.id,
-        platform: linked.platform,
-        platformUid: linked.platformUid,
-        platformUsername: linked.platformUsername
-    };
 });

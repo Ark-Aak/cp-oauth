@@ -1,17 +1,18 @@
+# Development infrastructure only; the application runs on the host.
 services:
     db:
         image: postgres:16-alpine
         restart: always
         ports:
-            - '5432:5432'
+            - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
         environment:
-            POSTGRES_USER: cpuser
-            POSTGRES_PASSWORD: cppass
-            POSTGRES_DB: cpoauth
+            POSTGRES_USER: '${POSTGRES_USER:?Set POSTGRES_USER}'
+            POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}'
+            POSTGRES_DB: '${POSTGRES_DB:?Set POSTGRES_DB}'
         volumes:
             - pgdata:/var/lib/postgresql/data
         healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U cpuser -d cpoauth']
+            test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
             interval: 5s
             timeout: 5s
             retries: 5
@@ -20,11 +21,14 @@ services:
         image: redis:7-alpine
         restart: always
         ports:
-            - '6379:6379'
+            - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+        environment:
+            REDIS_PASSWORD: '${REDIS_PASSWORD:?Set REDIS_PASSWORD}'
+        command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:?Set REDIS_PASSWORD}']
         volumes:
             - redisdata:/data
         healthcheck:
-            test: ['CMD', 'redis-cli', 'ping']
+            test: ['CMD-SHELL', 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli -e ping']
             interval: 5s
             timeout: 5s
             retries: 5

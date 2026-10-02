@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
-import prisma from '~/server/utils/prisma';
-import { normalizeUsername } from '~/utils/username';
+import { getPublicProfile } from '~/server/utils/public-profile';
+import { getPublicBaseUrl } from '~/server/utils/base-url';
 
 // --- Platform display names (subset used in card) ---
 
@@ -146,8 +146,9 @@ function buildCardSvg(params: {
     colors: ThemeColors;
     lang: string;
     themeName: 'light' | 'dark';
+    siteHost: string;
 }): string {
-    const { username, displayName, accounts, width, colors, lang, themeName } = params;
+    const { username, displayName, accounts, width, colors, lang, themeName, siteHost } = params;
     const strings = getStrings(lang);
     const paddingSide = 20; // Left/right inner padding.
     const paddingTop = 20; // Top inner padding.
@@ -218,7 +219,7 @@ function buildCardSvg(params: {
     <g transform="translate(${paddingSide}, ${headerBaselineY})">
         ${logo}
         <text x="30" y="1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="${colors.text}">CP OAuth</text>
-        <text x="${contentWidth}" y="1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="${colors.muted}" text-anchor="end">www.cpoauth.com</text>
+        <text x="${contentWidth}" y="1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="${colors.muted}" text-anchor="end">${escapeXml(siteHost)}</text>
     </g>
 
     <!-- Divider -->
@@ -243,7 +244,7 @@ export default defineEventHandler(async event => {
         throw createError({ statusCode: 400, message: 'Username required' });
     }
 
-    const normalizedUsername = normalizeUsername(username);
+    setResponseHeader(event, 'Cache-Control', 'no-store');
 
     const query = getQuery(event);
     const width = Math.min(800, Math.max(300, Number(query.width) || 480));
@@ -251,60 +252,22 @@ export default defineEventHandler(async event => {
     const lang = ['zh', 'ja', 'en'].includes(String(query.lang || '')) ? String(query.lang) : 'en';
     const colors = THEMES[themeName] ?? LIGHT_THEME;
 
-    const users = await prisma.user.findMany({
-        where: {
-            username: {
-                equals: normalizedUsername,
-                mode: 'insensitive'
-            }
-        },
-        take: 2,
-        select: {
-            username: true,
-            displayName: true,
-            publicLinkedPlatforms: true,
-            publicLinkedPlatformsConfigured: true,
-            linkedAccounts: {
-                select: {
-                    platform: true,
-                    platformUid: true,
-                    platformUsername: true
-                },
-                orderBy: { createdAt: 'asc' }
-            }
-        }
-    });
-
-    if (users.length === 0) {
-        throw createError({ statusCode: 404, message: 'User not found' });
-    }
-
-    if (users.length > 1) {
-        throw createError({
-            statusCode: 409,
-            message: 'Username lookup is ambiguous. Please contact an administrator'
-        });
-    }
-
-    const user = users[0]!;
-
-    const accounts = user.publicLinkedPlatformsConfigured
-        ? user.linkedAccounts.filter(a => user.publicLinkedPlatforms.includes(a.platform))
-        : user.linkedAccounts;
+    const { profile: user } = await getPublicProfile(username);
 
     const svg = buildCardSvg({
         username: user.username,
         displayName: user.displayName,
-        accounts,
+        accounts: user.linkedAccounts,
         width,
         colors,
         lang,
-        themeName
+        themeName,
+        siteHost: new URL(getPublicBaseUrl()).host
     });
 
     setResponseHeaders(event, {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600'
+        'Cache-Control': 'no-store'
     });
 
     return svg;

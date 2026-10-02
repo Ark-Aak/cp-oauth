@@ -1,40 +1,33 @@
-import bcrypt from 'bcryptjs';
-import { getUserIdFromEvent } from '~/server/utils/auth';
+import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
+import { assertAuthState, finishSensitiveMutation, lockAuthUser } from '~/server/utils/auth';
+import { requireFreshReauthentication } from '~/server/utils/auth-completion';
+import { enforceRateLimit } from '~/server/utils/rate-limit';
+import { parseBody } from '~/server/utils/validation';
+import { cancelTwoFactorSetup } from '~/server/utils/two-factor';
 
 export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-    const body = await readBody(event);
-    const password = String(body?.password || '');
-
-    if (!password) {
-        throw createError({ statusCode: 400, message: 'Password is required' });
-    }
-
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-            passwordHash: true
-        }
+    const body = await parseBody(
+        event,
+        z.object({ reauthToken: z.string().min(1).max(256) }).strict()
+    );
+    const auth = await requireFreshReauthentication(event, 'mfa_change', body.reauthToken);
+    await enforceRateLimit(event, 'challenge', auth.userId);
+    const user = await prisma.$transaction(async tx => {
+        await lockAuthUser(tx, auth.userId);
+        await assertAuthState(event, auth);
+        return tx.user.update({
+            where: { id: auth.userId, authVersion: auth.authVersion },
+            data: {
+                twoFactorEnabled: false,
+                twoFactorMethod: null,
+                totpSecret: null,
+                authVersion: { increment: 1 }
+            },
+            select: { authVersion: true }
+        });
     });
-
-    if (!user) {
-        throw createError({ statusCode: 404, message: 'User not found' });
-    }
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-        throw createError({ statusCode: 401, message: 'Password is incorrect' });
-    }
-
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            twoFactorEnabled: false,
-            twoFactorMethod: null,
-            totpSecret: null
-        }
-    });
-
+    await cancelTwoFactorSetup(event);
+    await finishSensitiveMutation(event, auth.userId, user.authVersion);
     return { success: true };
 });

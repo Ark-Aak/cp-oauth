@@ -1,15 +1,16 @@
+import { createError, defineEventHandler } from 'h3';
 import prisma from '~/server/utils/prisma';
-import { requireAdmin } from '~/server/utils/admin';
-
+import { requireAdmin, rethrowAdminError } from '~/server/utils/admin';
+import { parseQuery } from '~/server/utils/validation';
+import { adminUsersQuerySchema } from '~/utils/admin-validation';
 export default defineEventHandler(async event => {
-    await requireAdmin(event);
-
-    if (event.method === 'GET') {
-        const query = getQuery(event);
-        const search = (query.search as string) || '';
-        const page = Number(query.page) || 1;
+    try {
+        await requireAdmin(event);
+        if (event.method !== 'GET') {
+            throw createError({ statusCode: 405, message: 'Method not allowed' });
+        }
+        const { search, page } = parseQuery(event, adminUsersQuerySchema);
         const pageSize = 20;
-
         const where = search
             ? {
                   OR: [
@@ -31,7 +32,7 @@ export default defineEventHandler(async event => {
                     emailVerified: true,
                     createdAt: true
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                 skip: (page - 1) * pageSize,
                 take: pageSize
             }),
@@ -39,7 +40,7 @@ export default defineEventHandler(async event => {
         ]);
 
         return { users, total, page, pageSize };
+    } catch (error) {
+        rethrowAdminError(error, 'User');
     }
-
-    throw createError({ statusCode: 405, message: 'Method not allowed' });
 });

@@ -1,139 +1,107 @@
+import { randomBytes } from 'node:crypto';
+import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
-import { getUserIdFromEvent } from '~/server/utils/auth';
+import { getAuthContext, assertAuthState, lockAuthUser } from '~/server/utils/auth';
 import { getRedis } from '~/server/utils/redis';
 import { getConfig } from '~/server/utils/config';
 import { canRefreshUsername, fetchPlatformUsername } from '~/server/utils/platform-username';
 import { getValidClistAccessToken } from '~/server/utils/clist-oauth';
+import { decryptLinkedAccountToken } from '~/server/utils/linked-account-tokens';
+import { deleteRedisKeyIfValue } from '~/server/utils/security';
+import { parseBody } from '~/server/utils/validation';
+import { platformSchema } from '~/utils/validation';
 
-interface RefreshBody {
-    platform?: string;
-    platformUid?: string;
-}
+const refreshSchema = z.strictObject({
+    platform: platformSchema,
+    platformUid: z.string().trim().min(1).max(100)
+});
 
 export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-
-    const body = await readBody<RefreshBody>(event);
-
-    if (!body.platform || !body.platformUid) {
-        throw createError({ statusCode: 400, message: 'Missing platform or platformUid' });
-    }
-
-    const { platform, platformUid } = body;
-
-    if (!canRefreshUsername(platform)) {
+    const auth = getAuthContext(event);
+    const body = await parseBody(event, refreshSchema);
+    if (!canRefreshUsername(body.platform))
         throw createError({
             statusCode: 400,
-            message: `Username refresh is not supported for platform: ${platform}`
+            message: 'Username refresh is not supported for this platform'
         });
-    }
-
     const account = await prisma.linkedAccount.findUnique({
-        where: {
-            platform_platformUid: { platform, platformUid }
-        },
-        select: {
-            id: true,
-            userId: true,
-            platformUsername: true,
-            oauthAccessToken: true,
-            oauthIdToken: true,
-            oauthTokenType: true
-        }
+        where: { userId_platform: { userId: auth.userId, platform: body.platform } },
+        select: { id: true, platformUid: true, platformUsername: true, oauthAccessToken: true }
     });
-
-    if (!account) {
-        throw createError({ statusCode: 404, message: 'Linked account not found' });
-    }
-
-    if (account.userId !== userId) {
-        throw createError({ statusCode: 403, message: 'Forbidden' });
-    }
-
-    const redis = getRedis();
-    const cooldownLockKey = `refresh-username:${platform}:${platformUid}`;
-    let acquiredCooldownLock = false;
-
-    try {
-        const cooldownMinutes = parseInt(await getConfig('username_refresh_cooldown'), 10) || 1440;
-        const cooldownSeconds = cooldownMinutes * 60;
-        const lockResult = await redis.set(cooldownLockKey, '1', 'EX', cooldownSeconds, 'NX');
-        if (lockResult !== 'OK') {
-            const ttl = await redis.ttl(cooldownLockKey);
-            const remainingMinutes = Math.ceil(Math.max(ttl, 1) / 60);
-            throw createError({
-                statusCode: 429,
-                message: `Please wait ${remainingMinutes} minute(s) before refreshing again`
-            });
-        }
-        acquiredCooldownLock = true;
-    } catch (e: unknown) {
-        const err = e as { statusCode?: number };
-        if (err.statusCode === 429) throw e;
-    }
-
-    try {
-        // For Clist platform, use refresh-aware token getter
-        let effectiveAccessToken = account.oauthAccessToken;
-        if (platform === 'clist') {
-            const refreshed = await getValidClistAccessToken(account.id);
-            if (refreshed) {
-                effectiveAccessToken = refreshed;
-            }
-        }
-
-        const newUsername = await fetchPlatformUsername(platform, {
-            platformUid,
-            oauthAccessToken: effectiveAccessToken,
-            oauthIdToken: account.oauthIdToken,
-            oauthTokenType: account.oauthTokenType
+    if (!account || account.platformUid !== body.platformUid)
+        throw createError({ statusCode: 404, message: 'Your linked account was not found' });
+    await assertAuthState(event, auth);
+    const { username_refresh_cooldown } = await getConfig(['username_refresh_cooldown']);
+    const cooldownMinutes = Number(username_refresh_cooldown);
+    if (!Number.isInteger(cooldownMinutes) || cooldownMinutes < 1 || cooldownMinutes > 43200) {
+        throw createError({
+            statusCode: 503,
+            message: 'Username refresh configuration is unavailable'
         });
-
-        if (!newUsername) {
-            if (platform === 'github' && !account.oauthAccessToken) {
+    }
+    const key = `cp-oauth:v2:account:refresh-username:${account.id}`;
+    const owner = randomBytes(32).toString('base64url');
+    let acquired: string | null;
+    let remainingSeconds: number;
+    try {
+        acquired = await getRedis().set(key, owner, 'EX', cooldownMinutes * 60, 'NX');
+        remainingSeconds = acquired === 'OK' ? 0 : Math.max(await getRedis().ttl(key), 1);
+    } catch {
+        throw createError({ statusCode: 503, message: 'Username refresh cooldown is unavailable' });
+    }
+    if (acquired !== 'OK') {
+        setResponseHeader(event, 'Retry-After', remainingSeconds);
+        throw createError({
+            statusCode: 429,
+            message: `Please wait ${Math.ceil(remainingSeconds / 60)} minute(s) before refreshing again`,
+            data: { code: 'USERNAME_REFRESH_COOLDOWN', retryAfter: remainingSeconds }
+        });
+    }
+    try {
+        const accessToken =
+            body.platform === 'clist'
+                ? await getValidClistAccessToken(account.id)
+                : body.platform === 'github'
+                  ? decryptLinkedAccountToken(
+                        account.id,
+                        'oauthAccessToken',
+                        account.oauthAccessToken
+                    )
+                  : null;
+        const platformUsername = await fetchPlatformUsername(body.platform, {
+            platformUid: account.platformUid,
+            platformUsername: account.platformUsername,
+            oauthAccessToken: accessToken
+        });
+        if (!platformUsername)
+            throw createError({
+                statusCode: 404,
+                message: 'Platform account was not found; the previous username has been kept'
+            });
+        await prisma.$transaction(async tx => {
+            await lockAuthUser(tx, auth.userId);
+            await assertAuthState(event, auth);
+            const updated = await tx.linkedAccount.updateMany({
+                where: {
+                    id: account.id,
+                    userId: auth.userId,
+                    platformUid: account.platformUid,
+                    platformUsername: account.platformUsername
+                },
+                data: { platformUsername }
+            });
+            if (updated.count !== 1)
                 throw createError({
                     statusCode: 409,
-                    message:
-                        'Unable to refresh GitHub username because no GitHub access token has been saved. Please sign in with GitHub again to sync credentials.'
+                    message: 'Account binding changed; please reload and try again'
                 });
-            }
-
-            if (platform === 'codeforces') {
-                throw createError({
-                    statusCode: 409,
-                    message:
-                        'Unable to refresh Codeforces username. Please unbind and bind Codeforces again to update OAuth credentials.'
-                });
-            }
-
-            if (platform === 'github') {
-                throw createError({
-                    statusCode: 502,
-                    message: 'Failed to refresh GitHub username from GitHub API'
-                });
-            }
-
-            throw createError({
-                statusCode: 502,
-                message: 'Failed to fetch username from platform'
-            });
-        }
-
-        await prisma.linkedAccount.update({
-            where: {
-                platform_platformUid: { platform, platformUid }
-            },
-            data: { platformUsername: newUsername }
         });
-
-        return {
-            platform,
-            platformUid,
-            platformUsername: newUsername
-        };
+        return { platform: body.platform, platformUid: account.platformUid, platformUsername };
     } catch (error) {
-        if (acquiredCooldownLock) {
-            await redis.del(cooldownLockKey);
+        try {
+            await deleteRedisKeyIfValue(key, owner);
+        } catch {
+            // A failed refresh never overwrites the old username; an unreleased cooldown is bounded.
         }
         throw error;
     }

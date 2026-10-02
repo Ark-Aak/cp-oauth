@@ -1,0 +1,229 @@
+name: Verify
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: verify-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    verify:
+        runs-on: ubuntu-latest
+        timeout-minutes: 45
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: cpuser
+                    POSTGRES_PASSWORD: refactor_pg_test
+                    POSTGRES_DB: cpoauth_refactor_test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U cpuser -d cpoauth_refactor_test"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 12
+            redis:
+                image: redis:7
+                ports:
+                    - 6379:6379
+                options: >-
+                    --health-cmd "redis-cli ping"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 12
+        env:
+            CI: 'true'
+            HUSKY: '0'
+            S3_UPLOAD_ENABLED: 'false'
+            DATABASE_URL: postgresql://cpuser:refactor_pg_test@127.0.0.1:5432/cpoauth_refactor_test
+            TEST_DATABASE_URL: postgresql://cpuser:refactor_pg_test@127.0.0.1:5432/cpoauth_refactor_test
+            CONFIG_TEST_DATABASE_URL: postgresql://cpuser:refactor_pg_test@127.0.0.1:5432/cpoauth_refactor_test
+            NUXT_REDIS_URL: redis://127.0.0.1:6379/15
+            NUXT_PUBLIC_SITE_ORIGIN: http://localhost:3000
+            NUXT_TRUST_PROXY: 'false'
+            TEST_BASE_URL: http://localhost:3000
+            NITRO_HOST: 127.0.0.1
+            NITRO_PORT: '3000'
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.11'
+            - name: Generate masked, job-only runtime keys
+              shell: bash
+              run: |
+                  node --input-type=module <<'NODE'
+                  import { randomBytes } from 'node:crypto';
+                  import { appendFileSync } from 'node:fs';
+                  const keys = {
+                      NUXT_JWT_SECRET: randomBytes(32).toString('hex'),
+                      NUXT_DATA_ENCRYPTION_KEY: randomBytes(32).toString('base64')
+                  };
+                  for (const [name, value] of Object.entries(keys)) {
+                      console.log(`::add-mask::${value}`);
+                      appendFileSync(process.env.GITHUB_ENV, `${name}=${value}\n`);
+                  }
+                  NODE
+            - name: Install locked Node and Python dependencies
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  npm ci
+                  python -m venv "$RUNNER_TEMP/clist-venv"
+                  "$RUNNER_TEMP/clist-venv/bin/python" -m pip install --only-binary=:all: --no-deps -r requirements.txt
+                  echo "PYTHON_PATH=$RUNNER_TEMP/clist-venv/bin/python" >> "$GITHUB_ENV"
+            - name: Generate client, deploy isolated migrations and initialize encryption
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  npx --no-install prisma generate
+                  npx --no-install prisma migrate deploy
+                  node scripts/refactor-data.mjs --encrypt
+                  node scripts/refactor-data.mjs --check
+            - name: Node behavior tests, including Luogu boundaries
+              run: npm run test:unit
+            - name: Lint
+              run: npm run lint
+            - name: Typecheck
+              run: npm run typecheck
+            - name: Pure production build
+              run: npm run build
+            - name: Real HTTP and PostgreSQL integration against the built service
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  log_file="$RUNNER_TEMP/cp-oauth-built-web.log"
+                  node .output/server/index.mjs > "$log_file" 2>&1 &
+                  server_pid=$!
+                  export TEST_SERVER_PID="$server_pid"
+                  cleanup() {
+                      status=$?
+                      trap - EXIT INT TERM
+                      kill "$server_pid" 2>/dev/null || true
+                      for attempt in {1..10}; do
+                          if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
+                          sleep 1
+                      done
+                      kill -KILL "$server_pid" 2>/dev/null || true
+                      wait "$server_pid" 2>/dev/null || true
+                      if [ "$status" -ne 0 ]; then cat "$log_file"; fi
+                      exit "$status"
+                  }
+                  trap cleanup EXIT
+                  trap 'exit 130' INT
+                  trap 'exit 143' TERM
+                  node --input-type=module <<'NODE'
+                  import { setTimeout as delay } from 'node:timers/promises';
+                  const deadline = Date.now() + 90_000;
+                  while (Date.now() < deadline) {
+                      try { process.kill(Number(process.env.TEST_SERVER_PID), 0); }
+                      catch { throw new Error('Built HTTP service exited before readiness'); }
+                      try {
+                          const response = await fetch(new URL('/api/readyz', process.env.TEST_BASE_URL), {
+                              signal: AbortSignal.timeout(2500)
+                          });
+                          if (response.status === 200 && (await response.json()).status === 'ready') {
+                              console.log('Built HTTP service is ready');
+                              process.exit(0);
+                          }
+                      } catch {}
+                      await delay(1000);
+                  }
+                  throw new Error('Built HTTP service was not ready within 90 seconds');
+                  NODE
+                  npm run test:integration
+            - name: Build production and migration Docker targets
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  docker build --target migration --tag cp-oauth:ci-migration .
+                  docker build --target production --tag cp-oauth:ci-production .
+            - name: Migrate a fresh container schema, verify production readiness and smoke Node/Python
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  web_container="cp-oauth-ci-web-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+                  migration_container="cp-oauth-ci-migration-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+                  cleanup() {
+                      status=$?
+                      trap - EXIT INT TERM
+                      if [ "$status" -ne 0 ]; then docker logs "$web_container" 2>/dev/null || true; fi
+                      docker rm -f "$web_container" "$migration_container" > /dev/null 2>&1 || true
+                      exit "$status"
+                  }
+                  trap cleanup EXIT
+                  trap 'exit 130' INT
+                  trap 'exit 143' TERM
+                  export DATABASE_URL="${DATABASE_URL}?schema=ci_container_test"
+                  export TEST_DATABASE_URL="$DATABASE_URL"
+                  export NUXT_REDIS_URL=redis://127.0.0.1:6379/14
+                  export NUXT_PUBLIC_SITE_ORIGIN=http://localhost:3001
+                  export TEST_BASE_URL=http://localhost:3001
+                  docker run --rm --name "$migration_container" --network host \
+                      -e DATABASE_URL -e NUXT_DATA_ENCRYPTION_KEY \
+                      cp-oauth:ci-migration sh -ec \
+                      './node_modules/.bin/prisma migrate deploy && node scripts/refactor-data.mjs --encrypt && node scripts/refactor-data.mjs --check'
+                  docker run --detach --name "$web_container" --network host \
+                      -e DATABASE_URL -e NUXT_REDIS_URL -e NUXT_JWT_SECRET -e NUXT_DATA_ENCRYPTION_KEY \
+                      -e NUXT_PUBLIC_SITE_ORIGIN -e NUXT_TRUST_PROXY -e S3_UPLOAD_ENABLED \
+                      -e NITRO_HOST=127.0.0.1 -e NITRO_PORT=3001 \
+                      cp-oauth:ci-production
+                  node --input-type=module <<'NODE'
+                  import { setTimeout as delay } from 'node:timers/promises';
+                  const deadline = Date.now() + 90_000;
+                  while (Date.now() < deadline) {
+                      try {
+                          const response = await fetch(new URL('/api/readyz', process.env.TEST_BASE_URL), {
+                              signal: AbortSignal.timeout(2500)
+                          });
+                          if (response.status === 200 && (await response.json()).status === 'ready') {
+                              console.log('Production container is ready');
+                              process.exit(0);
+                          }
+                      } catch {}
+                      await delay(1000);
+                  }
+                  throw new Error('Production container was not ready within 90 seconds');
+                  NODE
+                  docker exec "$web_container" /opt/clist-venv/bin/python -c \
+                      'import curl_cffi; assert curl_cffi.__version__ == "0.13.0"; print("curl_cffi 0.13.0")'
+                  docker exec -i "$web_container" node --input-type=module <<'NODE'
+                  import assert from 'node:assert/strict';
+                  import { execFile } from 'node:child_process';
+                  import { resolve } from 'node:path';
+                  assert.notEqual(process.getuid(), 0, 'Production runs as a non-root user');
+                  const result = await new Promise((resolveResult, reject) => {
+                      const child = execFile(process.env.PYTHON_PATH, [resolve('server/utils/clist-fetch.py')], {
+                          timeout: 25_000,
+                          maxBuffer: 2 * 1024 * 1024
+                      }, (error, stdout) => {
+                          if (error) return reject(new Error('Node/Python helper process failed'));
+                          try { resolveResult(JSON.parse(stdout)); }
+                          catch { reject(new Error('Node/Python helper returned invalid JSON')); }
+                      });
+                      child.stdin.on('error', () => {});
+                      child.stdin.end(JSON.stringify({
+                          method: 'GET',
+                          url: 'https://clist.by/api/v4/account/?limit=1',
+                          headers: { Accept: 'application/json' },
+                          deadlineSeconds: 20
+                      }));
+                  });
+                  assert.equal(result.error, null, 'The fixed-host helper must produce a real HTTP response');
+                  assert.ok(Number.isInteger(result.status) && result.status >= 100 && result.status <= 599);
+                  assert.equal(typeof result.body, 'string');
+                  console.log(`Node/Python Clist helper HTTP ${result.status}`);
+                  NODE
+                  node --test --test-concurrency=1 tests/integration/auth-oauth.test.mjs tests/integration/oauth-protocol.test.mjs

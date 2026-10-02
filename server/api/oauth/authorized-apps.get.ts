@@ -1,98 +1,64 @@
 import { getUserIdFromEvent } from '~/server/utils/auth';
 import prisma from '~/server/utils/prisma';
+import { handleOAuthRequest } from '~/server/utils/oauth';
 
-export default defineEventHandler(async event => {
-    const userId = getUserIdFromEvent(event);
-    const now = new Date();
+interface ActiveAuthorizedApp {
+    clientId: string;
+    name: string;
+    scopes: string[];
+    latestAuthorizedAt: Date;
+    accessTokenCount: number;
+    refreshTokenCount: number;
+    pendingAuthorizationCodeCount: number;
+}
 
-    // Get ALL access tokens for this user (including expired ones)
-    const accessTokens = await prisma.oAuthAccessToken.findMany({
-        where: { userId },
-        select: {
-            clientId: true,
-            scopes: true,
-            createdAt: true,
-            expiresAt: true,
-            client: { select: { name: true } }
+export default defineEventHandler(event =>
+    handleOAuthRequest(
+        event,
+        async () => {
+            const userId = getUserIdFromEvent(event);
+            const now = new Date();
+            const apps = await prisma.$queryRaw<ActiveAuthorizedApp[]>`
+        WITH active_grants AS (
+            SELECT client_id, scopes, created_at, 'access' AS kind
+            FROM oauth_access_tokens
+            WHERE user_id = ${userId} AND expires_at > ${now}
+            UNION ALL
+            SELECT client_id, scopes, created_at, 'refresh' AS kind
+            FROM oauth_refresh_tokens
+            WHERE user_id = ${userId} AND NOT revoked AND expires_at > ${now}
+            UNION ALL
+            SELECT client_id, scopes, created_at, 'code' AS kind
+            FROM oauth_authorization_codes
+            WHERE user_id = ${userId} AND NOT used AND expires_at > ${now}
+        ), grouped AS (
+            SELECT client_id, MAX(created_at) AS latest_authorized_at,
+                (COUNT(*) FILTER (WHERE kind = 'access'))::int AS access_count,
+                (COUNT(*) FILTER (WHERE kind = 'refresh'))::int AS refresh_count,
+                (COUNT(*) FILTER (WHERE kind = 'code'))::int AS code_count
+            FROM active_grants
+            GROUP BY client_id
+        ), granted_scopes AS (
+            SELECT client_id, array_agg(DISTINCT scope ORDER BY scope) AS scopes
+            FROM active_grants CROSS JOIN LATERAL unnest(active_grants.scopes) AS granted(scope)
+            GROUP BY client_id
+        )
+        SELECT c.client_id AS "clientId", c.name,
+            COALESCE(s.scopes, ARRAY[]::text[]) AS scopes,
+            g.latest_authorized_at AS "latestAuthorizedAt",
+            g.access_count AS "accessTokenCount",
+            g.refresh_count AS "refreshTokenCount",
+            g.code_count AS "pendingAuthorizationCodeCount"
+        FROM grouped g
+        JOIN oauth_clients c ON c.client_id = g.client_id
+        LEFT JOIN granted_scopes s ON s.client_id = g.client_id
+        ORDER BY g.latest_authorized_at DESC, c.client_id ASC
+    `;
+            return apps.map(app => ({
+                ...app,
+                latestAuthorizedAt: app.latestAuthorizedAt.toISOString()
+            }));
         },
-        orderBy: { createdAt: 'desc' }
-    });
-
-    // Get ALL refresh tokens for this user (including revoked/expired)
-    const refreshTokens = await prisma.oAuthRefreshToken.findMany({
-        where: { userId },
-        select: {
-            clientId: true,
-            scopes: true,
-            createdAt: true,
-            expiresAt: true,
-            revoked: true,
-            client: { select: { name: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-    });
-
-    // Merge and group by clientId
-    const appMap = new Map<
-        string,
-        {
-            clientId: string;
-            name: string;
-            scopes: Set<string>;
-            latestAuthorizedAt: Date;
-            accessTokenCount: number;
-            refreshTokenCount: number;
-        }
-    >();
-
-    for (const t of accessTokens) {
-        const isActive = t.expiresAt > now;
-        const existing = appMap.get(t.clientId);
-        if (existing) {
-            t.scopes.forEach(s => existing.scopes.add(s));
-            if (t.createdAt > existing.latestAuthorizedAt) {
-                existing.latestAuthorizedAt = t.createdAt;
-            }
-            if (isActive) existing.accessTokenCount++;
-        } else {
-            appMap.set(t.clientId, {
-                clientId: t.clientId,
-                name: t.client.name,
-                scopes: new Set(t.scopes),
-                latestAuthorizedAt: t.createdAt,
-                accessTokenCount: isActive ? 1 : 0,
-                refreshTokenCount: 0
-            });
-        }
-    }
-
-    for (const t of refreshTokens) {
-        const isActive = !t.revoked && t.expiresAt > now;
-        const existing = appMap.get(t.clientId);
-        if (existing) {
-            t.scopes.forEach(s => existing.scopes.add(s));
-            if (t.createdAt > existing.latestAuthorizedAt) {
-                existing.latestAuthorizedAt = t.createdAt;
-            }
-            if (isActive) existing.refreshTokenCount++;
-        } else {
-            appMap.set(t.clientId, {
-                clientId: t.clientId,
-                name: t.client.name,
-                scopes: new Set(t.scopes),
-                latestAuthorizedAt: t.createdAt,
-                accessTokenCount: 0,
-                refreshTokenCount: isActive ? 1 : 0
-            });
-        }
-    }
-
-    return Array.from(appMap.values()).map(app => ({
-        clientId: app.clientId,
-        name: app.name,
-        scopes: Array.from(app.scopes).sort(),
-        latestAuthorizedAt: app.latestAuthorizedAt.toISOString(),
-        accessTokenCount: app.accessTokenCount,
-        refreshTokenCount: app.refreshTokenCount
-    }));
-});
+        'invalid_request'
+    )
+);

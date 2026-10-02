@@ -1,322 +1,377 @@
 <template>
-    <el-card class="luogu-login-card" shadow="never">
-        <h1 class="luogu-login-card__title">{{ $t('auth.login.luogu_guide_title') }}</h1>
-        <p class="luogu-login-card__desc">{{ $t('auth.login.with_luogu_tip') }}</p>
-
-        <el-radio-group v-model="mode" class="luogu-login-card__mode-switch">
-            <el-radio-button value="challenge">{{
-                $t('auth.login.luogu_mode_challenge')
-            }}</el-radio-button>
-            <el-radio-button value="credential">{{
-                $t('auth.login.luogu_mode_credential')
-            }}</el-radio-button>
-        </el-radio-group>
-
-        <p v-if="mode === 'challenge'" class="luogu-login-card__mode-tip">
-            {{ $t('auth.login.luogu_challenge_tip') }}
+    <el-card class="auth-card" shadow="never" :aria-busy="operation !== null">
+        <h1 class="auth-card__title">{{ $t('auth.login.luogu_guide_title') }}</h1>
+        <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
+        <p class="auth-card__desc">{{ $t('auth.flow.luogu_setup_hint') }}</p>
+        <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
+            {{ errorMessage }}
         </p>
-        <p v-else class="luogu-login-card__mode-tip">
-            {{ $t('auth.login.luogu_credential_tip') }}
-        </p>
+        <p v-if="notice" class="auth-card__status" role="status">{{ notice }}</p>
 
-        <div v-if="turnstileEnabled" ref="turnstileEl" class="luogu-login-card__turnstile" />
-        <p
-            v-if="turnstileEnabled && !thirdPartyCaptchaReady"
-            class="luogu-login-card__turnstile-hint"
-        >
-            {{ $t('auth.login.turnstile_required_for_thirdparty') }}
+        <p v-if="completed" class="auth-card__status" role="status">
+            {{ $t('auth.flow.callback_complete') }}
         </p>
-
-        <el-form v-if="mode === 'credential'" @submit.prevent="handleLuoguCredentialLogin">
-            <el-form-item>
-                <el-input
-                    v-model="pasteId"
-                    :placeholder="$t('auth.login.luogu_paste_id')"
-                    size="large"
-                />
-            </el-form-item>
+        <template v-else-if="restartRequired || challengeExpired">
+            <p class="auth-card__desc" role="status">
+                {{ $t('auth.flow.luogu_challenge_restart') }}
+            </p>
             <el-button
-                class="luogu-login-card__btn"
-                type="primary"
-                native-type="submit"
-                :loading="loading"
-                :disabled="!pasteId.trim() || !thirdPartyCaptchaReady"
-                size="large"
+                class="auth-card__button"
+                :disabled="operation !== null"
+                @click="restartChallenge"
             >
-                <span class="luogu-login-card__btn-content">
-                    <AppPlatformIcon platform="luogu" />
-                    <span>{{ $t('auth.login.luogu_login_by_credential') }}</span>
-                </span>
+                {{ $t('auth.flow.restart_login') }}
             </el-button>
-        </el-form>
-
-        <div v-else>
-            <div v-if="challengeStep === 1">
-                <el-form-item>
+        </template>
+        <template v-else-if="challenge">
+            <p class="auth-card__desc">
+                {{ $t('binding.step2_desc', { platform: 'Luogu' }) }}
+            </p>
+            <p class="luogu-code-label">{{ $t('binding.code_label') }}</p>
+            <pre class="luogu-code"><code>{{ challenge.code }}</code></pre>
+            <div class="auth-card__actions">
+                <el-button
+                    :loading="copyPending"
+                    :disabled="operation !== null || copyPending"
+                    @click="copyChallengeCode"
+                >
+                    {{ $t('auth.flow.copy_code') }}
+                </el-button>
+            </div>
+            <p class="auth-card__desc">{{ $t('binding.code_expires', { minutes: 10 }) }}</p>
+            <el-form
+                ref="verifyFormRef"
+                method="post"
+                :disabled="!hydrationReady"
+                :model="form"
+                :rules="verifyRules"
+                label-position="top"
+                @submit.prevent="verifyChallenge"
+            >
+                <el-form-item
+                    prop="pasteId"
+                    :label="$t('auth.login.luogu_paste_id')"
+                    for="luogu-paste"
+                >
                     <el-input
-                        v-model="challengeUid"
-                        :placeholder="$t('auth.login.luogu_uid_placeholder')"
+                        id="luogu-paste"
+                        v-model="form.pasteId"
+                        name="luogu-paste"
+                        :aria-label="$t('auth.login.luogu_paste_id')"
+                        :disabled="!hydrationReady || operation !== null"
                         size="large"
                     />
                 </el-form-item>
-                <el-button
-                    class="luogu-login-card__btn"
-                    type="primary"
-                    :loading="loading"
-                    :disabled="!challengeUid.trim() || !thirdPartyCaptchaReady"
-                    size="large"
-                    @click="handleChallengeRequest"
-                >
-                    {{ $t('binding.get_code') }}
-                </el-button>
-            </div>
-
-            <div v-else>
-                <div class="luogu-login-card__code" @click="copyChallengeCode">
-                    <code>{{ challengeCode }}</code>
-                </div>
-                <p class="luogu-login-card__code-hint">
-                    {{ $t('binding.code_expires', { minutes: 10 }) }}
-                </p>
-
-                <el-form @submit.prevent="handleChallengeVerify">
-                    <el-form-item>
-                        <el-input
-                            v-model="challengeCredential"
-                            :placeholder="$t('auth.login.luogu_paste_id')"
-                            size="large"
-                        />
-                    </el-form-item>
+                <el-form-item>
                     <el-button
-                        class="luogu-login-card__btn"
+                        class="auth-card__button"
                         type="primary"
                         native-type="submit"
-                        :loading="loading"
-                        :disabled="!challengeCredential.trim()"
+                        :loading="operation === 'verify'"
+                        :disabled="!hydrationReady || operation !== null"
                         size="large"
                     >
                         {{ $t('auth.login.luogu_login_by_challenge') }}
                     </el-button>
-                </el-form>
+                </el-form-item>
+            </el-form>
+            <el-button :disabled="operation !== null" @click="restartChallenge">
+                {{ $t('auth.flow.restart_login') }}
+            </el-button>
+        </template>
+        <template v-else>
+            <div v-if="configError" class="auth-card__alert">
+                <p class="auth-card__error" role="alert">{{ $t('auth.flow.config_error') }}</p>
+                <el-button
+                    :loading="configPending"
+                    :disabled="operation !== null"
+                    @click="refreshConfig()"
+                >
+                    {{ $t('common.retry') }}
+                </el-button>
             </div>
-        </div>
-
-        <p class="luogu-login-card__back">
-            <NuxtLink :to="`/login?redirect=${encodeURIComponent(redirectTarget)}`">
-                {{ $t('auth.login.with_account_password') }}
-            </NuxtLink>
+            <p class="auth-card__desc">{{ $t('auth.login.luogu_challenge_tip') }}</p>
+            <el-form
+                ref="requestFormRef"
+                method="post"
+                :disabled="!hydrationReady"
+                :model="form"
+                :rules="requestRules"
+                label-position="top"
+                @submit.prevent="requestChallenge"
+            >
+                <el-form-item prop="uid" :label="$t('auth.flow.luogu_uid')" for="luogu-uid">
+                    <el-input
+                        id="luogu-uid"
+                        v-model="form.uid"
+                        name="username"
+                        autocomplete="username"
+                        inputmode="numeric"
+                        :aria-label="$t('auth.flow.luogu_uid')"
+                        :disabled="!hydrationReady || operation !== null"
+                        size="large"
+                    />
+                </el-form-item>
+                <div v-if="turnstileEnabled" class="auth-card__captcha">
+                    <div ref="turnstileEl" class="auth-card__captcha-widget" />
+                    <p class="auth-card__status" role="status">{{ captchaMessage }}</p>
+                    <el-button
+                        v-if="turnstileStatus === 'error'"
+                        :disabled="operation !== null"
+                        @click="retryTurnstile()"
+                    >
+                        {{ $t('common.retry') }}
+                    </el-button>
+                </div>
+                <el-form-item>
+                    <el-button
+                        class="auth-card__button"
+                        type="primary"
+                        native-type="submit"
+                        :loading="operation === 'request'"
+                        :disabled="
+                            !hydrationReady || operation !== null || !configReady || !captchaReady
+                        "
+                        size="large"
+                    >
+                        {{ $t('binding.get_code') }}
+                    </el-button>
+                </el-form-item>
+            </el-form>
+        </template>
+        <p class="auth-card__footer">
+            <NuxtLink :to="loginPath">{{ $t('auth.login.with_account_password') }}</NuxtLink>
         </p>
     </el-card>
 </template>
 
 <script setup lang="ts">
-import { ElMessage } from 'element-plus';
-import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import type { FormInstance, FormRules } from 'element-plus';
+import type { AuthResult } from '~/types/auth';
+import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 definePageMeta({ layout: 'auth' });
+const hydrationReady = useHydrationReady();
 
 const { t } = useI18n();
-useHead({ title: () => `${t('auth.login.luogu_guide_title')} - CP OAuth` });
-
 const route = useRoute();
-const loading = ref(false);
-const pasteId = ref('');
-const mode = ref<'challenge' | 'credential'>('challenge');
-const challengeStep = ref(1);
-const challengeUid = ref('');
-const challengeCode = ref('');
-const challengeRequestId = ref('');
-const challengeCredential = ref('');
-const redirectTarget = getSafeRedirectTarget(route.query.redirect);
-
-interface PublicConfigResponse {
-    turnstileEnabled?: boolean;
-    turnstileSiteKey?: string;
-}
-
-const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
-const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
-const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
+const api = useApi();
+const { accept, clearPending } = useAuth();
+const {
+    data: publicConfig,
+    pending: configPending,
+    error: configError,
+    refresh: refreshConfig
+} = await usePublicConfig();
+const form = reactive({ uid: '', pasteId: '' });
+const requestFormRef = ref<FormInstance>();
+const verifyFormRef = ref<FormInstance>();
+const challenge = ref<{ requestId: string; code: string; expiresAt: number } | null>(null);
+const operation = ref<'request' | 'verify' | null>(null);
+const copyPending = ref(false);
+const restartRequired = ref(false);
+const completed = ref(false);
+const errorMessage = ref('');
+const errorEl = ref<HTMLElement | null>(null);
+const notice = ref('');
+const now = ref(Date.now());
+let expiryTimer: ReturnType<typeof setInterval> | undefined;
+const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
+const loginPath = computed(() => buildLoginPath(redirectTarget.value));
+const challengeExpired = computed(
+    () => !!challenge.value && challenge.value.expiresAt <= now.value
+);
+const configReady = computed(
+    () => !!publicConfig.value && !configPending.value && !configError.value
+);
+const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled === true);
+const turnstileSiteKey = computed(() =>
+    turnstileEnabled.value ? publicConfig.value?.turnstileSiteKey || '' : ''
+);
 const {
     token: turnstileToken,
     el: turnstileEl,
-    reset: resetTurnstile
-} = useTurnstile(turnstileSiteKey);
-const thirdPartyCaptchaReady = computed(
-    () => !turnstileEnabled.value || Boolean(turnstileToken.value)
+    reset: resetTurnstile,
+    status: turnstileStatus,
+    error: turnstileError,
+    retry: retryTurnstile
+} = useTurnstile(turnstileSiteKey, { action: 'luogu_challenge' });
+const captchaReady = computed(
+    () => !turnstileEnabled.value || (turnstileStatus.value === 'ready' && !!turnstileToken.value)
 );
+const captchaMessage = computed(() => {
+    if (turnstileStatus.value === 'error')
+        return turnstileError.value || t('auth.flow.captcha_error');
+    if (captchaReady.value) return t('auth.flow.captcha_ready');
+    return t(
+        turnstileStatus.value === 'loading'
+            ? 'auth.flow.captcha_loading'
+            : 'auth.flow.captcha_waiting'
+    );
+});
+const requestRules = computed<FormRules>(() => ({
+    uid: [
+        {
+            required: true,
+            pattern: /^[1-9]\d*$/,
+            message: t('auth.flow.luogu_uid_invalid'),
+            trigger: 'blur'
+        }
+    ]
+}));
+const verifyRules = computed<FormRules>(() => ({
+    pasteId: [
+        {
+            required: true,
+            whitespace: true,
+            message: t('auth.login.luogu_paste_id'),
+            trigger: 'blur'
+        }
+    ]
+}));
 
-watch(mode, value => {
-    if (value === 'challenge') {
-        challengeStep.value = 1;
-        challengeRequestId.value = '';
-        challengeCode.value = '';
-        challengeCredential.value = '';
-    }
+useHead({
+    title: () =>
+        `${t('auth.login.luogu_guide_title')} - ${publicConfig.value?.siteTitle || t('app.name')}`
+});
+watch(errorMessage, async message => {
+    if (!message) return;
+    await nextTick();
+    errorEl.value?.focus();
+});
+onMounted(() => {
+    expiryTimer = setInterval(() => {
+        now.value = Date.now();
+    }, 1000);
+});
+onBeforeUnmount(() => {
+    if (expiryTimer) clearInterval(expiryTimer);
 });
 
-async function handleLuoguCredentialLogin() {
-    loading.value = true;
-    try {
-        const result = await $fetch<{ token: string }>('/api/auth/thirdparty/luogu/paste-login', {
-            method: 'POST',
-            body: {
-                pasteId: pasteId.value.trim(),
-                turnstileToken: turnstileToken.value || ''
-            }
-        });
-        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
-        await navigateTo(redirectTarget);
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
-    } finally {
-        loading.value = false;
-    }
+function showError(error: unknown) {
+    const err = error as { data?: { message?: string } };
+    errorMessage.value = err.data?.message || t('auth.login.error');
 }
 
-async function handleChallengeRequest() {
-    loading.value = true;
+async function requestChallenge() {
+    if (operation.value || !configReady.value || !captchaReady.value || !requestFormRef.value)
+        return;
+    operation.value = 'request';
+    errorMessage.value = '';
+    notice.value = '';
+    clearPending();
     try {
-        const result = await $fetch<{ requestId: string; code: string }>(
+        const valid = await requestFormRef.value.validate().catch(() => false);
+        if (!valid) return;
+        const result = await api<{ requestId: string; code: string; expiresIn: number }>(
             '/api/auth/thirdparty/luogu/challenge/request',
             {
                 method: 'POST',
                 body: {
-                    platformUid: challengeUid.value.trim(),
-                    turnstileToken: turnstileToken.value || ''
+                    luoguUid: form.uid.trim(),
+                    redirect: redirectTarget.value,
+                    turnstileToken: turnstileToken.value || undefined
                 }
             }
         );
-
-        challengeRequestId.value = result.requestId;
-        challengeCode.value = result.code;
-        challengeStep.value = 2;
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
+        challenge.value = {
+            requestId: result.requestId,
+            code: result.code,
+            expiresAt: Date.now() + result.expiresIn * 1000
+        };
+        form.pasteId = '';
+    } catch (error) {
+        showError(error);
     } finally {
-        loading.value = false;
+        resetTurnstile();
+        operation.value = null;
     }
 }
 
-async function handleChallengeVerify() {
-    loading.value = true;
+async function verifyChallenge() {
+    if (operation.value || !verifyFormRef.value || !challenge.value) return;
+    now.value = Date.now();
+    if (challengeExpired.value) {
+        restartRequired.value = true;
+        return;
+    }
+    operation.value = 'verify';
+    errorMessage.value = '';
+    notice.value = '';
+    const requestId = challenge.value.requestId;
     try {
-        const result = await $fetch<{ token: string }>(
-            '/api/auth/thirdparty/luogu/challenge/verify',
-            {
-                method: 'POST',
-                body: {
-                    requestId: challengeRequestId.value,
-                    credential: challengeCredential.value.trim()
-                }
-            }
-        );
-        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
-        await navigateTo(redirectTarget);
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
+        const valid = await verifyFormRef.value.validate().catch(() => false);
+        if (!valid) return;
+        const result = await api<AuthResult>('/api/auth/thirdparty/luogu/challenge/verify', {
+            method: 'POST',
+            body: { requestId, pasteId: form.pasteId.trim() }
+        });
+        challenge.value = null;
+        form.pasteId = '';
+        completed.value = true;
+        await accept(result);
+    } catch (error) {
+        const err = error as { data?: { data?: { code?: string } } };
+        const code = err.data?.data?.code;
+        if (code === 'AUTH_CHALLENGE_EXPIRED' || code === 'AUTH_CHALLENGE_EXHAUSTED') {
+            challenge.value = null;
+            form.pasteId = '';
+            restartRequired.value = true;
+        }
+        if (completed.value) {
+            completed.value = false;
+            restartRequired.value = true;
+        }
+        showError(error);
     } finally {
-        loading.value = false;
+        operation.value = null;
     }
 }
 
-function copyChallengeCode() {
-    if (!challengeCode.value) return;
-    navigator.clipboard.writeText(challengeCode.value);
-    ElMessage.success(t('binding.code_copied'));
+function restartChallenge() {
+    if (operation.value) return;
+    challenge.value = null;
+    form.pasteId = '';
+    restartRequired.value = false;
+    completed.value = false;
+    errorMessage.value = '';
+    notice.value = '';
+    clearPending();
+    resetTurnstile();
+}
+
+async function copyChallengeCode() {
+    if (!challenge.value || challengeExpired.value || operation.value || copyPending.value) return;
+    copyPending.value = true;
+    errorMessage.value = '';
+    notice.value = '';
+    try {
+        await navigator.clipboard.writeText(challenge.value.code);
+        notice.value = t('binding.code_copied');
+    } catch {
+        errorMessage.value = t('auth.flow.copy_error');
+    } finally {
+        copyPending.value = false;
+    }
 }
 </script>
 
 <style scoped lang="scss">
-.luogu-login-card {
-    width: 100%;
-    max-width: 400px;
+.luogu-code-label {
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.luogu-code {
+    margin-bottom: 12px;
+    padding: 12px;
     border: 1px solid var(--border-color);
-
-    &__title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 10px;
-        color: var(--text-primary);
-    }
-
-    &__desc {
-        font-size: 13px;
-        color: var(--text-secondary);
-        line-height: 1.6;
-        margin-bottom: 14px;
-    }
-
-    &__mode-switch {
-        margin-bottom: 8px;
-    }
-
-    &__mode-tip {
-        margin: 0 0 10px;
-        font-size: 12px;
-        color: var(--text-muted);
-        line-height: 1.5;
-    }
-
-    &__btn {
-        width: 100%;
-    }
-
-    &__btn-content {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    &__code {
-        padding: 8px 12px;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
-        cursor: pointer;
-        margin-bottom: 4px;
-
-        code {
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
-    }
-
-    &__code-hint {
-        margin: 0 0 10px;
-        font-size: 12px;
-        color: var(--text-muted);
-    }
-
-    &__turnstile {
-        display: flex;
-        justify-content: center;
-        margin: 4px 0 10px;
-    }
-
-    &__turnstile-hint {
-        margin: -4px 0 10px;
-        font-size: 12px;
-        color: var(--text-muted);
-        line-height: 1.4;
-    }
-
-    &__back {
-        margin-top: 8px;
-        text-align: center;
-        font-size: 13px;
-
-        a {
-            color: var(--text-primary);
-            text-decoration: underline;
-        }
-    }
+    border-radius: var(--card-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 </style>

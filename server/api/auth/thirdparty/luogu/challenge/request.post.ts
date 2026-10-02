@@ -1,54 +1,44 @@
-import crypto from 'crypto';
+import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
-import { getRedis } from '~/server/utils/redis';
+import { parseBody } from '~/server/utils/validation';
 import { verifyTurnstileToken } from '~/server/utils/turnstile';
+import { enforceRateLimit } from '~/server/utils/rate-limit';
+import {
+    createPlatformChallenge,
+    normalizePlatformUid,
+    platformUidSchema
+} from '~/server/utils/platform-flow';
+import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+
+const requestSchema = z.strictObject({
+    luoguUid: platformUidSchema,
+    redirect: z.string().optional(),
+    turnstileToken: z.string().max(4096).optional()
+});
 
 export default defineEventHandler(async event => {
-    const body = await readBody(event);
-    const platformUid = String(body.platformUid || '').trim();
-    const turnstileToken = String(body.turnstileToken || '');
-
-    await verifyTurnstileToken({
-        token: turnstileToken,
-        action: 'luogu:challenge:request'
-    });
-
-    if (!platformUid) {
-        throw createError({ statusCode: 400, message: 'Platform UID is required' });
-    }
-
+    const body = await parseBody(event, requestSchema);
+    const platformUid = normalizePlatformUid('luogu', body.luoguUid);
+    await enforceRateLimit(event, 'challenge', `luogu:${platformUid}`);
+    await verifyTurnstileToken({ token: body.turnstileToken, action: 'luogu_challenge' });
+    // Luogu login only authenticates an existing binding. It never registers or auto-links a user.
     const linked = await prisma.linkedAccount.findUnique({
-        where: {
-            platform_platformUid: {
-                platform: 'luogu',
-                platformUid
-            }
-        },
-        select: {
-            userId: true
-        }
+        where: { platform_platformUid: { platform: 'luogu', platformUid } },
+        select: { userId: true, user: { select: { authVersion: true } } }
     });
-
     if (!linked) {
         throw createError({
             statusCode: 404,
-            message: 'This Luogu account has not been linked'
+            message:
+                'This Luogu account is not linked. Register a local account and link it before using Luogu login.'
         });
     }
-
-    const requestId = crypto.randomBytes(12).toString('hex');
-    const code = `CPOAUTH-CHALLENGE-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-
-    await getRedis().set(
-        `auth:luogu:challenge:${requestId}`,
-        JSON.stringify({ code, platformUid }),
-        'EX',
-        600
-    );
-
-    return {
-        requestId,
-        code,
-        expiresIn: 600
-    };
+    return createPlatformChallenge(event, {
+        mode: 'login',
+        platform: 'luogu',
+        platformUid,
+        userId: linked.userId,
+        authVersion: linked.user.authVersion,
+        redirect: getSafeRedirectTarget(body.redirect)
+    });
 });

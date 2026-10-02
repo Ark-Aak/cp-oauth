@@ -1,58 +1,49 @@
+import { createError, defineEventHandler } from 'h3';
 import prisma from '~/server/utils/prisma';
-import { requireAdmin } from '~/server/utils/admin';
+import { requireAdmin, requireAdminInTransaction, rethrowAdminError } from '~/server/utils/admin';
+import { getAuthContext, lockAuthUser } from '~/server/utils/auth';
+import { lockAdminRole } from '~/server/utils/role';
 import { getRedis } from '~/server/utils/redis';
-
-interface CreateNoticeBody {
-    title?: string;
-    content?: string;
-    pinned?: boolean;
-}
+import { sanitizeNoticeContent } from '~/server/utils/notices';
+import { parseBody } from '~/server/utils/validation';
+import { noticeCreateSchema } from '~/utils/admin-validation';
 
 export default defineEventHandler(async event => {
-    await requireAdmin(event);
-
-    if (event.method === 'GET') {
-        const notices = await prisma.notice.findMany({
-            orderBy: [{ pinned: 'desc' }, { publishedAt: 'desc' }],
-            take: 50
-        });
-
-        return { notices };
-    }
-
-    if (event.method === 'POST') {
-        const body = await readBody<CreateNoticeBody>(event);
-        const title = body.title?.trim() || '';
-        const content = body.content?.trim() || '';
-
-        if (!title) {
-            throw createError({ statusCode: 400, message: 'Notice title is required' });
+    try {
+        if (event.method === 'GET') {
+            await requireAdmin(event);
+            const notices = await prisma.notice.findMany({
+                orderBy: [{ pinned: 'desc' }, { publishedAt: 'desc' }, { id: 'desc' }],
+                take: 50
+            });
+            return {
+                notices: notices.map(notice => ({
+                    ...notice,
+                    content: sanitizeNoticeContent(notice.content)
+                }))
+            };
         }
 
-        if (!content) {
-            throw createError({ statusCode: 400, message: 'Notice content is required' });
-        }
-
-        if (title.length > 120) {
-            throw createError({ statusCode: 400, message: 'Notice title is too long' });
-        }
-
-        const notice = await prisma.notice.create({
-            data: {
-                title,
-                content,
-                pinned: Boolean(body.pinned)
+        if (event.method === 'POST') {
+            const auth = getAuthContext(event);
+            const body = await parseBody(event, noticeCreateSchema);
+            const content = sanitizeNoticeContent(body.content);
+            const notice = await prisma.$transaction(async tx => {
+                await lockAdminRole(tx);
+                await lockAuthUser(tx, auth.userId);
+                await requireAdminInTransaction(tx, auth);
+                return tx.notice.create({ data: { ...body, content } });
+            });
+            try {
+                await getRedis().del('public:notices');
+            } catch {
+                // Cache failure does not roll back a committed notice.
             }
-        });
-
-        try {
-            await getRedis().del('public:notices');
-        } catch {
-            // Redis unavailable
+            return { notice };
         }
 
-        return { notice };
+        throw createError({ statusCode: 405, message: 'Method not allowed' });
+    } catch (error) {
+        rethrowAdminError(error, 'Notice');
     }
-
-    throw createError({ statusCode: 405, message: 'Method not allowed' });
 });

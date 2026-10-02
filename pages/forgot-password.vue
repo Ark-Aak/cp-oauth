@@ -1,96 +1,111 @@
 <template>
-    <el-card class="auth-card" shadow="never">
+    <el-card class="auth-card" shadow="never" :aria-busy="pending">
         <p class="auth-card__brand">{{ siteTitle }}</p>
         <h1 class="auth-card__title">{{ $t('auth.password.forgot_title') }}</h1>
         <p class="auth-card__desc">{{ $t('auth.password.forgot_desc') }}</p>
-        <el-form :model="form" @submit.prevent="handleSubmit">
-            <el-form-item>
-                <el-input v-model="form.email" type="email" :placeholder="$t('auth.login.email')" />
+        <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
+            {{ errorMessage }}
+        </p>
+        <el-alert
+            v-if="sent"
+            :title="$t('auth.password.reset_sent')"
+            type="success"
+            show-icon
+            :closable="false"
+            class="auth-card__alert"
+        />
+        <el-form
+            ref="formRef"
+            method="post"
+            :disabled="!hydrationReady"
+            :model="form"
+            :rules="rules"
+            label-position="top"
+            @submit.prevent="sendReset"
+        >
+            <el-form-item prop="email" :label="$t('auth.login.email')" for="forgot-email">
+                <el-input
+                    id="forgot-email"
+                    v-model="form.email"
+                    :aria-label="$t('auth.login.email')"
+                    type="email"
+                    name="email"
+                    autocomplete="email"
+                    :disabled="!hydrationReady || pending"
+                    size="large"
+                />
             </el-form-item>
             <el-form-item>
                 <el-button
                     type="primary"
                     native-type="submit"
-                    :loading="loading"
-                    class="auth-card__btn"
+                    :loading="pending"
+                    :disabled="!hydrationReady || pending"
+                    class="auth-card__button"
+                    size="large"
                 >
                     {{ $t('auth.password.send_reset') }}
                 </el-button>
             </el-form-item>
         </el-form>
-        <NuxtLink to="/login" class="auth-card__link">{{
-            $t('auth.password.back_login')
-        }}</NuxtLink>
+        <NuxtLink :to="loginPath" class="auth-card__link">
+            {{ $t('auth.password.back_login') }}
+        </NuxtLink>
     </el-card>
 </template>
 
 <script setup lang="ts">
-import { ElMessage } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
+import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 definePageMeta({ layout: 'auth' });
 
 const { t } = useI18n();
-useHead({ title: () => `${t('auth.password.forgot_title')} - CP OAuth` });
-
+const route = useRoute();
+const api = useApi();
+const { data: publicConfig } = await usePublicConfig();
+const formRef = ref<FormInstance>();
 const form = reactive({ email: '' });
-const loading = ref(false);
-
-const { data: publicConfig } = await useFetch<{ siteTitle?: string }>('/api/public/config');
+const pending = ref(false);
+const sent = ref(false);
+const errorMessage = ref('');
+const errorEl = ref<HTMLElement | null>(null);
+const hydrationReady = useHydrationReady();
 const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
+const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
+const loginPath = computed(() => buildLoginPath(redirectTarget.value));
+const rules = computed<FormRules>(() => ({
+    email: [
+        { required: true, message: t('auth.flow.email_invalid'), trigger: 'blur' },
+        { type: 'email', message: t('auth.flow.email_invalid'), trigger: 'blur' }
+    ]
+}));
 
-async function handleSubmit() {
-    if (!form.email) return;
-    loading.value = true;
+useHead({ title: () => `${t('auth.password.forgot_title')} - ${siteTitle.value}` });
+watch(errorMessage, async message => {
+    if (!message) return;
+    await nextTick();
+    errorEl.value?.focus();
+});
+
+async function sendReset() {
+    if (pending.value || !formRef.value) return;
+    pending.value = true;
+    errorMessage.value = '';
+    sent.value = false;
     try {
-        await $fetch('/api/auth/password/forgot', {
+        const valid = await formRef.value.validate().catch(() => false);
+        if (!valid) return;
+        await api<{ success: true }>('/api/auth/password/forgot', {
             method: 'POST',
-            body: { email: form.email }
+            body: { email: form.email.trim(), redirect: redirectTarget.value }
         });
-        ElMessage.success(t('auth.password.reset_sent'));
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.password.reset_error'));
+        sent.value = true;
+    } catch (error) {
+        const err = error as { data?: { message?: string } };
+        errorMessage.value = err.data?.message || t('auth.password.reset_error');
     } finally {
-        loading.value = false;
+        pending.value = false;
     }
 }
 </script>
-
-<style scoped lang="scss">
-.auth-card {
-    width: 100%;
-    max-width: 380px;
-    border: 1px solid var(--border-color);
-
-    &__brand {
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-bottom: 12px;
-        font-weight: 600;
-    }
-
-    &__title {
-        font-size: 20px;
-        margin-bottom: 8px;
-    }
-
-    &__desc {
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-bottom: 14px;
-        line-height: 1.6;
-    }
-
-    &__btn {
-        width: 100%;
-    }
-
-    &__link {
-        display: inline-block;
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--text-secondary);
-        text-decoration: underline;
-    }
-}
-</style>

@@ -1,600 +1,561 @@
 <template>
-    <el-card class="login-card" shadow="never">
-        <p class="login-card__brand">{{ siteTitle }}</p>
-        <h1 class="login-card__title">{{ $t('auth.login.title') }}</h1>
+    <el-card class="auth-card" shadow="never" :aria-busy="operation !== null">
+        <noscript
+            ><p class="auth-card__error">{{ $t('auth.flow.javascript_required') }}</p></noscript
+        >
+        <p class="auth-card__brand">{{ siteTitle }}</p>
+        <h1 class="auth-card__title">
+            {{ twoFactorStep ? $t('auth.flow.two_factor_title') : $t('auth.login.title') }}
+        </h1>
         <el-alert
-            v-if="verified"
+            v-if="verified && !twoFactorStep"
             :title="$t('auth.login.verified')"
             type="success"
             show-icon
             :closable="false"
-            class="login-card__alert"
+            class="auth-card__alert"
         />
+        <el-alert
+            v-if="passwordReset && !twoFactorStep"
+            :title="$t('auth.password.reset_success')"
+            type="success"
+            show-icon
+            :closable="false"
+            class="auth-card__alert"
+        />
+        <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
+            {{ errorMessage }}
+        </p>
+        <p v-if="notice" class="auth-card__status" role="status">{{ notice }}</p>
 
-        <template v-if="!twoFactorPending">
-            <el-form
-                ref="formRef"
-                :model="form"
-                :rules="rules"
-                label-position="top"
-                @submit.prevent="handleLogin"
+        <template v-if="twoFactorStep">
+            <p
+                v-if="operation === 'mfa' && !pendingChallenge"
+                class="auth-card__status"
+                role="status"
             >
-                <el-form-item prop="email">
-                    <el-input
-                        v-model="form.email"
-                        type="email"
-                        :placeholder="$t('auth.login.email')"
-                        size="large"
-                    />
-                </el-form-item>
-                <el-form-item prop="password">
-                    <el-input
-                        v-model="form.password"
-                        type="password"
-                        :placeholder="$t('auth.login.password')"
-                        size="large"
-                        show-password
-                    />
-                </el-form-item>
-                <div class="login-card__forgot-wrap">
-                    <NuxtLink to="/forgot-password" class="login-card__forgot-link">
-                        {{ $t('auth.login.forgot_password') }}
-                    </NuxtLink>
-                </div>
-                <div v-if="turnstileEnabled" ref="turnstileEl" class="login-card__turnstile" />
-                <el-form-item>
-                    <el-button
-                        type="primary"
-                        native-type="submit"
-                        :loading="loading"
-                        size="large"
-                        class="login-card__btn"
-                    >
-                        {{ loading ? $t('auth.login.loading') : $t('auth.login.submit') }}
-                    </el-button>
-                </el-form-item>
-            </el-form>
-
-            <div class="login-card__oauth">
-                <el-divider>{{ $t('auth.login.oauth_divider') }}</el-divider>
-                <p class="login-card__oauth-hint">
-                    {{ $t('auth.login.thirdparty_auto_register_hint') }}
-                </p>
-                <el-button
-                    class="login-card__oauth-btn"
-                    :loading="passkeyLoading"
-                    :disabled="!form.email"
-                    @click="handlePasskeyLogin"
-                >
-                    <span class="login-card__oauth-btn-content">
-                        <Fingerprint :size="16" :stroke-width="1.5" />
-                        <span>{{ $t('auth.login.with_passkey') }}</span>
-                    </span>
-                </el-button>
-                <el-button
-                    v-if="codeforcesLoginEnabled"
-                    class="login-card__oauth-btn"
-                    :loading="codeforcesLoading"
-                    @click="handleCodeforcesLogin"
-                >
-                    <span class="login-card__oauth-btn-content">
-                        <AppPlatformIcon platform="codeforces" />
-                        <span>{{ $t('auth.login.with_codeforces') }}</span>
-                    </span>
-                </el-button>
-                <el-button
-                    v-if="githubLoginEnabled"
-                    class="login-card__oauth-btn"
-                    :loading="githubLoading"
-                    @click="handleGitHubLogin"
-                >
-                    <span class="login-card__oauth-btn-content">
-                        <AppPlatformIcon platform="github" />
-                        <span>{{ $t('auth.login.with_github') }}</span>
-                    </span>
-                </el-button>
-                <el-button
-                    v-if="googleLoginEnabled"
-                    class="login-card__oauth-btn"
-                    :loading="googleLoading"
-                    @click="handleGoogleLogin"
-                >
-                    <span class="login-card__oauth-btn-content">
-                        <AppPlatformIcon platform="google" />
-                        <span>{{ $t('auth.login.with_google') }}</span>
-                    </span>
-                </el-button>
-                <el-button
-                    v-if="clistLoginEnabled"
-                    class="login-card__oauth-btn"
-                    :loading="clistLoading"
-                    @click="handleClistLogin"
-                >
-                    <span class="login-card__oauth-btn-content">
-                        <AppPlatformIcon platform="clist" />
-                        <span>{{ $t('auth.login.with_clist') }}</span>
-                    </span>
-                </el-button>
-                <el-button class="login-card__oauth-btn" @click="handleLuoguGuideLogin">
-                    <span class="login-card__oauth-btn-content">
-                        <AppPlatformIcon platform="luogu" />
-                        <span>{{ $t('auth.login.with_luogu') }}</span>
-                    </span>
-                </el-button>
-            </div>
-        </template>
-
-        <template v-else>
-            <el-alert type="warning" :closable="false" class="login-card__alert">
-                <template #title>
+                {{ $t('auth.flow.callback_complete') }}
+            </p>
+            <template v-else-if="challengeActive">
+                <p class="auth-card__desc">
                     {{
-                        twoFactorMethod === 'email_otp'
+                        pendingChallenge?.method === 'email_otp'
                             ? $t('auth.login.twofactor_email_sent')
                             : $t('auth.login.twofactor_totp_required')
                     }}
-                </template>
-            </el-alert>
-            <el-form :model="twoFactorForm" @submit.prevent="handleVerifyTwoFactor">
-                <el-form-item>
+                </p>
+                <el-form
+                    method="post"
+                    :disabled="!hydrationReady"
+                    :model="twoFactorForm"
+                    label-position="top"
+                    @submit.prevent="verifyTwoFactor"
+                >
+                    <el-form-item :label="$t('auth.login.twofactor_code')" for="login-otp">
+                        <el-input
+                            id="login-otp"
+                            v-model="twoFactorForm.code"
+                            :aria-label="$t('auth.login.twofactor_code')"
+                            name="one-time-code"
+                            autocomplete="one-time-code"
+                            inputmode="numeric"
+                            maxlength="6"
+                            :disabled="!hydrationReady || operation !== null"
+                            size="large"
+                        />
+                    </el-form-item>
+                    <p v-if="codeAlreadySubmitted" class="auth-card__status" role="status">
+                        {{ $t('auth.flow.code_already_submitted') }}
+                    </p>
+                    <el-form-item>
+                        <el-button
+                            type="primary"
+                            native-type="submit"
+                            :loading="operation === 'mfa'"
+                            :disabled="
+                                !hydrationReady ||
+                                operation !== null ||
+                                !validCode ||
+                                codeAlreadySubmitted
+                            "
+                            class="auth-card__button"
+                            size="large"
+                        >
+                            {{ $t('auth.login.verify_2fa') }}
+                        </el-button>
+                    </el-form-item>
+                </el-form>
+            </template>
+            <p v-else class="auth-card__desc" role="status">
+                {{ $t('auth.flow.challenge_restart') }}
+            </p>
+            <el-button
+                class="auth-card__button"
+                :disabled="operation !== null"
+                @click="restartLogin"
+            >
+                {{ $t('auth.flow.restart_login') }}
+            </el-button>
+        </template>
+
+        <template v-else>
+            <div v-if="configError" class="auth-card__alert">
+                <p class="auth-card__error" role="alert">{{ $t('auth.flow.config_error') }}</p>
+                <el-button
+                    :loading="configPending"
+                    :disabled="operation !== null"
+                    @click="refreshConfig()"
+                >
+                    {{ $t('common.retry') }}
+                </el-button>
+            </div>
+            <el-form
+                ref="formRef"
+                method="post"
+                :disabled="!hydrationReady"
+                :model="form"
+                :rules="rules"
+                label-position="top"
+                @submit.prevent="loginWithPassword"
+            >
+                <el-form-item prop="email" :label="$t('auth.login.email')" for="login-email">
                     <el-input
-                        v-model="twoFactorForm.code"
-                        maxlength="6"
-                        :placeholder="$t('auth.login.twofactor_code')"
+                        id="login-email"
+                        v-model="form.email"
+                        type="email"
+                        name="email"
+                        :aria-label="$t('auth.login.email')"
+                        autocomplete="email"
+                        :disabled="!hydrationReady || operation !== null"
                         size="large"
                     />
                 </el-form-item>
+                <el-form-item
+                    prop="password"
+                    :label="$t('auth.login.password')"
+                    for="login-password"
+                >
+                    <el-input
+                        id="login-password"
+                        v-model="form.password"
+                        :type="passwordVisible ? 'text' : 'password'"
+                        name="password"
+                        :aria-label="$t('auth.login.password')"
+                        autocomplete="current-password"
+                        :disabled="!hydrationReady || operation !== null"
+                        size="large"
+                    >
+                        <template #suffix>
+                            <el-button
+                                class="auth-card__password-toggle"
+                                text
+                                native-type="button"
+                                :aria-label="
+                                    $t(
+                                        passwordVisible
+                                            ? 'auth.flow.hide_password'
+                                            : 'auth.flow.show_password'
+                                    )
+                                "
+                                :aria-pressed="passwordVisible"
+                                :disabled="!hydrationReady || operation !== null"
+                                @click="passwordVisible = !passwordVisible"
+                            >
+                                <EyeOff v-if="passwordVisible" :size="18" aria-hidden="true" />
+                                <Eye v-else :size="18" aria-hidden="true" />
+                            </el-button>
+                        </template>
+                    </el-input>
+                </el-form-item>
+                <NuxtLink :to="forgotPath" class="auth-card__link">
+                    {{ $t('auth.login.forgot_password') }}
+                </NuxtLink>
+                <div v-if="turnstileEnabled" class="auth-card__captcha">
+                    <div ref="turnstileEl" class="auth-card__captcha-widget" />
+                    <p class="auth-card__status" role="status">
+                        {{ captchaMessage }}
+                    </p>
+                    <el-button
+                        v-if="turnstileStatus === 'error'"
+                        :disabled="operation !== null"
+                        @click="retryTurnstile()"
+                    >
+                        {{ $t('common.retry') }}
+                    </el-button>
+                </div>
                 <el-form-item>
                     <el-button
                         type="primary"
                         native-type="submit"
-                        :loading="twoFactorLoading"
+                        :loading="operation === 'password'"
+                        :disabled="
+                            !hydrationReady || operation !== null || !configReady || !captchaReady
+                        "
+                        class="auth-card__button"
                         size="large"
-                        class="login-card__btn"
                     >
-                        {{ $t('auth.login.verify_2fa') }}
+                        {{
+                            operation === 'password'
+                                ? $t('auth.login.loading')
+                                : $t('auth.login.submit')
+                        }}
                     </el-button>
                 </el-form-item>
-                <el-form-item>
-                    <el-button text @click="resetTwoFactorStep">{{
-                        $t('auth.login.back')
-                    }}</el-button>
-                </el-form-item>
             </el-form>
-        </template>
 
-        <p class="login-card__footer">
-            {{ $t('auth.login.footer') }}
-            <NuxtLink to="/register">{{ $t('auth.login.register_link') }}</NuxtLink>
-        </p>
+            <div class="auth-card__actions">
+                <el-button
+                    :loading="operation === 'passkey'"
+                    :disabled="!hydrationReady || operation !== null || !configReady"
+                    @click="loginWithPasskey"
+                >
+                    <Fingerprint :size="18" :stroke-width="1.5" class="login-icon" />
+                    {{ $t('auth.login.with_passkey') }}
+                </el-button>
+            </div>
+            <el-divider>{{ $t('auth.login.oauth_divider') }}</el-divider>
+            <p v-if="providers.length" class="auth-card__desc">
+                {{ $t('auth.flow.oauth_registration_hint') }}
+            </p>
+            <div class="auth-card__actions">
+                <el-button
+                    v-for="provider in providers"
+                    :key="provider.name"
+                    :loading="operation === provider.name"
+                    :disabled="
+                        !hydrationReady || operation !== null || !configReady || !captchaReady
+                    "
+                    @click="loginWithProvider(provider.name)"
+                >
+                    <AppPlatformIcon :platform="provider.name" class="login-icon" />
+                    {{ $t(provider.label) }}
+                </el-button>
+                <el-button
+                    :loading="operation === 'luogu'"
+                    :disabled="!hydrationReady || operation !== null"
+                    @click="loginWithLuogu"
+                >
+                    <AppPlatformIcon platform="luogu" class="login-icon" />
+                    {{ $t('auth.login.with_luogu') }}
+                </el-button>
+            </div>
+            <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
+            <p v-if="publicConfig?.registrationEnabled" class="auth-card__footer">
+                {{ $t('auth.login.footer') }}
+                <NuxtLink :to="registerPath">{{ $t('auth.login.register_link') }}</NuxtLink>
+            </p>
+        </template>
     </el-card>
 </template>
 
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus';
-import { ElMessage } from 'element-plus';
-import { Fingerprint } from 'lucide-vue-next';
+import { Eye, EyeOff, Fingerprint } from 'lucide-vue-next';
+import type { AuthResult } from '~/types/auth';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { toRequestOptions, serializeAuthenticationCredential } from '~/utils/webauthn';
 
 definePageMeta({ layout: 'auth' });
+const hydrationReady = useHydrationReady();
 
+type Provider = 'github' | 'google' | 'codeforces' | 'clist';
 const { t } = useI18n();
-
-useHead({ title: () => `${t('auth.login.title')} - CP OAuth` });
 const route = useRoute();
+const api = useApi();
+const { accept, pendingChallenge, clearPending, rememberRedirect } = useAuth();
+const {
+    data: publicConfig,
+    pending: configPending,
+    error: configError,
+    refresh: refreshConfig
+} = await usePublicConfig();
 const formRef = ref<FormInstance>();
-const loading = ref(false);
-const passkeyLoading = ref(false);
-const twoFactorLoading = ref(false);
-const codeforcesLoading = ref(false);
-const githubLoading = ref(false);
-const googleLoading = ref(false);
-const clistLoading = ref(false);
-const verified = computed(() => route.query.verified === 'true');
-const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
+const form = reactive({ email: '', password: '' });
+const passwordVisible = ref(false);
+const twoFactorForm = reactive({ code: '' });
+const operation = ref<'password' | 'passkey' | 'mfa' | 'luogu' | Provider | null>(null);
+const errorMessage = ref('');
+const errorEl = ref<HTMLElement | null>(null);
+const notice = ref('');
+const now = ref(Date.now());
+const submittedCodes = new Set<string>();
+let expiryTimer: ReturnType<typeof setInterval> | undefined;
 
-interface PublicConfigResponse {
-    siteTitle?: string;
-    turnstileEnabled?: boolean;
-    turnstileSiteKey?: string;
-    codeforcesLoginEnabled?: boolean;
-    githubLoginEnabled?: boolean;
-    googleLoginEnabled?: boolean;
-    clistLoginEnabled?: boolean;
-}
-
-const form = reactive({
-    email: '',
-    password: ''
-});
-
-const twoFactorForm = reactive({
-    challengeId: '',
-    code: ''
-});
-
-const twoFactorPending = ref(false);
-const twoFactorMethod = ref<'email_otp' | 'totp' | ''>('');
-
-const rules = computed<FormRules>(() => ({
-    email: [{ required: true, message: t('auth.login.email'), trigger: 'blur' }],
-    password: [{ required: true, message: t('auth.login.password'), trigger: 'blur' }]
-}));
-
-const { data: publicConfig } = await useFetch<PublicConfigResponse>('/api/public/config');
 const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
-const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled || false);
-const turnstileSiteKey = computed(() => publicConfig.value?.turnstileSiteKey || '');
-const codeforcesLoginEnabled = computed(() => publicConfig.value?.codeforcesLoginEnabled || false);
-const githubLoginEnabled = computed(() => publicConfig.value?.githubLoginEnabled || false);
-const googleLoginEnabled = computed(() => publicConfig.value?.googleLoginEnabled || false);
-const clistLoginEnabled = computed(() => publicConfig.value?.clistLoginEnabled || false);
+const redirectTarget = computed(() =>
+    getSafeRedirectTarget(pendingChallenge.value?.redirect ?? route.query.redirect)
+);
+const verified = computed(() => route.query.verified === 'true');
+const passwordReset = computed(() => route.query.reset === 'true');
+const twoFactorStep = computed(() => route.query.step === 'two-factor' || !!pendingChallenge.value);
+const challengeActive = computed(
+    () => !!pendingChallenge.value && pendingChallenge.value.expiresAt > now.value
+);
+const validCode = computed(() => /^\d{6}$/.test(twoFactorForm.code.trim()));
+const codeAlreadySubmitted = computed(() => submittedCodes.has(twoFactorForm.code.trim()));
+const registerPath = computed(() => ({
+    path: '/register',
+    query: { redirect: redirectTarget.value }
+}));
+const forgotPath = computed(() => ({
+    path: '/forgot-password',
+    query: { redirect: redirectTarget.value }
+}));
+const configReady = computed(
+    () => !!publicConfig.value && !configPending.value && !configError.value
+);
+const turnstileEnabled = computed(() => publicConfig.value?.turnstileEnabled === true);
+const turnstileSiteKey = computed(() =>
+    turnstileEnabled.value ? publicConfig.value?.turnstileSiteKey || '' : ''
+);
 const {
     token: turnstileToken,
     el: turnstileEl,
-    reset: resetTurnstile
-} = useTurnstile(turnstileSiteKey);
+    reset: resetTurnstile,
+    status: turnstileStatus,
+    error: turnstileError,
+    retry: retryTurnstile
+} = useTurnstile(turnstileSiteKey, { action: 'login' });
+const captchaReady = computed(
+    () => !turnstileEnabled.value || (turnstileStatus.value === 'ready' && !!turnstileToken.value)
+);
+const captchaMessage = computed(() => {
+    if (turnstileStatus.value === 'error')
+        return turnstileError.value || t('auth.flow.captcha_error');
+    if (captchaReady.value) return t('auth.flow.captcha_ready');
+    return t(
+        turnstileStatus.value === 'loading'
+            ? 'auth.flow.captcha_loading'
+            : 'auth.flow.captcha_waiting'
+    );
+});
+const providers = computed(() =>
+    [
+        {
+            name: 'github' as const,
+            enabled: publicConfig.value?.githubLoginEnabled,
+            label: 'auth.login.with_github'
+        },
+        {
+            name: 'google' as const,
+            enabled: publicConfig.value?.googleLoginEnabled,
+            label: 'auth.login.with_google'
+        },
+        {
+            name: 'codeforces' as const,
+            enabled: publicConfig.value?.codeforcesLoginEnabled,
+            label: 'auth.login.with_codeforces'
+        },
+        {
+            name: 'clist' as const,
+            enabled: publicConfig.value?.clistLoginEnabled,
+            label: 'auth.login.with_clist'
+        }
+    ].filter(provider => provider.enabled)
+);
+const rules = computed<FormRules>(() => ({
+    email: [
+        { required: true, message: t('auth.flow.email_invalid'), trigger: 'blur' },
+        { type: 'email', message: t('auth.flow.email_invalid'), trigger: 'blur' }
+    ],
+    password: [{ required: true, message: t('auth.login.password'), trigger: 'blur' }]
+}));
 
-interface LoginResponse {
-    token?: string;
-    requiresTwoFactor?: boolean;
-    method?: 'email_otp' | 'totp';
-    challengeId?: string;
-}
+useHead({
+    title: () =>
+        `${t(twoFactorStep.value ? 'auth.flow.two_factor_title' : 'auth.login.title')} - ${siteTitle.value}`
+});
 
-function toBase64Url(bytes: Uint8Array): string {
-    return btoa(String.fromCharCode(...bytes))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '');
-}
-
-function fromBase64Url(value: string): Uint8Array {
-    const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-    const padding = '='.repeat((4 - (normalized.length % 4 || 4)) % 4);
-    const binary = atob(normalized + padding);
-    return Uint8Array.from(binary, ch => ch.charCodeAt(0));
-}
-
-function toArrayBuffer(value: string): ArrayBuffer {
-    const bytes = fromBase64Url(value);
-    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-}
-
-async function completeLoginResponse(data: LoginResponse) {
-    if (data.requiresTwoFactor && data.challengeId && data.method) {
-        twoFactorPending.value = true;
-        twoFactorMethod.value = data.method;
-        twoFactorForm.challengeId = data.challengeId;
+watch(errorMessage, async message => {
+    if (!message) return;
+    await nextTick();
+    errorEl.value?.focus();
+});
+watch(
+    () => pendingChallenge.value?.challengeId,
+    () => {
         twoFactorForm.code = '';
-        return;
+        submittedCodes.clear();
     }
+);
+onMounted(() => {
+    expiryTimer = setInterval(() => {
+        now.value = Date.now();
+    }, 1000);
+});
+onBeforeUnmount(() => {
+    if (expiryTimer) clearInterval(expiryTimer);
+});
 
-    if (data.token) {
-        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = data.token;
-        await navigateTo(redirectTarget.value);
-        return;
-    }
-
-    throw new Error('Invalid login response');
+function showError(error: unknown) {
+    const err = error as { data?: { message?: string } };
+    errorMessage.value = err.data?.message || t('auth.login.error');
 }
 
-async function handleLogin() {
-    if (!formRef.value) return;
-    const valid = await formRef.value.validate().catch(() => false);
-    if (!valid) return;
-
-    loading.value = true;
+async function loginWithPassword() {
+    if (operation.value || !configReady.value || !captchaReady.value || !formRef.value) return;
+    operation.value = 'password';
+    errorMessage.value = '';
+    notice.value = '';
+    clearPending();
     try {
-        const data = await $fetch<LoginResponse>('/api/auth/login', {
+        const valid = await formRef.value.validate().catch(() => false);
+        if (!valid) return;
+        const result = await api<AuthResult>('/api/auth/login', {
             method: 'POST',
             body: {
-                email: form.email,
+                email: form.email.trim(),
                 password: form.password,
+                redirect: redirectTarget.value,
                 turnstileToken: turnstileToken.value || undefined
             }
         });
-        await completeLoginResponse(data);
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
+        form.password = '';
+        await accept(result);
+    } catch (error) {
+        showError(error);
+    } finally {
         resetTurnstile();
-    } finally {
-        loading.value = false;
+        operation.value = null;
     }
 }
 
-async function handleVerifyTwoFactor() {
-    if (!twoFactorForm.challengeId || !twoFactorForm.code) return;
-    twoFactorLoading.value = true;
-    try {
-        const result = await $fetch<{ token: string }>('/api/auth/2fa/verify-login', {
-            method: 'POST',
-            body: {
-                challengeId: twoFactorForm.challengeId,
-                code: twoFactorForm.code
-            }
-        });
-        useCookie('auth_token', { maxAge: 7 * 24 * 60 * 60 }).value = result.token;
-        await navigateTo(redirectTarget.value);
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-    } finally {
-        twoFactorLoading.value = false;
+async function verifyTwoFactor() {
+    if (operation.value || !validCode.value || codeAlreadySubmitted.value) return;
+    now.value = Date.now();
+    const challenge = pendingChallenge.value;
+    if (!challenge || !challengeActive.value) {
+        clearPending();
+        errorMessage.value = t('auth.flow.challenge_restart');
+        return;
     }
-}
-
-function resetTwoFactorStep() {
-    twoFactorPending.value = false;
-    twoFactorMethod.value = '';
-    twoFactorForm.challengeId = '';
+    operation.value = 'mfa';
+    errorMessage.value = '';
+    const code = twoFactorForm.code.trim();
+    submittedCodes.add(code);
     twoFactorForm.code = '';
+    try {
+        const result = await api<AuthResult>('/api/auth/2fa/verify-login', {
+            method: 'POST',
+            body: { challengeId: challenge.challengeId, code }
+        });
+        clearPending();
+        await accept(result);
+    } catch (error) {
+        const err = error as { data?: { message?: string; data?: { code?: string } } };
+        const code = err.data?.data?.code;
+        if (code === 'AUTH_CHALLENGE_EXPIRED' || code === 'AUTH_CHALLENGE_EXHAUSTED') {
+            clearPending();
+            errorMessage.value = t('auth.flow.challenge_restart');
+        } else {
+            showError(error);
+        }
+    } finally {
+        operation.value = null;
+    }
 }
 
-async function handlePasskeyLogin() {
-    if (!form.email.trim()) {
-        ElMessage.warning(t('auth.login.passkey_email_required'));
-        return;
-    }
-    if (!window.PublicKeyCredential) {
-        ElMessage.error(t('auth.login.passkey_not_supported'));
-        return;
-    }
+async function restartLogin() {
+    if (operation.value) return;
+    const redirect = redirectTarget.value;
+    clearPending();
+    twoFactorForm.code = '';
+    errorMessage.value = '';
+    notice.value = '';
+    await navigateTo({ path: '/login', query: { redirect } }, { replace: true });
+}
 
-    passkeyLoading.value = true;
+async function loginWithPasskey() {
+    if (operation.value || !configReady.value) return;
+    errorMessage.value = '';
+    notice.value = '';
+    clearPending();
+    if (!window.PublicKeyCredential || !navigator.credentials) {
+        errorMessage.value = t('auth.login.passkey_not_supported');
+        return;
+    }
+    operation.value = 'passkey';
     try {
-        const { challengeId, options } = await $fetch<{
+        const { challengeId, options } = await api<{
             challengeId: string;
-            options: {
-                challenge: string;
-                timeout?: number;
-                rpId?: string;
-                userVerification?: UserVerificationRequirement;
-                allowCredentials?: Array<{
-                    id: string;
-                    type: PublicKeyCredentialType;
-                    transports?: AuthenticatorTransport[];
-                }>;
-            };
+            options: PublicKeyCredentialRequestOptionsJSON;
         }>('/api/auth/passkey/login/options', {
             method: 'POST',
-            body: {
-                email: form.email.trim().toLowerCase()
-            }
+            body: { email: form.email.trim() || undefined, redirect: redirectTarget.value }
         });
-
-        const publicKey: PublicKeyCredentialRequestOptions = {
-            ...options,
-            challenge: toArrayBuffer(options.challenge),
-            allowCredentials: options.allowCredentials?.map(item => ({
-                ...item,
-                id: toArrayBuffer(item.id)
-            }))
-        };
-
         const credential = (await navigator.credentials.get({
-            publicKey
+            publicKey: toRequestOptions(options)
         })) as PublicKeyCredential | null;
-
         if (!credential) {
-            throw new Error('No credential returned');
+            notice.value = t('auth.flow.passkey_cancelled');
+            return;
         }
-
-        const assertion = credential.response as AuthenticatorAssertionResponse;
-        const response = {
-            id: credential.id,
-            rawId: toBase64Url(new Uint8Array(credential.rawId)),
-            type: credential.type,
-            response: {
-                clientDataJSON: toBase64Url(new Uint8Array(assertion.clientDataJSON)),
-                authenticatorData: toBase64Url(new Uint8Array(assertion.authenticatorData)),
-                signature: toBase64Url(new Uint8Array(assertion.signature)),
-                userHandle: assertion.userHandle
-                    ? toBase64Url(new Uint8Array(assertion.userHandle))
-                    : null
-            },
-            clientExtensionResults: credential.getClientExtensionResults()
-        };
-
-        const result = await $fetch<LoginResponse>('/api/auth/passkey/login/verify', {
+        const result = await api<AuthResult>('/api/auth/passkey/login/verify', {
             method: 'POST',
-            body: {
-                challengeId,
-                response
-            }
+            body: { challengeId, response: serializeAuthenticationCredential(credential) }
         });
-
-        await completeLoginResponse(result);
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string }; message?: string };
-        ElMessage.error(err.data?.message || err.message || t('auth.login.error'));
-    } finally {
-        passkeyLoading.value = false;
-    }
-}
-
-async function handleGitHubLogin() {
-    githubLoading.value = true;
-    try {
-        const result = await $fetch<{ authorizationUrl: string }>(
-            '/api/auth/thirdparty/github/start',
-            {
-                query: {
-                    redirect: redirectTarget.value,
-                    turnstileToken: turnstileToken.value || ''
-                }
-            }
-        );
-        await navigateTo(result.authorizationUrl, { external: true });
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
-    } finally {
-        githubLoading.value = false;
-    }
-}
-
-async function handleGoogleLogin() {
-    googleLoading.value = true;
-    try {
-        const result = await $fetch<{ authorizationUrl: string }>(
-            '/api/auth/thirdparty/google/start',
-            {
-                query: {
-                    redirect: redirectTarget.value,
-                    turnstileToken: turnstileToken.value || ''
-                }
-            }
-        );
-        await navigateTo(result.authorizationUrl, { external: true });
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
-    } finally {
-        googleLoading.value = false;
-    }
-}
-
-async function handleCodeforcesLogin() {
-    codeforcesLoading.value = true;
-    try {
-        const result = await $fetch<{ authorizationUrl: string }>(
-            '/api/auth/thirdparty/codeforces/start',
-            {
-                query: {
-                    redirect: redirectTarget.value,
-                    turnstileToken: turnstileToken.value || ''
-                }
-            }
-        );
-        await navigateTo(result.authorizationUrl, { external: true });
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
-    } finally {
-        codeforcesLoading.value = false;
-    }
-}
-
-async function handleClistLogin() {
-    clistLoading.value = true;
-    try {
-        const result = await $fetch<{ authorizationUrl: string }>(
-            '/api/auth/thirdparty/clist/start',
-            {
-                query: {
-                    redirect: redirectTarget.value,
-                    turnstileToken: turnstileToken.value || ''
-                }
-            }
-        );
-        await navigateTo(result.authorizationUrl, { external: true });
-    } catch (e: unknown) {
-        const err = e as { data?: { message?: string } };
-        ElMessage.error(err.data?.message || t('auth.login.error'));
-        resetTurnstile();
-    } finally {
-        clistLoading.value = false;
-    }
-}
-
-async function handleLuoguGuideLogin() {
-    await navigateTo({
-        path: '/oauth/thirdparty/luogu',
-        query: {
-            redirect: redirectTarget.value
+        form.password = '';
+        await accept(result);
+    } catch (error) {
+        if (
+            error instanceof DOMException &&
+            (error.name === 'NotAllowedError' || error.name === 'AbortError')
+        ) {
+            notice.value = t('auth.flow.passkey_cancelled');
+        } else {
+            showError(error);
         }
-    });
+    } finally {
+        operation.value = null;
+    }
+}
+
+async function loginWithProvider(provider: Provider) {
+    if (operation.value || !configReady.value || !captchaReady.value) return;
+    operation.value = provider;
+    errorMessage.value = '';
+    notice.value = '';
+    clearPending();
+    try {
+        const result = await api<{ authorizationUrl: string }>(
+            `/api/auth/thirdparty/${provider}/start`,
+            {
+                method: 'GET',
+                query: {
+                    mode: 'login',
+                    redirect: redirectTarget.value,
+                    turnstileToken: turnstileToken.value || undefined
+                }
+            }
+        );
+        rememberRedirect(provider, redirectTarget.value);
+        await navigateTo(result.authorizationUrl, { external: true });
+    } catch (error) {
+        showError(error);
+    } finally {
+        resetTurnstile();
+        operation.value = null;
+    }
+}
+
+async function loginWithLuogu() {
+    if (operation.value) return;
+    operation.value = 'luogu';
+    clearPending();
+    try {
+        await navigateTo({
+            path: '/oauth/thirdparty/luogu',
+            query: { redirect: redirectTarget.value }
+        });
+    } finally {
+        operation.value = null;
+    }
 }
 </script>
 
 <style scoped lang="scss">
-.login-card {
-    width: 100%;
-    max-width: 400px;
-    border: 1px solid var(--border-color);
-
-    &__brand {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-muted);
-        letter-spacing: -0.01em;
-        margin-bottom: 14px;
-    }
-
-    &__title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 20px;
-        color: var(--text-primary);
-    }
-
-    &__alert {
-        margin-bottom: 14px;
-    }
-
-    &__forgot-wrap {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: -8px;
-        margin-bottom: 8px;
-    }
-
-    &__forgot-link {
-        color: var(--text-secondary);
-        font-size: 12px;
-        text-decoration: underline;
-    }
-
-    &__turnstile {
-        display: flex;
-        justify-content: center;
-        margin: 4px 0 14px;
-    }
-
-    &__btn {
-        width: 100%;
-    }
-
-    &__oauth {
-        margin-bottom: 6px;
-
-        :deep(.el-button + .el-button) {
-            margin-left: 0;
-        }
-    }
-
-    &__oauth-hint {
-        margin: 2px 0 8px;
-        font-size: 12px;
-        color: var(--text-muted);
-        line-height: 1.5;
-    }
-
-    &__oauth-btn {
-        width: 100%;
-        margin-top: 8px;
-    }
-
-    &__oauth-btn-content {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    &__footer {
-        margin-top: 6px;
-        text-align: center;
-        font-size: 13px;
-        color: var(--text-muted);
-
-        a {
-            color: var(--text-primary);
-            text-decoration: underline;
-        }
-    }
+.login-icon {
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 </style>

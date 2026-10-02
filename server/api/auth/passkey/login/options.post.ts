@@ -1,50 +1,22 @@
-import crypto from 'crypto';
-import prisma from '~/server/utils/prisma';
-import { buildAuthenticationOptions, getPasskeyRpInfo } from '~/server/utils/passkey';
-import { buildPasskeyLoginChallengeKey, setRedisJson } from '~/server/utils/security';
+import { z } from 'zod';
+import { emailSchema } from '~/utils/validation';
+import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { parseBody } from '~/server/utils/validation';
+import { beginPasskeyAuthentication } from '~/server/utils/passkey';
 
 export default defineEventHandler(async event => {
-    const body = await readBody(event);
-    const email = normalizeUsername(body.email);
-
-    if (!email) {
-        throw createError({ statusCode: 400, message: 'Email is required' });
-    }
-
-    const user = await prisma.user.findUnique({
-        where: { email },
-        select: {
-            id: true,
-            passkeyCredentials: {
-                select: {
-                    credentialId: true
-                }
-            }
-        }
-    });
-
-    if (!user || user.passkeyCredentials.length === 0) {
-        throw createError({ statusCode: 404, message: 'No passkey found for this email' });
-    }
-
-    const options = await buildAuthenticationOptions({
-        rpInfo: getPasskeyRpInfo(event),
-        allowCredentialIds: user.passkeyCredentials.map(item => item.credentialId)
-    });
-
-    const challengeId = crypto.randomUUID();
-    await setRedisJson(
-        buildPasskeyLoginChallengeKey(challengeId),
-        {
-            challenge: options.challenge,
-            userId: user.id,
-            email
-        },
-        300
+    const body = await parseBody(
+        event,
+        z
+            .object({
+                email: emailSchema.optional(),
+                redirect: z.string().max(4096).optional()
+            })
+            .strict()
     );
-
-    return {
-        challengeId,
-        options
-    };
+    return beginPasskeyAuthentication(event, {
+        mode: 'login',
+        email: body.email,
+        redirect: getSafeRedirectTarget(body.redirect)
+    });
 });

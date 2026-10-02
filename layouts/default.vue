@@ -1,155 +1,269 @@
 <template>
-    <el-container class="app-layout">
-        <!-- Mobile overlay -->
-        <div v-if="sidebarOpen" class="app-layout__overlay" @click="sidebarOpen = false" />
-        <AppSidebar
-            :is-logged-in="isLoggedIn"
-            :is-admin="isAdmin"
-            :username="sidebarUsername"
-            :display-name="sidebarDisplayName"
-            :avatar-url="sidebarAvatarUrl"
-            :open="sidebarOpen"
-            @logout="handleLogout"
-            @navigate="sidebarOpen = false"
-        />
-        <el-main class="app-layout__main">
-            <button class="app-layout__menu-btn" @click="sidebarOpen = !sidebarOpen">
-                <Menu :size="20" :stroke-width="1.5" />
-            </button>
-            <div class="app-layout__content">
+    <div class="app-layout">
+        <a class="app-layout__skip" href="#main-content">{{ $t('nav.skip_content') }}</a>
+        <aside class="app-layout__desktop-nav">
+            <AppSidebar
+                :user="user"
+                :anonymous="status === 'anonymous'"
+                :logout-pending="logoutPending"
+                @logout="handleLogout"
+            />
+        </aside>
+        <el-drawer
+            id="mobile-navigation"
+            v-model="sidebarOpen"
+            direction="ltr"
+            :title="$t('nav.navigation')"
+            size="min(320px, calc(100vw - 32px))"
+            class="app-layout__drawer"
+            @closed="menuButton?.focus()"
+        >
+            <AppSidebar
+                :user="user"
+                :anonymous="status === 'anonymous'"
+                :logout-pending="logoutPending"
+                @logout="handleLogout"
+                @navigate="sidebarOpen = false"
+            />
+        </el-drawer>
+        <div class="app-layout__workspace">
+            <header class="app-layout__topbar">
+                <button
+                    ref="menuButton"
+                    type="button"
+                    class="app-layout__menu"
+                    :aria-label="$t('nav.toggle_menu')"
+                    :aria-expanded="sidebarOpen"
+                    aria-controls="mobile-navigation"
+                    @click="sidebarOpen = true"
+                >
+                    <Menu :size="21" aria-hidden="true" />
+                </button>
+                <span class="app-layout__context">{{ $t('app.name') }}</span>
+                <div class="app-layout__desktop-preferences"><AppPreferences /></div>
+                <el-popover trigger="click" placement="bottom-end" :width="288">
+                    <AppPreferences />
+                    <template #reference
+                        ><button
+                            type="button"
+                            class="app-layout__mobile-preferences"
+                            :aria-label="$t('settings.title')"
+                        >
+                            <SlidersHorizontal :size="21" aria-hidden="true" /></button
+                    ></template>
+                </el-popover>
+            </header>
+            <main id="main-content" tabindex="-1" class="app-layout__main">
+                <div v-if="authError" role="alert" class="app-layout__notice">
+                    <p>{{ $t('identity.identity_unavailable') }}</p>
+                    <el-button :loading="identityPending" @click="retryIdentity">{{
+                        $t('identity.retry')
+                    }}</el-button>
+                </div>
+                <p v-if="logoutError" role="alert" class="app-layout__notice">{{ logoutError }}</p>
+                <div v-if="verificationEmailFailed" role="status" class="app-layout__notice">
+                    <p>{{ $t('identity.verification_delivery_failed') }}</p>
+                    <NuxtLink to="/profile?tab=basic">{{
+                        $t('identity.verification_resend')
+                    }}</NuxtLink>
+                </div>
+                <el-alert
+                    v-if="identityConfirmed"
+                    class="app-layout__notice"
+                    :title="$t('identity.identity_confirmed')"
+                    :closable="false"
+                    type="success"
+                    show-icon
+                    ><el-button text @click="identityConfirmed = false">{{
+                        $t('identity.dismiss_notice')
+                    }}</el-button></el-alert
+                >
                 <slot />
-            </div>
-            <AppFooter />
-        </el-main>
-    </el-container>
+            </main>
+            <div class="app-layout__footer"><AppFooter /></div>
+        </div>
+        <AuthReauthenticationDialog />
+    </div>
 </template>
 
 <script setup lang="ts">
-import { Menu } from 'lucide-vue-next';
-
-const token = useCookie('auth_token');
-const isLoggedIn = computed(() => !!token.value);
-const userRole = ref('');
-const sidebarUsername = ref('');
-const sidebarDisplayName = ref('');
-const sidebarAvatarUrl = ref('');
+import { Menu, SlidersHorizontal } from 'lucide-vue-next';
+const { t } = useI18n();
+const { user, status, error: authError, load, logout, verificationEmailFailed } = useAuth();
+const { confirmed: identityConfirmed } = useReauthentication();
 const sidebarOpen = ref(false);
-
-async function fetchCurrentUser() {
-    if (!token.value) {
-        userRole.value = '';
-        sidebarUsername.value = '';
-        sidebarDisplayName.value = '';
-        sidebarAvatarUrl.value = '';
-        return;
-    }
+const menuButton = ref<HTMLButtonElement | null>(null);
+const identityPending = ref(false);
+const logoutPending = ref(false);
+const logoutError = ref('');
+async function retryIdentity() {
+    identityPending.value = true;
     try {
-        const data = await $fetch<{
-            role: string;
-            username: string;
-            displayName: string | null;
-            avatarUrl: string | null;
-        }>('/api/auth/me', {
-            headers: { Authorization: `Bearer ${token.value}` }
-        });
-        userRole.value = data.role;
-        sidebarUsername.value = data.username;
-        sidebarDisplayName.value = data.displayName || '';
-        sidebarAvatarUrl.value = data.avatarUrl || '';
+        await load(true);
     } catch {
-        userRole.value = '';
-        sidebarUsername.value = '';
-        sidebarDisplayName.value = '';
-        sidebarAvatarUrl.value = '';
+        /* Shared error stays visible. */
+    } finally {
+        identityPending.value = false;
     }
 }
-
-const isAdmin = computed(() => userRole.value === 'admin');
-
-watch(token, () => fetchCurrentUser(), { immediate: true });
-
+try {
+    await load();
+} catch {
+    /* Network failure is not anonymous identity. */
+}
 const route = useRoute();
 watch(
-    () => route.path,
+    () => route.fullPath,
     () => {
         sidebarOpen.value = false;
     }
 );
-
-function handleLogout() {
-    token.value = null;
-    userRole.value = '';
-    sidebarUsername.value = '';
-    sidebarDisplayName.value = '';
-    sidebarAvatarUrl.value = '';
-    sidebarOpen.value = false;
-    navigateTo('/login');
+async function handleLogout() {
+    if (logoutPending.value) return;
+    logoutPending.value = true;
+    logoutError.value = '';
+    try {
+        await logout();
+        sidebarOpen.value = false;
+    } catch (error: unknown) {
+        logoutError.value =
+            (error as { data?: { message?: string } }).data?.message || t('identity.network_error');
+    } finally {
+        logoutPending.value = false;
+    }
 }
 </script>
 
 <style scoped lang="scss">
 .app-layout {
-    min-height: 100vh;
-
-    &__overlay {
-        display: none;
-    }
-
-    &__menu-btn {
-        display: none;
-    }
-
-    &__main {
-        margin-left: 240px;
-        padding: 28px 36px;
-        background: var(--bg-secondary);
-        min-height: 100vh;
-    }
-
-    &__content {
-        min-height: 100vh;
-    }
+    min-height: 100dvh;
 }
-
-@media (max-width: 768px) {
-    .app-layout {
-        &__overlay {
-            display: block;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            z-index: 19;
-        }
-
-        &__menu-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            width: 36px;
-            height: 36px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-primary);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition:
-                color 0.15s ease,
-                border-color 0.15s ease;
-
-            &:hover {
-                color: var(--text-primary);
-                border-color: var(--text-muted);
-            }
-        }
-
-        &__main {
-            margin-left: 0;
-            padding: 16px 16px;
-        }
+.app-layout__desktop-nav {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--sidebar-width);
+    border-right: 1px solid var(--border-color);
+    z-index: 20;
+    overflow-y: auto;
+}
+.app-layout__workspace {
+    margin-left: var(--sidebar-width);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+.app-layout__topbar {
+    min-height: 88px;
+    padding: var(--space-4) var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-primary);
+}
+.app-layout__context {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.06em;
+}
+.app-layout__desktop-preferences {
+    margin-left: auto;
+}
+.app-layout__menu,
+.app-layout__mobile-preferences {
+    display: none;
+}
+.app-layout__main {
+    width: 100%;
+    max-width: 1264px;
+    padding: var(--space-6);
+    margin: 0 auto;
+    flex: 1;
+    min-width: 0;
+}
+.app-layout__footer {
+    width: 100%;
+    max-width: 1264px;
+    padding: 0 var(--space-6) var(--space-4);
+    margin: 0 auto;
+}
+.app-layout__notice {
+    padding: var(--space-4);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    border-radius: var(--card-radius);
+    margin-bottom: var(--space-5);
+}
+.app-layout__notice a {
+    color: var(--accent);
+    text-decoration: underline;
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+}
+.app-layout__skip {
+    position: fixed;
+    left: -9999px;
+    top: 12px;
+    z-index: 3000;
+    padding: 12px;
+    background: var(--bg-primary);
+    color: var(--accent);
+}
+.app-layout__skip:focus {
+    left: calc(var(--sidebar-width) + 16px);
+}
+:deep(.app-layout__drawer .el-drawer__body) {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+@media (max-width: 1023px) {
+    .app-layout__desktop-nav {
+        display: none;
+    }
+    .app-layout__workspace {
+        margin-left: 0;
+    }
+    .app-layout__topbar {
+        min-height: 56px;
+        padding: 6px var(--space-4);
+        position: sticky;
+        top: 0;
+        z-index: 15;
+    }
+    .app-layout__context {
+        font-size: 16px;
+        letter-spacing: 0;
+    }
+    .app-layout__desktop-preferences {
+        display: none;
+    }
+    .app-layout__menu,
+    .app-layout__mobile-preferences {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: var(--card-radius);
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    .app-layout__mobile-preferences {
+        margin-left: auto;
+    }
+    .app-layout__main {
+        padding: var(--space-5) var(--space-4);
+    }
+    .app-layout__footer {
+        padding: 0 var(--space-4) var(--space-4);
+    }
+    .app-layout__skip:focus {
+        left: 16px;
     }
 }
 </style>

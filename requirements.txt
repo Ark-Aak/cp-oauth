@@ -1,1 +1,5 @@
-curl_cffi>=0.7,<1.0
+# Resolved in an isolated Python 3.11 venv; include the complete runtime dependency set.
+certifi==2026.7.22
+cffi==2.1.1
+curl_cffi==0.13.0
+pycparser==3.0

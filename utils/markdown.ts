@@ -2,42 +2,57 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeShiki from '@shikijs/rehype';
 import rehypeStringify from 'rehype-stringify';
 
-function createProcessor(theme: 'light' | 'dark') {
-    return unified()
-        .use(remarkParse)
-        .use(remarkGfm)
-        .use(remarkRehype, { allowDangerousHtml: false })
-        .use(rehypeShiki, {
-            theme: theme === 'dark' ? 'vitesse-dark' : 'vitesse-light'
-        })
-        .use(rehypeStringify);
+type EmbeddedNode = { type: string; depth?: number; children?: EmbeddedNode[] };
+
+function demoteEmbeddedHeadings() {
+    return (tree: EmbeddedNode) => {
+        const visit = (node: EmbeddedNode) => {
+            if (node.type === 'heading' && typeof node.depth === 'number') {
+                node.depth = Math.min(6, node.depth + 1);
+            }
+            if (node.children) for (const child of node.children) visit(child);
+        };
+        visit(tree);
+    };
 }
 
-type MarkdownProcessor = ReturnType<typeof createProcessor>;
+const forbiddenAttributes: Record<string, true> = { style: true, id: true, name: true };
+const processor = unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(demoteEmbeddedHeadings)
+    .use(remarkRehype, { allowDangerousHtml: false })
+    .use(rehypeSanitize, {
+        ...defaultSchema,
+        attributes: Object.fromEntries(
+            Object.entries(defaultSchema.attributes || {}).map(([tag, attributes]) => [
+                tag,
+                (attributes || []).filter(
+                    attribute =>
+                        !Object.hasOwn(
+                            forbiddenAttributes,
+                            typeof attribute === 'string' ? attribute : attribute[0]
+                        )
+                )
+            ])
+        ),
+        protocols: {
+            ...defaultSchema.protocols,
+            href: ['http', 'https', 'mailto'],
+            src: ['http', 'https']
+        }
+    })
+    .use(rehypeShiki, {
+        themes: { light: 'vitesse-light', dark: 'vitesse-dark' },
+        defaultColor: false
+    })
+    .use(rehypeStringify);
 
-let lightProcessor: MarkdownProcessor | null = null;
-let darkProcessor: MarkdownProcessor | null = null;
-
-async function getProcessor(theme: 'light' | 'dark') {
-    if (theme === 'light' && lightProcessor) return lightProcessor;
-    if (theme === 'dark' && darkProcessor) return darkProcessor;
-
-    const processor = createProcessor(theme);
-
-    if (theme === 'light') lightProcessor = processor;
-    else darkProcessor = processor;
-
-    return processor;
-}
-
-export async function renderMarkdown(
-    markdown: string,
-    theme: 'light' | 'dark' = 'dark'
-): Promise<string> {
-    const processor = await getProcessor(theme);
+export async function renderMarkdown(markdown: string): Promise<string> {
     const result = await processor.process(markdown);
     return String(result);
 }

@@ -1,0 +1,44 @@
+<template>
+    <section :aria-busy="pending" class="async-state">
+        <div v-if="pending" class="async-state__loading" role="status">
+            <el-skeleton :rows="3" animated />
+            <span class="sr-only">{{ $t('user.loading') }}</span>
+        </div>
+        <div v-else-if="error" class="async-state__message" role="alert">
+            <p>{{ error }}</p>
+            <el-button native-type="button" @click="$emit('retry')">{{
+                $t('common.retry')
+            }}</el-button>
+        </div>
+        <div v-else-if="empty" class="async-state__message">
+            <slot name="empty"
+                ><p>{{ emptyText }}</p></slot
+            >
+        </div>
+        <slot v-else />
+    </section>
+</template>
+
+<script setup lang="ts">
+defineProps<{ pending: boolean; error?: string | null; empty?: boolean; emptyText?: string }>();
+defineEmits<{ retry: [] }>();
+</script>
+
+<style scoped lang="scss">
+.async-state {
+    min-width: 0;
+}
+.async-state__message {
+    padding: var(--space-5);
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+}
+.async-state__message p {
+    margin-bottom: var(--space-3);
+}
+.async-state__loading {
+    padding: var(--space-4);
+}
+</style>

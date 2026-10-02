@@ -1,87 +1,80 @@
-import { consola } from 'consola';
-import crypto from 'crypto';
+import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
-import { getConfig } from '~/server/utils/config';
+import { getConfig, requireRegistrationEnabled } from '~/server/utils/config';
 import { sendVerificationEmail } from '~/server/utils/mailer';
 import { hashToken } from '~/server/utils/token-hash';
 import { getPublicBaseUrl } from '~/server/utils/base-url';
-import { createAuthUserResponse } from '~/server/utils/user-response';
+import { getDataEncryptionKey } from '~/server/utils/data-encryption';
 import { createUserWithInitialRole } from '~/server/utils/role';
-import { USERNAME_RULE_MESSAGE, isValidUsername, normalizeUsername } from '~/utils/username';
+import { emailSchema, usernameSchema, newPasswordSchema } from '~/utils/validation';
+import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { parseBody } from '~/server/utils/validation';
+import { verifyTurnstileToken } from '~/server/utils/turnstile';
+import { enforceRateLimit } from '~/server/utils/rate-limit';
+import { completePrimaryAuthentication } from '~/server/utils/auth-completion';
 
-const logger = consola.withTag('auth:register');
+const registerSchema = z
+    .object({
+        username: usernameSchema,
+        email: emailSchema,
+        password: newPasswordSchema,
+        turnstileToken: z.string().max(4096).optional(),
+        redirect: z.string().max(4096).optional()
+    })
+    .strict();
 
 export default defineEventHandler(async event => {
-    const regEnabled = await getConfig('registration_enabled');
-    if (regEnabled === 'false') {
-        logger.warn('Registration attempt rejected: registration disabled');
-        throw createError({ statusCode: 403, message: 'Registration is currently disabled' });
-    }
-
-    const body = await readBody(event);
-    const { username, email: rawEmail, password, turnstileToken } = body;
-    const normalizedUsername = normalizeUsername(username);
-    const email = normalizeUsername(rawEmail);
-
-    if (!normalizedUsername || !email || !password) {
-        throw createError({ statusCode: 400, message: 'All fields are required' });
-    }
-
-    if (!isValidUsername(normalizedUsername)) {
-        throw createError({ statusCode: 400, message: USERNAME_RULE_MESSAGE });
-    }
-
-    // Turnstile verification
-    const turnstileEnabled = await getConfig('turnstile_enabled');
-    if (turnstileEnabled === 'true') {
-        const secret = await getConfig('turnstile_secret_key');
-        if (!turnstileToken) {
-            logger.warn(`Registration rejected: captcha required but not provided for ${email}`);
-            throw createError({ statusCode: 400, message: 'Captcha verification required' });
-        }
-        const res = await $fetch<{ success: boolean }>(
-            'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-            { method: 'POST', body: { secret, response: turnstileToken } }
-        );
-        if (!res.success) {
-            logger.warn(`Registration rejected: captcha verification failed for ${email}`);
-            throw createError({ statusCode: 400, message: 'Captcha verification failed' });
-        }
-    }
-
-    const existing = await prisma.user.findFirst({
-        where: {
-            OR: [{ email }, { username: { equals: normalizedUsername, mode: 'insensitive' } }]
-        }
-    });
-
-    if (existing) {
-        logger.warn(
-            `Registration rejected: user already exists (email=${email}, username=${normalizedUsername})`
-        );
+    const body = await parseBody(event, registerSchema);
+    await enforceRateLimit(event, 'register');
+    await requireRegistrationEnabled();
+    await verifyTurnstileToken({ token: body.turnstileToken, action: 'register' });
+    const redirect = getSafeRedirectTarget(body.redirect);
+    const baseUrl = getPublicBaseUrl();
+    getDataEncryptionKey();
+    // Resolve required runtime/mail configuration before committing a new account.
+    await getConfig([
+        'site_title',
+        'smtp_host',
+        'smtp_port',
+        'smtp_user',
+        'smtp_pass',
+        'smtp_from'
+    ]);
+    const [existingEmail, existingUsername] = await Promise.all([
+        prisma.user.findUnique({ where: { email: body.email }, select: { id: true } }),
+        prisma.user.findUnique({ where: { username: body.username }, select: { id: true } })
+    ]);
+    if (existingEmail || existingUsername) {
         throw createError({ statusCode: 409, message: 'User already exists' });
     }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const emailVerifyToken = crypto.randomBytes(32).toString('hex');
-
-    // First registered user becomes admin
+    const passwordHash = await bcrypt.hash(body.password, 10);
+    const emailVerifyToken = randomBytes(32).toString('base64url');
     const user = await createUserWithInitialRole({
         data: {
-            username: normalizedUsername,
-            email,
+            username: body.username,
+            email: body.email,
             passwordHash,
-            emailVerifyToken: hashToken(emailVerifyToken)
+            emailVerifyToken: hashToken(emailVerifyToken),
+            emailVerifyExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
         }
+    }).catch(error => {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+            throw createError({ statusCode: 409, message: 'User already exists' });
+        }
+        throw error;
     });
-
-    logger.success(`User registered: ${normalizedUsername} (${user.id}), role=${user.role}`);
-
-    // Attempt to send verification email
-    await sendVerificationEmail(email, emailVerifyToken, getPublicBaseUrl());
-
-    const token = await signAuthToken(user.id);
-
-    return { token, user: createAuthUserResponse(user) };
+    const verificationEmailSent = await sendVerificationEmail(
+        body.email,
+        emailVerifyToken,
+        baseUrl,
+        redirect
+    );
+    const result = await completePrimaryAuthentication(event, user.id, {
+        redirect,
+        mode: 'register',
+        authVersion: user.authVersion
+    });
+    return 'authenticated' in result ? { ...result, verificationEmailSent } : result;
 });

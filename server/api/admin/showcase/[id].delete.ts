@@ -1,23 +1,34 @@
+import { createError, defineEventHandler, getRouterParam } from 'h3';
+import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
-import { requireAdmin } from '~/server/utils/admin';
+import { requireAdminInTransaction, rethrowAdminError } from '~/server/utils/admin';
+import { getAuthContext, lockAuthUser } from '~/server/utils/auth';
+import { lockAdminRole } from '~/server/utils/role';
 import { getRedis } from '~/server/utils/redis';
+import { parseInput } from '~/server/utils/validation';
 
 export default defineEventHandler(async event => {
-    await requireAdmin(event);
-
-    const id = getRouterParam(event, 'id');
-    if (!id) {
-        throw createError({ statusCode: 400, message: 'Missing showcase item ID' });
-    }
-
-    await prisma.showcaseItem.delete({ where: { id } });
-
-    // Invalidate public cache
     try {
-        await getRedis().del('public:showcase');
-    } catch {
-        // Redis unavailable
+        const auth = getAuthContext(event);
+        const { id } = parseInput(z.object({ id: z.string().min(1) }), {
+            id: getRouterParam(event, 'id')
+        });
+        await prisma.$transaction(async tx => {
+            await lockAdminRole(tx);
+            await lockAuthUser(tx, auth.userId);
+            await requireAdminInTransaction(tx, auth);
+            const result = await tx.showcaseItem.deleteMany({ where: { id } });
+            if (result.count !== 1) {
+                throw createError({ statusCode: 404, message: 'Showcase item not found' });
+            }
+        });
+        try {
+            await getRedis().del('public:showcase');
+        } catch {
+            // Cache failure does not roll back a committed deletion.
+        }
+        return { success: true };
+    } catch (error) {
+        rethrowAdminError(error, 'Showcase item');
     }
-
-    return { success: true };
 });

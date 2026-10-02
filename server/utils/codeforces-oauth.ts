@@ -1,91 +1,81 @@
-import { consola } from 'consola';
-import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH, isValidUsername } from '~/utils/username';
-import prisma from './prisma';
+import jwt from 'jsonwebtoken';
+import { createError } from 'h3';
+import { z } from 'zod';
 
-const logger = consola.withTag('auth:codeforces');
 const CODEFORCES_ISSUER = 'https://codeforces.com';
 const DISCOVERY_CACHE_TTL_MS = 10 * 60 * 1000;
 
-interface CodeforcesDiscoveryMetadata {
-    issuer: string;
-    authorization_endpoint: string;
-    token_endpoint: string;
-    userinfo_endpoint?: string;
-}
-
-interface CodeforcesTokenResponse {
-    access_token: string;
-    token_type?: string;
-    expires_in?: number;
-    refresh_token?: string;
-    scope?: string;
-    id_token?: string;
-}
-
-interface CodeforcesIdentity {
-    platformUid: string;
-    platformUsername: string;
-    email: string | null;
-    emailVerified: boolean;
-    displayName: string | null;
-    avatarUrl: string | null;
-}
-
-function toBoolean(value: unknown): boolean | null {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-        if (value.toLowerCase() === 'true') return true;
-        if (value.toLowerCase() === 'false') return false;
-    }
-    return null;
-}
+const discoverySchema = z.object({
+    issuer: z.literal(CODEFORCES_ISSUER),
+    authorization_endpoint: z.string(),
+    token_endpoint: z.string(),
+    id_token_signing_alg_values_supported: z.array(z.string())
+});
+export type CodeforcesDiscoveryMetadata = z.infer<typeof discoverySchema>;
+const tokenSchema = z.object({
+    access_token: z.string().min(1),
+    token_type: z.string().optional(),
+    expires_in: z.number().finite().positive().optional(),
+    refresh_token: z.string().optional(),
+    scope: z.string().optional(),
+    id_token: z.string().optional()
+});
+export type CodeforcesTokenResponse = z.infer<typeof tokenSchema>;
+const identityClaimsSchema = z.object({
+    sub: z.string().trim().min(1),
+    handle: z.string().trim().min(1),
+    exp: z.number().finite(),
+    iat: z.number().finite(),
+    email: z.string().optional(),
+    email_verified: z.boolean().optional(),
+    name: z.string().optional(),
+    avatar: z.string().optional()
+});
 
 let discoveryCache: { value: CodeforcesDiscoveryMetadata; expiresAt: number } | null = null;
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
+function validEndpoint(value: unknown): value is string {
+    if (typeof value !== 'string') return false;
     try {
-        const parts = token.split('.');
-        const rawPayload = parts[1];
-        if (!rawPayload) {
-            return null;
-        }
-        const payload = rawPayload.replace(/-/g, '+').replace(/_/g, '/');
-        const padded = payload.padEnd(Math.ceil(payload.length / 4) * 4, '=');
-        return JSON.parse(Buffer.from(padded, 'base64').toString('utf8')) as Record<
-            string,
-            unknown
-        >;
+        const url = new URL(value);
+        return (
+            url.protocol === 'https:' &&
+            url.origin === CODEFORCES_ISSUER &&
+            !url.username &&
+            !url.password &&
+            !url.hash
+        );
     } catch {
-        return null;
+        return false;
     }
-}
-
-function toStringOrNull(value: unknown): string | null {
-    if (typeof value !== 'string') {
-        return null;
-    }
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : null;
 }
 
 export async function getCodeforcesDiscoveryMetadata(): Promise<CodeforcesDiscoveryMetadata> {
-    const now = Date.now();
-    if (discoveryCache && now < discoveryCache.expiresAt) {
-        return discoveryCache.value;
+    if (discoveryCache && Date.now() < discoveryCache.expiresAt) return discoveryCache.value;
+    let response: unknown;
+    try {
+        response = await $fetch(`${CODEFORCES_ISSUER}/.well-known/openid-configuration`, {
+            timeout: 10_000,
+            retry: 0,
+            redirect: 'error'
+        });
+    } catch {
+        throw createError({ statusCode: 502, message: 'Codeforces discovery is unavailable' });
     }
-
-    const metadata = await $fetch<CodeforcesDiscoveryMetadata>(
-        `${CODEFORCES_ISSUER}/.well-known/openid-configuration`
-    );
-
-    if (!metadata.authorization_endpoint || !metadata.token_endpoint) {
-        throw createError({ statusCode: 502, message: 'Invalid Codeforces discovery document' });
+    const parsed = discoverySchema.safeParse(response);
+    if (
+        !parsed.success ||
+        !validEndpoint(parsed.data.authorization_endpoint) ||
+        !validEndpoint(parsed.data.token_endpoint) ||
+        !parsed.data.id_token_signing_alg_values_supported.includes('HS256')
+    ) {
+        throw createError({
+            statusCode: 502,
+            message: 'Codeforces does not support the required HS256 identity protocol'
+        });
     }
-
-    discoveryCache = {
-        value: metadata,
-        expiresAt: now + DISCOVERY_CACHE_TTL_MS
-    };
+    const metadata = parsed.data;
+    discoveryCache = { value: metadata, expiresAt: Date.now() + DISCOVERY_CACHE_TTL_MS };
     return metadata;
 }
 
@@ -99,7 +89,7 @@ export async function buildCodeforcesAuthorizationUrl(params: {
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', params.clientId);
     url.searchParams.set('redirect_uri', params.redirectUri);
-    url.searchParams.set('scope', 'openid profile');
+    url.searchParams.set('scope', 'openid');
     url.searchParams.set('state', params.state);
     return url.toString();
 }
@@ -111,177 +101,93 @@ export async function exchangeCodeforcesAuthorizationCode(params: {
     redirectUri: string;
 }): Promise<{ token: CodeforcesTokenResponse; discovery: CodeforcesDiscoveryMetadata }> {
     const discovery = await getCodeforcesDiscoveryMetadata();
-    const formBody = new URLSearchParams({
+    const form = new URLSearchParams({
         grant_type: 'authorization_code',
         code: params.code,
         client_id: params.clientId,
         client_secret: params.clientSecret,
         redirect_uri: params.redirectUri
     });
-
     let rawData: unknown;
     try {
         const response = await $fetch.raw(discovery.token_endpoint, {
             method: 'POST',
+            timeout: 10_000,
+            retry: 0,
+            redirect: 'error',
             headers: {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json, application/x-www-form-urlencoded, text/plain'
             },
-            body: formBody.toString()
+            body: form.toString()
         });
         rawData = response._data;
-    } catch (error: unknown) {
-        const err = error as {
-            statusCode?: number;
-            data?: { error?: string; error_description?: string };
-            message?: string;
-        };
-        const detail =
-            err.data?.error_description || err.data?.error || err.message || 'Unknown error';
-        throw createError({
-            statusCode: err.statusCode || 502,
-            message: `Codeforces token exchange failed: ${detail}`
-        });
+    } catch {
+        throw createError({ statusCode: 502, message: 'Codeforces token exchange failed' });
     }
-
-    let token: CodeforcesTokenResponse;
+    let value: unknown;
     if (typeof rawData === 'string') {
-        const asQuery = new URLSearchParams(rawData);
-        token = {
-            access_token: asQuery.get('access_token') || '',
-            token_type: asQuery.get('token_type') || undefined,
-            expires_in: asQuery.get('expires_in') ? Number(asQuery.get('expires_in')) : undefined,
-            refresh_token: asQuery.get('refresh_token') || undefined,
-            scope: asQuery.get('scope') || undefined,
-            id_token: asQuery.get('id_token') || undefined
+        const formData = new URLSearchParams(rawData);
+        const expiresIn = formData.get('expires_in');
+        value = {
+            access_token: formData.get('access_token') || '',
+            token_type: formData.get('token_type') || undefined,
+            expires_in: expiresIn ? Number(expiresIn) : undefined,
+            refresh_token: formData.get('refresh_token') || undefined,
+            scope: formData.get('scope') || undefined,
+            id_token: formData.get('id_token') || undefined
         };
     } else {
-        token = (rawData || {}) as CodeforcesTokenResponse;
+        value = rawData;
     }
+    const parsed = tokenSchema.safeParse(value);
+    if (!parsed.success)
+        throw createError({ statusCode: 502, message: 'Invalid Codeforces token response' });
+    return { token: parsed.data, discovery };
+}
 
-    if (!token.access_token) {
-        throw createError({
-            statusCode: 502,
-            message: 'Codeforces token response missing access_token'
-        });
-    }
-
-    return { token, discovery };
+function optionalString(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 export async function resolveCodeforcesIdentity(params: {
     token: CodeforcesTokenResponse;
     discovery: CodeforcesDiscoveryMetadata;
-}): Promise<CodeforcesIdentity> {
-    let claims: Record<string, unknown> = {};
-
-    if (params.discovery.userinfo_endpoint) {
-        try {
-            const userinfo = await $fetch<Record<string, unknown>>(
-                params.discovery.userinfo_endpoint,
-                {
-                    headers: {
-                        Authorization: `Bearer ${params.token.access_token}`
-                    }
-                }
-            );
-            claims = userinfo;
-        } catch (error) {
-            logger.warn('Failed to load userinfo from Codeforces, fallback to id_token');
-            logger.debug(error);
-        }
-    }
-
-    if (Object.keys(claims).length === 0 && params.token.id_token) {
-        const decoded = decodeJwtPayload(params.token.id_token);
-        if (decoded) {
-            claims = decoded;
-        }
-    }
-
-    const platformUid =
-        toStringOrNull(claims.sub) ||
-        toStringOrNull(claims.preferred_username) ||
-        toStringOrNull(claims.nickname);
-    const platformUsername =
-        toStringOrNull(claims.preferred_username) ||
-        toStringOrNull(claims.nickname) ||
-        toStringOrNull(claims.handle) ||
-        platformUid;
-
-    if (!platformUid || !platformUsername) {
+    clientId: string;
+    clientSecret: string;
+}) {
+    if (
+        params.discovery.issuer !== CODEFORCES_ISSUER ||
+        !params.discovery.id_token_signing_alg_values_supported?.includes('HS256') ||
+        typeof params.token.id_token !== 'string' ||
+        !params.clientId ||
+        !params.clientSecret
+    ) {
         throw createError({
             statusCode: 502,
-            message: 'Unable to resolve Codeforces user identity'
+            message: 'Codeforces verified identity is unavailable'
         });
     }
-
+    let claims: z.infer<typeof identityClaimsSchema>;
+    try {
+        const verified = jwt.verify(params.token.id_token, params.clientSecret, {
+            algorithms: ['HS256'],
+            issuer: CODEFORCES_ISSUER,
+            audience: params.clientId
+        });
+        claims = identityClaimsSchema.parse(verified);
+    } catch {
+        throw createError({
+            statusCode: 502,
+            message: 'Codeforces identity signature or claims are invalid'
+        });
+    }
     return {
-        platformUid,
-        platformUsername,
-        email: toStringOrNull(claims.email),
-        emailVerified: toBoolean(claims.email_verified) ?? false,
-        displayName: toStringOrNull(claims.name),
-        avatarUrl: toStringOrNull(claims.picture)
+        platformUid: claims.sub,
+        platformUsername: claims.handle,
+        email: optionalString(claims.email),
+        emailVerified: claims.email_verified === true,
+        displayName: optionalString(claims.name) || claims.handle.trim(),
+        avatarUrl: optionalString(claims.avatar)
     };
-}
-
-function sanitizeUsername(candidate: string): string {
-    const normalized = candidate
-        .trim()
-        .toLowerCase()
-        .replace(/[^A-Za-z0-9_]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_+|_+$/g, '');
-
-    const fallback = normalized.length > 0 ? normalized : 'cf_user';
-    const clipped = fallback.slice(0, USERNAME_MAX_LENGTH);
-    if (clipped.length >= USERNAME_MIN_LENGTH) {
-        return clipped;
-    }
-    return `${clipped}${'x'.repeat(USERNAME_MIN_LENGTH - clipped.length)}`;
-}
-
-export async function getUniqueUsername(base: string): Promise<string> {
-    const sanitized = sanitizeUsername(base);
-    if (isValidUsername(sanitized)) {
-        const exists = await prisma.user.findFirst({
-            where: {
-                username: {
-                    equals: sanitized,
-                    mode: 'insensitive'
-                }
-            },
-            select: { id: true }
-        });
-        if (!exists) {
-            return sanitized;
-        }
-    }
-
-    for (let i = 1; i <= 9999; i += 1) {
-        const suffix = `_${i}`;
-        const head = sanitized.slice(0, USERNAME_MAX_LENGTH - suffix.length);
-        const candidate = `${head}${suffix}`;
-        if (!isValidUsername(candidate)) {
-            continue;
-        }
-        const exists = await prisma.user.findFirst({
-            where: {
-                username: {
-                    equals: candidate,
-                    mode: 'insensitive'
-                }
-            },
-            select: { id: true }
-        });
-        if (!exists) {
-            return candidate;
-        }
-    }
-
-    throw createError({
-        statusCode: 500,
-        message: 'Unable to allocate username for Codeforces user'
-    });
 }

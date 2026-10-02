@@ -1,19 +1,21 @@
 <template>
-    <img :src="iconSrc" :alt="platform" class="platform-icon" loading="lazy" />
+    <span class="platform-icon" aria-hidden="true">
+        <img
+            v-if="iconSrc && !failed"
+            :src="iconSrc"
+            alt=""
+            loading="lazy"
+            @error="failed = true"
+        />
+        <Code v-else :size="18" :stroke-width="1.6" />
+    </span>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-    platform: string;
-}>();
-
-const baseUrl = computed(() => {
-    const configured = useRuntimeConfig().app.baseURL || '/';
-    return configured.endsWith('/') ? configured : `${configured}/`;
-});
-
-// Map Clist resource domains to local platform names for icon lookup
-const RESOURCE_TO_ICON: Record<string, string> = {
+import { Code } from 'lucide-vue-next';
+const props = defineProps<{ platform: string }>();
+const failed = ref(false);
+const resourceIcons: Record<string, string> = {
     'codeforces.com': 'codeforces',
     'atcoder.jp': 'atcoder',
     'atcoder.jp/heuristic': 'atcoder',
@@ -22,42 +24,42 @@ const RESOURCE_TO_ICON: Record<string, string> = {
     'google.com': 'google',
     'clist.by': 'clist'
 };
-
-const resolved = computed(() => {
-    return RESOURCE_TO_ICON[props.platform] || props.platform;
-});
-
+const localIcons: Record<string, string> = {
+    atcoder: 'atcoder.svg',
+    codeforces: 'codeforces-tricolor.svg',
+    clist: 'clist.svg',
+    github: 'github.svg',
+    google: 'google.svg',
+    luogu: 'luogu.svg'
+};
 const iconSrc = computed(() => {
-    const p = resolved.value;
-    if (p === 'atcoder') {
-        return `${baseUrl.value}icons/atcoder.svg`;
-    }
-    if (p === 'codeforces') {
-        return `${baseUrl.value}icons/codeforces-tricolor.svg`;
-    }
-    if (p === 'clist') {
-        return `${baseUrl.value}icons/clist.svg`;
-    }
-    if (p === 'github') {
-        return `${baseUrl.value}icons/github.svg`;
-    }
-    if (p === 'google') {
-        return `${baseUrl.value}icons/google.svg`;
-    }
-    if (p === 'luogu') {
-        return `${baseUrl.value}icons/luogu.svg`;
-    }
-    // Fallback: try simpleicons by domain name (strip TLD)
-    const name = props.platform.replace(/\..+$/, '');
-    return `https://cdn.simpleicons.org/${name}`;
+    const name = resourceIcons[props.platform] || props.platform;
+    const file = localIcons[name];
+    if (!file) return null;
+    const base = useRuntimeConfig().app.baseURL || '/';
+    return `${base.endsWith('/') ? base : `${base}/`}icons/${file}`;
 });
+watch(
+    () => props.platform,
+    () => {
+        failed.value = false;
+    }
+);
 </script>
 
 <style scoped lang="scss">
 .platform-icon {
-    width: 16px;
-    height: 16px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
+    color: currentColor;
+}
+.platform-icon img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
 }
 </style>

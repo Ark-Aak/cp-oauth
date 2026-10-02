@@ -19,8 +19,12 @@ model User {
   role                            String    @default("user")
   emailVerified                   Boolean   @default(false) @map("email_verified")
   emailVerifyToken                String?   @unique @map("email_verify_token")
+  emailVerifyExpiresAt            DateTime? @map("email_verify_expires_at")
+  pendingEmail                    String?   @map("pending_email")
+  pendingEmailTokenHash           String?   @unique @map("pending_email_token_hash")
+  pendingEmailExpiresAt           DateTime? @map("pending_email_expires_at")
+  authVersion                     Int       @default(0) @map("auth_version")
   publicLinkedPlatforms           String[]  @default([]) @map("public_linked_platforms")
-  publicLinkedPlatformsConfigured Boolean   @default(false) @map("public_linked_platforms_configured")
   publicCpStats                   Boolean   @default(false) @map("public_cp_stats")
   publicRatingHistory             Boolean   @default(false) @map("public_rating_history")
   passwordResetToken              String?   @unique @map("password_reset_token")
@@ -41,6 +45,8 @@ model User {
   passkeyCredentials PasskeyCredential[]
 
 
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([role])
   @@map("users")
 }
 
@@ -57,6 +63,7 @@ model PasskeyCredential {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("passkey_credentials")
 }
 
@@ -82,17 +89,18 @@ model OAuthClient {
   accessTokens       OAuthAccessToken[]
   refreshTokens      OAuthRefreshToken[]
 
+  @@index([userId])
   @@map("oauth_clients")
 }
 
 model OAuthAuthorizationCode {
   id                  String   @id @default(uuid())
-  code                String   @unique
+  codeHash            String   @unique @map("code_hash")
   clientId            String   @map("client_id")
   userId              String   @map("user_id")
   scopes              String[]
   redirectUri         String   @map("redirect_uri")
-  codeChallenge       String?  @map("code_challenge")
+  codeChallengeHash   String?  @map("code_challenge_hash")
   codeChallengeMethod String?  @map("code_challenge_method")
   expiresAt           DateTime @map("expires_at")
   used                Boolean  @default(false)
@@ -101,37 +109,48 @@ model OAuthAuthorizationCode {
   client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
   user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, clientId, used, expiresAt])
+  @@index([clientId])
+  @@index([expiresAt])
   @@map("oauth_authorization_codes")
 }
 
 model OAuthAccessToken {
   id        String   @id @default(uuid())
-  token     String   @unique
+  tokenHash String   @unique @map("token_hash")
   clientId  String   @map("client_id")
   userId    String   @map("user_id")
   scopes    String[]
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
+  clientAuthRequired Boolean @default(true) @map("client_auth_required")
 
   client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
   user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, clientId, expiresAt])
+  @@index([clientId])
+  @@index([expiresAt])
   @@map("oauth_access_tokens")
 }
 
 model OAuthRefreshToken {
   id        String   @id @default(uuid())
-  token     String   @unique
+  tokenHash String   @unique @map("token_hash")
   clientId  String   @map("client_id")
   userId    String   @map("user_id")
   scopes    String[]
   expiresAt DateTime @map("expires_at")
   revoked   Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
+  clientAuthRequired Boolean @default(true) @map("client_auth_required")
 
   client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
   user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, clientId, revoked, expiresAt])
+  @@index([clientId])
+  @@index([expiresAt])
   @@map("oauth_refresh_tokens")
 }
 
@@ -166,6 +185,7 @@ model Notice {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([pinned(sort: Desc), publishedAt(sort: Desc)])
   @@map("notices")
 }
 
@@ -180,6 +200,7 @@ model ShowcaseItem {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([sortOrder, createdAt(sort: Desc)])
   @@map("showcase_items")
 }
 

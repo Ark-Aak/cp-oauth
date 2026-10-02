@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                              String    @id @default(uuid())
+  email                           String    @unique
+  username                        String    @unique
+  passwordHash                    String    @map("password_hash")
+  displayName                     String?   @map("display_name")
+  bio                             String?
+  homepage                        String?   @db.Text
+  avatarUrl                       String?   @map("avatar_url")
+  role                            String    @default("user")
+  emailVerified                   Boolean   @default(false) @map("email_verified")
+  emailVerifyToken                String?   @unique @map("email_verify_token")
+  publicLinkedPlatforms           String[]  @default([]) @map("public_linked_platforms")
+  publicLinkedPlatformsConfigured Boolean   @default(false) @map("public_linked_platforms_configured")
+  publicCpStats                   Boolean   @default(false) @map("public_cp_stats")
+  publicRatingHistory             Boolean   @default(false) @map("public_rating_history")
+  passwordResetToken              String?   @unique @map("password_reset_token")
+  passwordResetExpiresAt          DateTime? @map("password_reset_expires_at")
+  twoFactorEnabled                Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorMethod                 String?   @map("two_factor_method")
+  totpSecret                      String?   @map("totp_secret") @db.Text
+  theme                           String    @default("system")
+  locale                          String    @default("en")
+  createdAt                       DateTime  @default(now()) @map("created_at")
+  updatedAt                       DateTime  @updatedAt @map("updated_at")
+
+  oauthClients       OAuthClient[]
+  authorizationCodes OAuthAuthorizationCode[]
+  accessTokens       OAuthAccessToken[]
+  refreshTokens      OAuthRefreshToken[]
+  linkedAccounts     LinkedAccount[]
+  passkeyCredentials PasskeyCredential[]
+
+
+  @@map("users")
+}
+
+model PasskeyCredential {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  name         String
+  credentialId String   @unique @map("credential_id")
+  publicKey    String   @map("public_key") @db.Text
+  counter      Int      @default(0)
+  transports   String[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passkey_credentials")
+}
+
+model SystemConfig {
+  key   String @id
+  value String @db.Text
+
+  @@map("system_config")
+}
+
+model OAuthClient {
+  id                   String   @id @default(uuid())
+  clientId             String   @unique @default(uuid()) @map("client_id")
+  clientSecretHash     String   @map("client_secret_hash")
+  name                 String
+  redirectUris         String[] @map("redirect_uris")
+  requireEmailVerified Boolean  @default(false) @map("require_email_verified")
+  userId               String   @map("user_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authorizationCodes OAuthAuthorizationCode[]
+  accessTokens       OAuthAccessToken[]
+  refreshTokens      OAuthRefreshToken[]
+
+  @@map("oauth_clients")
+}
+
+model OAuthAuthorizationCode {
+  id                  String   @id @default(uuid())
+  code                String   @unique
+  clientId            String   @map("client_id")
+  userId              String   @map("user_id")
+  scopes              String[]
+  redirectUri         String   @map("redirect_uri")
+  codeChallenge       String?  @map("code_challenge")
+  codeChallengeMethod String?  @map("code_challenge_method")
+  expiresAt           DateTime @map("expires_at")
+  used                Boolean  @default(false)
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_authorization_codes")
+}
+
+model OAuthAccessToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  clientId  String   @map("client_id")
+  userId    String   @map("user_id")
+  scopes    String[]
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_access_tokens")
+}
+
+model OAuthRefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  clientId  String   @map("client_id")
+  userId    String   @map("user_id")
+  scopes    String[]
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_refresh_tokens")
+}
+
+model LinkedAccount {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  platform          String
+  platformUid       String    @map("platform_uid")
+  platformUsername  String?   @map("platform_username")
+  oauthAccessToken  String?   @map("oauth_access_token") @db.Text
+  oauthRefreshToken String?   @map("oauth_refresh_token") @db.Text
+  oauthIdToken      String?   @map("oauth_id_token") @db.Text
+  oauthTokenType    String?   @map("oauth_token_type")
+  oauthExpiresAt    DateTime? @map("oauth_expires_at")
+  oauthScope        String?   @map("oauth_scope") @db.Text
+  verifiedAt        DateTime  @default(now()) @map("verified_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@unique([platform, platformUid])
+  @@map("linked_accounts")
+}
+
+model Notice {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  pinned      Boolean  @default(false)
+  publishedAt DateTime @default(now()) @map("published_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("notices")
+}
+
+model ShowcaseItem {
+  id          String   @id @default(uuid())
+  category    String
+  name        String
+  description String   @db.Text
+  url         String
+  iconUrl     String?  @map("icon_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("showcase_items")
+}

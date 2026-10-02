@@ -1,14 +1,37 @@
 <template>
     <div class="about">
-        <h1 class="about__title">{{ $t('about.title') }}</h1>
-        <p class="about__intro">{{ $t('about.intro') }}</p>
+        <AppPageHeader :title="$t('about.title')" :description="$t('about.guide_intro')" />
 
-        <!-- OAuth2 Flow -->
-        <el-card shadow="never" class="about__card">
-            <template #header>
-                <span class="about__card-title">{{ $t('about.flow.title') }}</span>
-            </template>
-            <p class="about__text">{{ $t('about.flow.description') }}</p>
+        <nav class="about__contents" :aria-label="$t('about.contents')">
+            <h2>{{ $t('about.contents') }}</h2>
+            <ol>
+                <li>
+                    <a href="#flow">{{ $t('about.flow.title') }}</a>
+                </li>
+                <li>
+                    <a href="#create">{{ $t('about.create.title') }}</a>
+                </li>
+                <li>
+                    <a href="#pkce">{{ $t('about.pkce.title') }}</a>
+                </li>
+                <li>
+                    <a href="#credentials">{{ $t('about.credentials.title') }}</a>
+                </li>
+                <li>
+                    <a href="#endpoints">{{ $t('about.endpoints.title') }}</a>
+                </li>
+                <li>
+                    <a href="#scopes">{{ $t('about.scopes.title') }}</a>
+                </li>
+                <li>
+                    <a href="#card">{{ $t('about.card.title') }}</a>
+                </li>
+            </ol>
+        </nav>
+
+        <section id="flow" class="about__section" aria-labelledby="flow-heading">
+            <h2 id="flow-heading">{{ $t('about.flow.title') }}</h2>
+            <p class="about__text">{{ $t('about.intro') }}</p>
             <ol class="about__steps">
                 <li>{{ $t('about.flow.step1') }}</li>
                 <li>{{ $t('about.flow.step2') }}</li>
@@ -17,139 +40,180 @@
                 <li>{{ $t('about.flow.step5') }}</li>
                 <li>{{ $t('about.flow.step6') }}</li>
             </ol>
-        </el-card>
+            <p class="about__text about__boundary">{{ $t('about.cookie_boundary') }}</p>
+        </section>
 
-        <!-- Endpoints -->
-        <el-card shadow="never" class="about__card">
-            <template #header>
-                <span class="about__card-title">{{ $t('about.endpoints.title') }}</span>
-            </template>
+        <section id="create" class="about__section" aria-labelledby="create-heading">
+            <h2 id="create-heading">{{ $t('about.create.title') }}</h2>
+            <p class="about__text">{{ $t('about.create.description') }}</p>
+            <NuxtLink to="/developer" class="about__action el-button el-button--primary">
+                {{ $t('developer.register_app') }}
+            </NuxtLink>
+        </section>
 
-            <div class="about__endpoint">
-                <h3>GET /api/oauth/authorize</h3>
-                <p class="about__text">{{ $t('about.endpoints.authorize_desc') }}</p>
-                <div class="about__code" v-html="snippets.authorize" />
-            </div>
+        <AppAsyncState
+            v-if="snippetError"
+            :pending="snippetStatus === 'pending'"
+            :error="$t('markdown.render_error')"
+            @retry="retrySnippets()"
+        />
+        <p v-else-if="snippetStatus === 'pending'" role="status" class="about__text">
+            {{ $t('user.loading') }}
+        </p>
 
-            <el-divider />
-
-            <div class="about__endpoint">
-                <h3>POST /api/oauth/token</h3>
-                <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
-                <div class="about__code" v-html="snippets.token" />
-            </div>
-
-            <el-divider />
-
-            <div class="about__endpoint">
-                <h3>
-                    POST /api/oauth/token
-                    <span style="font-weight: 400; font-size: 12px; color: var(--text-muted)"
-                        >(refresh)</span
-                    >
-                </h3>
-                <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
-                <div class="about__code" v-html="snippets.refresh" />
-            </div>
-
-            <el-divider />
-
-            <div class="about__endpoint">
-                <h3>GET /api/oauth/userinfo</h3>
-                <p class="about__text">{{ $t('about.endpoints.userinfo_desc') }}</p>
-                <div class="about__code" v-html="snippets.userinfo" />
-            </div>
-
-            <el-divider />
-
-            <div class="about__endpoint">
-                <h3>POST /api/oauth/revoke</h3>
-                <p class="about__text">{{ $t('about.endpoints.revoke_desc') }}</p>
-                <div class="about__code" v-html="snippets.revoke" />
-            </div>
-        </el-card>
-
-        <!-- Scopes -->
-        <el-card shadow="never" class="about__card">
-            <template #header>
-                <span class="about__card-title">{{ $t('about.scopes.title') }}</span>
-            </template>
-            <p class="about__text">{{ $t('about.scopes.description') }}</p>
-            <el-table :data="scopeData" stripe class="about__scope-table">
-                <el-table-column prop="scope" :label="$t('about.scopes.scope_col')" width="160">
-                    <template #default="{ row }">
-                        <code>{{ row.scope }}</code>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="data" :label="$t('about.scopes.data_col')" />
-            </el-table>
-        </el-card>
-
-        <!-- PKCE -->
-        <el-card shadow="never" class="about__card">
-            <template #header>
-                <span class="about__card-title">{{ $t('about.pkce.title') }}</span>
-            </template>
+        <section id="pkce" class="about__section" aria-labelledby="pkce-heading">
+            <h2 id="pkce-heading">{{ $t('about.pkce.title') }}</h2>
             <p class="about__text">{{ $t('about.pkce.description') }}</p>
-            <div class="about__code" v-html="snippets.pkce" />
-        </el-card>
+            <div class="about__code">
+                <div v-if="snippetStatus === 'success'" v-html="snippets?.pkce" />
+                <pre v-else class="about__source"><code>{{ snippetSources.pkce }}</code></pre>
+            </div>
+            <h3>{{ $t('about.pkce.exchange_title') }}</h3>
+            <div class="about__code">
+                <div v-if="snippetStatus === 'success'" v-html="snippets?.publicToken" />
+                <pre
+                    v-else
+                    class="about__source"
+                ><code>{{ snippetSources.publicToken }}</code></pre>
+            </div>
+        </section>
 
-        <!-- User Card -->
-        <el-card shadow="never" class="about__card">
-            <template #header>
-                <span class="about__card-title">{{ $t('about.card.title') }}</span>
-            </template>
+        <section id="credentials" class="about__section" aria-labelledby="credentials-heading">
+            <h2 id="credentials-heading">{{ $t('about.credentials.title') }}</h2>
+            <p class="about__text">{{ $t('about.credentials.description') }}</p>
+            <div class="about__code">
+                <div v-if="snippetStatus === 'success'" v-html="snippets?.token" />
+                <pre v-else class="about__source"><code>{{ snippetSources.token }}</code></pre>
+            </div>
+        </section>
+
+        <section id="endpoints" class="about__section" aria-labelledby="endpoints-heading">
+            <h2 id="endpoints-heading">{{ $t('about.endpoints.title') }}</h2>
+
+            <div class="about__endpoint">
+                <h3><code>GET /oauth/authorize</code></h3>
+                <p class="about__text">{{ $t('about.endpoints.authorize_desc') }}</p>
+                <div class="about__code">
+                    <div v-if="snippetStatus === 'success'" v-html="snippets?.authorize" />
+                    <pre
+                        v-else
+                        class="about__source"
+                    ><code>{{ snippetSources.authorize }}</code></pre>
+                </div>
+            </div>
+
+            <div class="about__endpoint">
+                <h3><code>POST /api/oauth/token</code> — {{ $t('about.refresh_title') }}</h3>
+                <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
+                <div class="about__code">
+                    <div v-if="snippetStatus === 'success'" v-html="snippets?.refresh" />
+                    <pre
+                        v-else
+                        class="about__source"
+                    ><code>{{ snippetSources.refresh }}</code></pre>
+                </div>
+            </div>
+
+            <div class="about__endpoint">
+                <h3><code>GET /api/oauth/userinfo</code></h3>
+                <p class="about__text">{{ $t('about.endpoints.userinfo_desc') }}</p>
+                <div class="about__code">
+                    <div v-if="snippetStatus === 'success'" v-html="snippets?.userinfo" />
+                    <pre
+                        v-else
+                        class="about__source"
+                    ><code>{{ snippetSources.userinfo }}</code></pre>
+                </div>
+            </div>
+
+            <div class="about__endpoint">
+                <h3><code>POST /api/oauth/revoke</code></h3>
+                <p class="about__text">{{ $t('about.endpoints.revoke_desc') }}</p>
+                <div class="about__code">
+                    <div v-if="snippetStatus === 'success'" v-html="snippets?.revoke" />
+                    <pre v-else class="about__source"><code>{{ snippetSources.revoke }}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="scopes" class="about__section" aria-labelledby="scopes-heading">
+            <h2 id="scopes-heading">{{ $t('about.scopes.title') }}</h2>
+            <p class="about__text">{{ $t('about.scopes.description') }}</p>
+            <div
+                class="about__scope-table"
+                tabindex="0"
+                role="region"
+                :aria-label="$t('about.scopes.title')"
+            >
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ $t('about.scopes.scope_col') }}</th>
+                            <th scope="col">{{ $t('about.scopes.data_col') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in scopeData" :key="row.scope">
+                            <th scope="row">
+                                <code>{{ row.scope }}</code>
+                            </th>
+                            <td>{{ row.data }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="card" class="about__section" aria-labelledby="card-heading">
+            <h2 id="card-heading">{{ $t('about.card.title') }}</h2>
             <p class="about__text">{{ $t('about.card.description') }}</p>
             <p class="about__text">
                 <strong>{{ $t('about.card.endpoint') }}:</strong>
                 <code>GET /api/users/{username}/card.svg</code>
             </p>
             <p class="about__text">{{ $t('about.card.params') }}</p>
-            <p class="about__text">
-                <strong>{{ $t('about.card.example') }}:</strong>
-            </p>
-            <div class="about__code" v-html="snippets.card" />
-        </el-card>
+            <h3>{{ $t('about.card.example') }}</h3>
+            <div class="about__code">
+                <div v-if="snippetStatus === 'success'" v-html="snippets?.card" />
+                <pre v-else class="about__source"><code>{{ snippetSources.card }}</code></pre>
+            </div>
+        </section>
     </div>
 </template>
 
 <script setup lang="ts">
 import { renderMarkdown } from '~/utils/markdown';
+import { SCOPES } from '~/utils/oauth-scopes';
 
 const { t } = useI18n();
+const oauthOrigin = new URL(useRuntimeConfig().public.siteOrigin).origin;
 
-useHead({ title: () => `${t('about.title')} - CP OAuth` });
-const colorMode = useColorMode();
-const currentTheme = computed(() => (colorMode.value === 'dark' ? 'dark' : 'light'));
+useHead({
+    title: () => `${t('about.title')} - CP OAuth`,
+    link: [{ rel: 'canonical', href: `${oauthOrigin}/about` }]
+});
 
-const scopeData = computed(() => [
-    { scope: 'openid', data: t('about.scopes.openid') },
-    { scope: 'profile', data: t('about.scopes.profile') },
-    { scope: 'email', data: t('about.scopes.email') },
-    { scope: 'cp:linked', data: t('about.scopes.cp_linked') },
-    { scope: 'link:luogu', data: t('about.scopes.link_luogu') },
-    { scope: 'link:atcoder', data: t('about.scopes.link_atcoder') },
-    { scope: 'link:codeforces', data: t('about.scopes.link_codeforces') },
-    { scope: 'link:github', data: t('about.scopes.link_github') },
-    { scope: 'link:google', data: t('about.scopes.link_google') },
-    { scope: 'cp:summary', data: t('about.scopes.cp_summary') },
-    { scope: 'cp:details', data: t('about.scopes.cp_details') }
-]);
+const scopeData = computed(() =>
+    Object.keys(SCOPES).map(scope => ({
+        scope,
+        data: t(`about.scopes.${scope.replace(':', '_')}`)
+    }))
+);
 
 const authorizeSnippet = `\`\`\`http
-GET /oauth/authorize?
+GET ${oauthOrigin}/oauth/authorize?
   response_type=code
   &client_id=YOUR_CLIENT_ID
   &redirect_uri=https://yourapp.com/callback
-  &scope=openid profile
+  &scope=openid%20profile
   &state=random_state_string
   &code_challenge=BASE64URL_SHA256_HASH
   &code_challenge_method=S256
 \`\`\``;
 
 const tokenSnippet = `\`\`\`javascript
-// Exchange authorization code for access token + refresh token
-const response = await fetch('/api/oauth/token', {
+// Secret-authenticated applications: run this on your server, never expose the secret in a browser.
+const response = await fetch('${oauthOrigin}/api/oauth/token', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -158,8 +222,8 @@ const response = await fetch('/api/oauth/token', {
     redirect_uri: 'https://yourapp.com/callback',
     client_id: 'YOUR_CLIENT_ID',
     client_secret: 'YOUR_CLIENT_SECRET',
-    // Or for PKCE:
-    // code_verifier: 'YOUR_CODE_VERIFIER'
+    code_verifier: 'YOUR_CODE_VERIFIER' // required if the authorization request used PKCE
+    // Only a secret-authenticated grant requested without PKCE can omit code_verifier.
   })
 })
 
@@ -172,16 +236,33 @@ const {
 } = await response.json()
 \`\`\``;
 
+const publicTokenSnippet = `\`\`\`javascript
+// Exchange a PKCE authorization code; do not send client_secret (not even an empty value).
+const response = await fetch('${oauthOrigin}/api/oauth/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    grant_type: 'authorization_code',
+    code: 'AUTHORIZATION_CODE',
+    redirect_uri: 'https://yourapp.com/callback',
+    client_id: 'YOUR_CLIENT_ID',
+    code_verifier: codeVerifier
+  })
+})
+const { access_token, refresh_token, expires_in, scope } = await response.json()
+// This grant's refresh and revoke requests also omit client_secret.
+\`\`\``;
+
 const refreshSnippet = `\`\`\`javascript
-// Refresh an expired access token
-const response = await fetch('/api/oauth/token', {
+// Authentication follows the original grant, not a guessed client type.
+const response = await fetch('${oauthOrigin}/api/oauth/token', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     grant_type: 'refresh_token',
     refresh_token: 'YOUR_REFRESH_TOKEN',
     client_id: 'YOUR_CLIENT_ID',
-    client_secret: 'YOUR_CLIENT_SECRET' // optional for PKCE clients
+    client_secret: 'YOUR_CLIENT_SECRET' // omit only when the original PKCE exchange omitted it
   })
 })
 
@@ -191,7 +272,7 @@ const { access_token, refresh_token, expires_in } = await response.json()
 
 const userinfoSnippet = `\`\`\`javascript
 // Fetch user data with access token
-const userinfo = await fetch('/api/oauth/userinfo', {
+const userinfo = await fetch('${oauthOrigin}/api/oauth/userinfo', {
   headers: { Authorization: 'Bearer {access_token}' }
 })
 
@@ -212,174 +293,233 @@ const data = await userinfo.json()
 \`\`\``;
 
 const pkceSnippet = `\`\`\`javascript
-// Generate PKCE code verifier and challenge
-const codeVerifier = generateRandomString(128)
-const encoder = new TextEncoder()
-const data = encoder.encode(codeVerifier)
-const digest = await crypto.subtle.digest('SHA-256', data)
+// 32 random bytes give a 43-character base64url verifier.
+const verifierBytes = crypto.getRandomValues(new Uint8Array(32))
+const codeVerifier = btoa(String.fromCharCode(...verifierBytes))
+  .replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')
+const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier))
 const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
   .replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '')
 
-// Include in authorization request:
-// code_challenge=codeChallenge
-// code_challenge_method=S256
-
-// Include in token request:
-// code_verifier=codeVerifier (instead of client_secret)
+// Keep state and verifier securely for the same-browser callback; validate state there.
+const authorizationUrl = new URL('${oauthOrigin}/oauth/authorize')
+authorizationUrl.search = new URLSearchParams({
+  response_type: 'code',
+  client_id: 'YOUR_CLIENT_ID',
+  redirect_uri: 'https://yourapp.com/callback',
+  scope: 'openid profile',
+  state: crypto.randomUUID(),
+  code_challenge: codeChallenge,
+  code_challenge_method: 'S256'
+}).toString()
+// Exchange the returned code with code_verifier: codeVerifier.
+// Omit client_secret entirely for a public grant; its refresh/revoke also need no secret.
+// An empty or incorrect client_secret is never accepted, even with valid PKCE.
 \`\`\``;
 
 const cardSnippet = `\`\`\`markdown
-![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg)
+![CP OAuth Profile](${oauthOrigin}/api/users/YOUR_USERNAME/card.svg)
 
 <!-- Dark theme -->
-![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?theme=dark)
+![CP OAuth Profile](${oauthOrigin}/api/users/YOUR_USERNAME/card.svg?theme=dark)
 
 <!-- Custom width -->
-![CP OAuth Profile](https://www.cpoauth.com/api/users/YOUR_USERNAME/card.svg?width=600&theme=dark)
+![CP OAuth Profile](${oauthOrigin}/api/users/YOUR_USERNAME/card.svg?width=600&theme=dark)
 \`\`\``;
 
 const revokeSnippet = `\`\`\`javascript
 // Revoke a token (RFC 7009)
-await fetch('/api/oauth/revoke', {
+await fetch('${oauthOrigin}/api/oauth/revoke', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
+    client_id: 'YOUR_CLIENT_ID',
+    client_secret: 'YOUR_CLIENT_SECRET', // omit only for a grant originally exchanged without it
     token: 'TOKEN_TO_REVOKE',
     token_type_hint: 'refresh_token' // or 'access_token'
   })
 })
-// Always returns 200, even if the token was already invalid
+// Validly authenticated requests return 200 even for an unknown or already revoked token.
+// JSON and application/x-www-form-urlencoded are supported; Basic authentication is not.
 \`\`\``;
 
-const snippets = reactive({
-    authorize: '',
-    token: '',
-    refresh: '',
-    userinfo: '',
-    pkce: '',
-    card: '',
-    revoke: ''
+const snippetSources = {
+    authorize: authorizeSnippet,
+    token: tokenSnippet,
+    publicToken: publicTokenSnippet,
+    refresh: refreshSnippet,
+    userinfo: userinfoSnippet,
+    pkce: pkceSnippet,
+    card: cardSnippet,
+    revoke: revokeSnippet
+};
+type SnippetName = keyof typeof snippetSources;
+
+const {
+    data: snippets,
+    error: snippetError,
+    status: snippetStatus,
+    refresh: retrySnippets
+} = await useAsyncData('about:markdown', async () => {
+    const entries = await Promise.all(
+        Object.entries(snippetSources).map(async ([name, source]) => [
+            name,
+            await renderMarkdown(source)
+        ])
+    );
+    return Object.fromEntries(entries) as Record<SnippetName, string>;
 });
-
-async function renderAll() {
-    const theme = currentTheme.value;
-    const [a, tok, ref, u, p, c, rev] = await Promise.all([
-        renderMarkdown(authorizeSnippet, theme),
-        renderMarkdown(tokenSnippet, theme),
-        renderMarkdown(refreshSnippet, theme),
-        renderMarkdown(userinfoSnippet, theme),
-        renderMarkdown(pkceSnippet, theme),
-        renderMarkdown(cardSnippet, theme),
-        renderMarkdown(revokeSnippet, theme)
-    ]);
-    snippets.authorize = a;
-    snippets.token = tok;
-    snippets.refresh = ref;
-    snippets.userinfo = u;
-    snippets.pkce = p;
-    snippets.card = c;
-    snippets.revoke = rev;
-}
-
-watch(currentTheme, renderAll);
-await renderAll();
 </script>
 
 <style scoped lang="scss">
 .about {
-    max-width: 720px;
+    min-width: 0;
+    max-width: 900px;
 
-    &__title {
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 6px;
-        color: var(--text-primary);
-        letter-spacing: -0.02em;
+    &__contents {
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-5);
+        border-bottom: 1px solid var(--border-color);
+
+        ol {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0 var(--space-5);
+            margin: var(--space-3) 0 0;
+            padding-left: var(--space-5);
+        }
+
+        li {
+            min-width: 0;
+            color: var(--text-muted);
+        }
+
+        a {
+            display: flex;
+            align-items: center;
+            min-height: 44px;
+            padding: var(--space-2) var(--space-1);
+            color: var(--accent);
+            overflow-wrap: anywhere;
+        }
     }
 
-    &__intro {
-        font-size: 14px;
-        color: var(--text-secondary);
-        margin-bottom: 28px;
-        line-height: 1.7;
-    }
+    &__section {
+        min-width: 0;
+        padding: var(--space-5) 0;
+        border-bottom: 1px solid var(--border-color);
+        scroll-margin-top: 80px;
 
-    &__card {
-        margin-bottom: 20px;
-        border: 1px solid var(--border-color);
-    }
+        &:last-child {
+            border-bottom: 0;
+        }
 
-    &__card-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text-primary);
+        h2,
+        h3 {
+            margin-bottom: var(--space-3);
+            overflow-wrap: anywhere;
+        }
     }
 
     &__text {
-        font-size: 13px;
         color: var(--text-secondary);
-        line-height: 1.7;
-        margin-bottom: 12px;
+        margin-bottom: var(--space-4);
+        overflow-wrap: anywhere;
+    }
+
+    &__boundary {
+        padding-left: var(--space-4);
+        border-left: 2px solid var(--border-color);
     }
 
     &__steps {
-        padding-left: 18px;
-        margin-bottom: 4px;
+        padding-left: var(--space-5);
+        margin: 0 0 var(--space-5);
+        color: var(--text-secondary);
 
-        li {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.8;
-            padding-left: 4px;
+        li + li {
+            margin-top: var(--space-2);
         }
     }
 
-    &__endpoint {
-        h3 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-family: monospace;
-            margin-bottom: 6px;
-        }
+    &__action {
+        white-space: normal;
+        min-height: 44px;
+        height: auto;
+        text-align: center;
+    }
+
+    &__endpoint + &__endpoint {
+        margin-top: var(--space-6);
+    }
+
+    &__source {
+        padding: var(--space-4);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 
     &__code {
-        margin-bottom: 4px;
+        min-width: 0;
+        margin-bottom: var(--space-5);
 
         :deep(pre) {
+            max-width: 100%;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: var(--card-radius);
+            padding: var(--space-4);
             overflow-x: auto;
             margin: 0;
-        }
-
-        :deep(.shiki) {
-            padding: 12px 14px;
-            border-radius: 6px;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-            font-size: 12px;
+            font-size: 14px;
             line-height: 1.6;
         }
 
         :deep(code) {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-            font-size: 12px;
+            font-size: 14px;
         }
     }
 
     &__scope-table {
-        margin-top: 4px;
+        max-width: 100%;
+        overflow-x: auto;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: var(--space-3);
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid var(--border-color);
+            overflow-wrap: anywhere;
+        }
+
+        th:first-child {
+            width: 144px;
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
 
         code {
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--text-primary);
-            background: var(--bg-tertiary);
-            padding: 2px 5px;
-            border-radius: 3px;
+            white-space: nowrap;
         }
+    }
+}
+
+@media (max-width: 767px) {
+    .about__contents ol {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

@@ -10,7 +10,7 @@ export default defineEventHandler(async event => {
             select: {
                 twoFactorEnabled: true,
                 twoFactorMethod: true,
-                email: true
+                emailVerified: true
             }
         }),
         prisma.passkeyCredential.count({ where: { userId } })
@@ -23,7 +23,7 @@ export default defineEventHandler(async event => {
     return {
         twoFactorEnabled: user.twoFactorEnabled,
         twoFactorMethod: user.twoFactorMethod,
-        hasEmail: Boolean(user.email),
+        hasEmail: user.emailVerified,
         passkeyCount
     };
 });

@@ -1,6 +1,5 @@
-import { consola } from 'consola';
-
-const logger = consola.withTag('leetcode-fetch');
+import { createError } from 'h3';
+import { z } from 'zod';
 
 const LEETCODE_GRAPHQL_URL = 'https://leetcode.cn/graphql';
 const LEETCODE_USER_AGENT = 'Mozilla/5.0 (compatible; CPOAuth/1.0)';
@@ -16,26 +15,34 @@ export interface LeetcodeProfile {
     acceptedHard: number;
 }
 
-interface LeetcodeGraphQLResponse {
-    data?: {
-        userProfilePublicProfile: {
-            profile: {
-                userSlug: string;
-                realName: string | null;
-                aboutMe: string | null;
-                userAvatar: string | null;
-            };
-            siteRanking: number | null;
-        } | null;
-        userProfileUserQuestionProgress: {
-            numAcceptedQuestions: Array<{
-                difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-                count: number;
-            }>;
-        } | null;
-    };
-    errors?: Array<{ message: string }>;
-}
+const responseSchema = z.object({
+    data: z
+        .object({
+            userProfilePublicProfile: z
+                .object({
+                    profile: z.object({
+                        userSlug: z.string().min(1),
+                        realName: z.string().nullable(),
+                        aboutMe: z.string().nullable(),
+                        userAvatar: z.string().nullable()
+                    }),
+                    siteRanking: z.number().nullable()
+                })
+                .nullable(),
+            userProfileUserQuestionProgress: z
+                .object({
+                    numAcceptedQuestions: z.array(
+                        z.object({
+                            difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
+                            count: z.number().int().nonnegative()
+                        })
+                    )
+                })
+                .nullable()
+        })
+        .optional(),
+    errors: z.array(z.object({ message: z.string() })).optional()
+});
 
 const PROFILE_QUERY = `query userProfile($userSlug: String!) {
     userProfilePublicProfile(userSlug: $userSlug) {
@@ -58,8 +65,8 @@ const PROFILE_QUERY = `query userProfile($userSlug: String!) {
 /**
  * Fetches a LeetCode user's public profile and accepted-question stats.
  *
- * Uses the leetcode.cn GraphQL endpoint. Returns null if the user does
- * not exist or the request fails — callers must treat null as "user not found".
+ * Uses the leetcode.cn GraphQL endpoint. Null means a real missing profile;
+ * network, GraphQL and malformed responses are upstream errors, not "not found".
  *
  * Note: LeetCode does not expose a stable numeric user ID in its public
  * GraphQL schema, so userSlug is used as the platformUid throughout cp-oauth.
@@ -67,11 +74,14 @@ const PROFILE_QUERY = `query userProfile($userSlug: String!) {
  */
 export async function fetchLeetcodeProfile(userSlug: string): Promise<LeetcodeProfile | null> {
     const trimmed = userSlug.trim();
-    if (!trimmed) return null;
+    if (!trimmed) throw createError({ statusCode: 400, message: 'LeetCode username is required' });
 
+    let response: unknown;
     try {
-        const res = await $fetch<LeetcodeGraphQLResponse>(LEETCODE_GRAPHQL_URL, {
+        response = await $fetch(LEETCODE_GRAPHQL_URL, {
             method: 'POST',
+            timeout: 10_000,
+            retry: 0,
             headers: {
                 'content-type': 'application/json',
                 referer: 'https://leetcode.cn',
@@ -82,44 +92,28 @@ export async function fetchLeetcodeProfile(userSlug: string): Promise<LeetcodePr
                 variables: { userSlug: trimmed }
             }
         });
-
-        if (res.errors && res.errors.length > 0) {
-            logger.warn(
-                `LeetCode GraphQL errors for userSlug=${trimmed}: ${res.errors.map(e => e.message).join('; ')}`
-            );
-            return null;
-        }
-
-        const publicProfile = res.data?.userProfilePublicProfile;
-        if (!publicProfile) {
-            return null;
-        }
-
-        const counts: Record<'EASY' | 'MEDIUM' | 'HARD', number> = {
-            EASY: 0,
-            MEDIUM: 0,
-            HARD: 0
-        };
-        const accepted = res.data?.userProfileUserQuestionProgress?.numAcceptedQuestions || [];
-        for (const entry of accepted) {
-            if (entry.difficulty in counts) {
-                counts[entry.difficulty] = entry.count;
-            }
-        }
-
-        return {
-            userSlug: publicProfile.profile.userSlug,
-            realName: publicProfile.profile.realName,
-            aboutMe: publicProfile.profile.aboutMe,
-            userAvatar: publicProfile.profile.userAvatar,
-            siteRanking: publicProfile.siteRanking,
-            acceptedEasy: counts.EASY,
-            acceptedMedium: counts.MEDIUM,
-            acceptedHard: counts.HARD
-        };
-    } catch (e: unknown) {
-        const err = e as { statusCode?: number; message?: string };
-        logger.warn(`Failed to fetch LeetCode profile for userSlug=${trimmed}: ${err.message}`);
-        return null;
+    } catch {
+        throw createError({ statusCode: 502, message: 'Failed to fetch LeetCode profile' });
     }
+    const parsed = responseSchema.safeParse(response);
+    if (!parsed.success || parsed.data.errors?.length || !parsed.data.data) {
+        throw createError({ statusCode: 502, message: 'Invalid LeetCode profile response' });
+    }
+    const data = parsed.data.data;
+    const publicProfile = data.userProfilePublicProfile;
+    if (publicProfile === null) return null;
+    const counts = { EASY: 0, MEDIUM: 0, HARD: 0 };
+    for (const entry of data.userProfileUserQuestionProgress?.numAcceptedQuestions || []) {
+        counts[entry.difficulty] = entry.count;
+    }
+    return {
+        userSlug: publicProfile.profile.userSlug,
+        realName: publicProfile.profile.realName,
+        aboutMe: publicProfile.profile.aboutMe,
+        userAvatar: publicProfile.profile.userAvatar,
+        siteRanking: publicProfile.siteRanking,
+        acceptedEasy: counts.EASY,
+        acceptedMedium: counts.MEDIUM,
+        acceptedHard: counts.HARD
+    };
 }

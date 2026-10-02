@@ -1,0 +1,109 @@
+<template>
+    <div class="profile-task-nav">
+        <nav class="profile-task-nav__desktop" :aria-label="t('profile.workbench.tasks')">
+            <a
+                v-for="task in PROFILE_TASKS"
+                :key="task"
+                :href="target(task)"
+                class="profile-task-nav__link"
+                :class="{ 'profile-task-nav__link--active': modelValue === task }"
+                :aria-current="modelValue === task ? 'page' : undefined"
+                @click="selectLink(task, $event)"
+                >{{ t(`profile.tabs.${task}`) }}</a
+            >
+        </nav>
+        <div class="profile-task-nav__mobile">
+            <label for="profile-task-select">{{ t('profile.workbench.tasks') }}</label>
+            <el-select
+                id="profile-task-select"
+                :aria-label="t('profile.workbench.tasks')"
+                :model-value="modelValue"
+                @update:model-value="selectTask"
+            >
+                <el-option
+                    v-for="task in PROFILE_TASKS"
+                    :key="task"
+                    :value="task"
+                    :label="t(`profile.tabs.${task}`)"
+                />
+            </el-select>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { PROFILE_TASKS, type ProfileTask } from './profile-workbench';
+
+const props = defineProps<{ modelValue: ProfileTask }>();
+const emit = defineEmits<{ 'update:modelValue': [task: ProfileTask] }>();
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+function target(task: ProfileTask) {
+    return router.resolve({ path: '/profile', query: { ...route.query, tab: task } }).href;
+}
+function selectTask(value: unknown) {
+    if (typeof value === 'string' && PROFILE_TASKS.includes(value as ProfileTask)) {
+        emit('update:modelValue', value as ProfileTask);
+    }
+}
+function selectLink(task: ProfileTask, event: MouseEvent) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+        return;
+    event.preventDefault();
+    if (props.modelValue !== task) emit('update:modelValue', task);
+}
+</script>
+
+<style scoped lang="scss">
+.profile-task-nav {
+    min-width: 0;
+    &__desktop {
+        display: none;
+    }
+    &__mobile {
+        display: grid;
+        gap: var(--space-2);
+    }
+    &__mobile label {
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 600;
+    }
+    &__mobile :deep(.el-select) {
+        width: 100%;
+    }
+    @media (min-width: 1024px) {
+        &__mobile {
+            display: none;
+        }
+        &__desktop {
+            display: grid;
+            gap: var(--space-1);
+            position: sticky;
+            top: var(--space-5);
+        }
+        &__link {
+            display: flex;
+            align-items: center;
+            min-height: 44px;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--card-radius);
+            font-size: 14px;
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+            border-left: 2px solid transparent;
+        }
+        &__link:hover {
+            color: var(--accent);
+            background: var(--bg-secondary);
+        }
+        &__link--active {
+            color: var(--accent);
+            background: var(--accent-subtle);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+    }
+}
+</style>
