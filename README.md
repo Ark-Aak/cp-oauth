@@ -93,11 +93,10 @@ The app will be available at `http://localhost:3000`.
 ### Build
 
 ```bash
-npx prisma generate
 npm run build
 ```
 
-`npm run build` only creates `.output`; it does not upload assets or require production runtime keys. Asset upload is an explicit operation after configuring the `S3_*` variables:
+`npm run build` regenerates Prisma Client from `prisma/schema.prisma` before compiling Nuxt into `.output`. It does not deploy database migrations, upload assets, or require production runtime keys. Asset upload remains an explicit operation after configuring the `S3_*` variables:
 
 ```bash
 npm run upload:s3
@@ -106,6 +105,8 @@ npm run upload:s3
 The build emits `.output/public/_i18n/<build-hash>/{en,zh,ja}/messages.json` using a locale-only prerenderer. Application pages remain SSR; application startup checks are not disabled. For CDN/OSS deployment, set `NUXT_APP_CDN_URL` when building, upload the **entire** `.output/public` including `_i18n`, and deploy `.output/server` from the **same build**. An application-domain Nginx rule cannot repair missing files requested from a separate asset domain.
 
 The locale-only build aborts if the i18n module does not provide a static language-resource route; a missing or callable replacement is not parsed or published as a resource URL.
+
+Database migrations do not regenerate Prisma Client. Deploy the complete freshly built `.output`, including `.output/server/node_modules`, and restart application processes; generating only the project-root client after a build or retaining old server dependencies can leave the running client on the previous schema.
 
 ### Run
 
@@ -131,7 +132,7 @@ All stages use Node 22 on Debian Bookworm. Production runs as non-root, includes
 ```bash
 # Development and assets
 npm run dev                       # Nuxt SSR development server
-npm run build                     # Pure production build
+npm run build                     # Generate Prisma Client, then build production artifact
 npm run preview                   # Preview production build
 npm run upload:s3                 # Explicit S3-compatible asset upload
 npm run upload:oss                # Existing alias of upload:s3

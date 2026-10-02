@@ -98,7 +98,7 @@ jobs:
               run: npm run lint
             - name: Typecheck
               run: npm run typecheck
-            - name: Pure production build
+            - name: Generate current Prisma Client and build production artifact
               run: npm run build
             - name: Real HTTP and PostgreSQL integration against the built service
               shell: bash
