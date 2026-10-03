@@ -19,6 +19,7 @@
                         :pending="false"
                         :empty="!section.items.length"
                         :empty-text="section.emptyText"
+                        :empty-icon="Globe"
                     >
                         <ul class="showcase__list">
                             <li v-for="item in section.items" :key="item.id">
@@ -27,7 +28,7 @@
                                     :href="item.url || undefined"
                                     :target="item.url ? '_blank' : undefined"
                                     :rel="item.url ? 'noopener noreferrer' : undefined"
-                                    class="showcase__item"
+                                    class="showcase__item ui-navigation-link"
                                 >
                                     <img
                                         v-if="!failedIcons[item.id] && (item.iconUrl || item.url)"
@@ -43,14 +44,7 @@
                                         aria-hidden="true"
                                     />
                                     <div class="showcase__item-body">
-                                        <h3 class="showcase__item-name">
-                                            <span>{{ item.name }}</span>
-                                            <ExternalLink
-                                                v-if="item.url"
-                                                :size="16"
-                                                aria-hidden="true"
-                                            />
-                                        </h3>
+                                        <h3 class="showcase__item-name">{{ item.name }}</h3>
                                         <p
                                             v-if="item.description"
                                             class="showcase__item-description"
@@ -69,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { Code, ExternalLink } from 'lucide-vue-next';
+import { Code, Globe } from 'lucide-vue-next';
 import type { ShowcaseItem } from '~/types/api';
 
 const { t } = useI18n();

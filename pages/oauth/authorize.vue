@@ -54,23 +54,29 @@
                             {{ $t('oauth.consent.current_account') }}
                         </h2>
                         <template v-if="user && status === 'authenticated'">
-                            <p class="consent__account-name">
-                                <strong>{{ user.displayName || user.username }}</strong>
-                                <span>{{ '@' + user.username }}</span>
-                            </p>
-                            <el-button
-                                native-type="button"
-                                :disabled="controlsPending || identityPending"
-                                :loading="switchPending"
-                                @click="switchAccount"
-                            >
-                                {{ $t('oauth.consent.switch_account') }}
-                            </el-button>
+                            <div class="consent__account-row">
+                                <p class="consent__account-name">
+                                    <strong>{{ user.displayName || user.username }}</strong>
+                                    <span>{{ '@' + user.username }}</span>
+                                </p>
+                                <el-button
+                                    native-type="button"
+                                    :disabled="controlsPending || identityPending"
+                                    :loading="switchPending"
+                                    @click="switchAccount"
+                                >
+                                    {{ $t('oauth.consent.switch_account') }}
+                                </el-button>
+                            </div>
                         </template>
                         <p v-else-if="status === 'anonymous'" class="consent__account-hint">
                             {{ $t('oauth.consent.signed_out_hint') }}
                         </p>
-                        <div v-if="authError" class="consent__notice" role="alert">
+                        <div
+                            v-if="authError"
+                            class="consent__notice consent__notice--error"
+                            role="alert"
+                        >
                             <p>{{ $t('identity.identity_unavailable') }}</p>
                             <el-button
                                 native-type="button"
@@ -83,7 +89,11 @@
                         </div>
                     </section>
 
-                    <div v-if="needsEmailVerification" class="consent__notice" role="status">
+                    <div
+                        v-if="needsEmailVerification"
+                        class="consent__notice consent__notice--verification"
+                        role="status"
+                    >
                         <p>{{ $t('oauth.consent.email_verification_required') }}</p>
                         <NuxtLink :to="verificationPath" class="consent__task-link">
                             {{ $t('oauth.consent.go_verify_email') }}
@@ -96,7 +106,7 @@
                         v-if="decisionError"
                         ref="decisionErrorElement"
                         tabindex="-1"
-                        class="consent__notice"
+                        class="consent__notice consent__notice--error"
                         role="alert"
                     >
                         {{ decisionError }}
@@ -138,30 +148,35 @@
 
         <a class="consent__sponsor" href="https://www.rainyun.com/federico_?s=oauth">
             {{ $t('app.footer.compute_service') }}
-            <ArrowUpRight :size="16" aria-hidden="true" />
         </a>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowUpRight, Shield } from 'lucide-vue-next';
+import { Shield } from 'lucide-vue-next';
+import { getCurrentInstance } from 'vue';
+import { ElMessageBox } from 'element-plus';
 import type { OAuthAuthorizationResponse } from '~/types/api';
 import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 definePageMeta({ layout: 'auth' });
 const { t } = useI18n();
+const messageBoxContext = getCurrentInstance()?.appContext;
 const route = useRoute();
 const api = useApi();
 const { user, status, error: authError, load, logout } = useAuth();
 useHead({ title: () => `${t('oauth.consent.title')} - CP OAuth` });
 const identityPending = ref(false);
+const switchConfirming = ref(false);
 const switchPending = ref(false);
 const decisionPending = ref(false);
 const decisionApproved = ref<boolean | null>(null);
 const decisionError = ref('');
 const decisionErrorElement = ref<HTMLElement | null>(null);
 const emailVerificationRequired = ref(false);
-const controlsPending = computed(() => decisionPending.value || switchPending.value);
+const controlsPending = computed(
+    () => decisionPending.value || switchConfirming.value || switchPending.value
+);
 const authorizationPath = computed(() => getSafeRedirectTarget(route.fullPath));
 const verificationPath = computed(() => ({
     path: '/profile',
@@ -257,6 +272,26 @@ async function showDecisionError(message: string) {
 async function switchAccount() {
     if (controlsPending.value || identityPending.value) return;
     const loginPath = buildLoginPath(authorizationPath.value);
+    switchConfirming.value = true;
+    try {
+        await ElMessageBox.confirm(
+            t('oauth.consent.switch_account_confirm'),
+            t('oauth.consent.switch_account'),
+            {
+                type: 'warning',
+                confirmButtonText: t('oauth.consent.switch_account'),
+                cancelButtonText: t('common.cancel')
+            },
+            messageBoxContext
+        );
+    } catch (cause) {
+        if (cause !== 'cancel' && cause !== 'close') {
+            await showDecisionError(errorMessage(cause, t('identity.network_error')));
+        }
+        return;
+    } finally {
+        switchConfirming.value = false;
+    }
     switchPending.value = true;
     decisionError.value = '';
     try {
@@ -341,9 +376,21 @@ async function handleDecision(approved: boolean) {
         border-radius: var(--card-radius);
     }
 
-    &__request {
+    :deep(.page-header) {
         margin-bottom: var(--space-5);
+    }
+
+    :deep(.page-header h1) {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+    }
+
+    &__request {
+        margin-bottom: var(--space-4);
         color: var(--text-secondary);
+        font-size: 15px;
+        line-height: 1.5;
         overflow-wrap: anywhere;
 
         strong {
@@ -353,20 +400,20 @@ async function handleDecision(approved: boolean) {
 
     h2 {
         margin-bottom: var(--space-2);
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 600;
-        line-height: 1.5;
+        line-height: 1.4;
     }
 
     &__destination,
-    &__permissions,
-    &__account {
-        margin-bottom: var(--space-5);
+    &__permissions {
+        margin-bottom: var(--space-4);
     }
 
     code {
-        font-family: monospace;
-        font-size: 14px;
+        font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
         color: var(--text-secondary);
         overflow-wrap: anywhere;
         white-space: normal;
@@ -378,8 +425,10 @@ async function handleDecision(approved: boolean) {
     }
 
     &__exact-uri summary {
-        min-height: 44px;
-        padding-block: var(--space-3);
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding-block: var(--space-2);
         color: var(--accent);
         cursor: pointer;
         font-size: 14px;
@@ -401,20 +450,40 @@ async function handleDecision(approved: boolean) {
         display: grid;
         grid-template-columns: 18px minmax(0, 1fr);
         align-items: start;
-        gap: var(--space-3);
-        padding-block: var(--space-3);
+        gap: var(--space-2);
+        padding-block: 10px;
         border-bottom: 1px solid var(--border-color);
+        font-size: 15px;
+        line-height: 1.45;
         overflow-wrap: anywhere;
 
         svg {
-            margin-top: var(--space-1);
+            margin-top: 2px;
             color: var(--accent);
+        }
+
+        code {
+            display: block;
+            margin-top: 2px;
         }
     }
 
+    &__scope:last-child {
+        border-bottom: 0;
+    }
+
     &__account {
-        padding-block: var(--space-4);
-        border-block: 1px solid var(--border-color);
+        margin-bottom: var(--space-4);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-color);
+    }
+
+    &__account-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+        min-width: 0;
     }
 
     &__account-name {
@@ -422,7 +491,8 @@ async function handleDecision(approved: boolean) {
         flex-wrap: wrap;
         align-items: baseline;
         gap: var(--space-2);
-        margin-bottom: var(--space-3);
+        min-width: 0;
+        font-size: 15px;
         overflow-wrap: anywhere;
 
         span {
@@ -439,12 +509,25 @@ async function handleDecision(approved: boolean) {
 
     &__notice {
         margin-bottom: var(--space-4);
-        padding: var(--space-4);
+        padding: var(--space-3) var(--space-4);
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
+        border-left-width: 3px;
+        border-radius: 0;
         color: var(--text-primary);
+        font-size: 14px;
+        line-height: 1.5;
         overflow-wrap: anywhere;
+    }
+
+    &__notice--verification {
+        background: var(--el-color-warning-light-9);
+        border-color: var(--el-color-warning);
+    }
+
+    &__notice--error {
+        background: var(--el-color-danger-light-9);
+        border-color: var(--el-color-danger);
     }
 
     &__notice .el-button {
@@ -454,10 +537,8 @@ async function handleDecision(approved: boolean) {
     &__task-link {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
-        margin-block: var(--space-2);
-        color: var(--accent);
-        text-decoration: underline;
+        min-height: 32px;
+        margin-block: var(--space-1);
         overflow-wrap: anywhere;
     }
 
@@ -471,7 +552,7 @@ async function handleDecision(approved: boolean) {
         margin: 0;
         min-height: 44px;
         height: auto;
-        padding-block: var(--space-3);
+        padding-block: 10px;
         white-space: normal;
     }
 
@@ -482,7 +563,6 @@ async function handleDecision(approved: boolean) {
         gap: var(--space-2);
         min-height: 44px;
         margin-top: var(--space-4);
-        color: var(--text-secondary);
         font-size: 14px;
         text-align: center;
         overflow-wrap: anywhere;
@@ -495,6 +575,15 @@ async function handleDecision(approved: boolean) {
     @media (max-width: 480px) {
         &__surface {
             padding: var(--space-4);
+        }
+
+        &__account-row {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        &__account-row :deep(.el-button) {
+            width: 100%;
         }
 
         &__actions {

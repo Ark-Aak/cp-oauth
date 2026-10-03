@@ -41,9 +41,11 @@
         >
             <div class="profile-bindings__section">
                 <h3>{{ t('binding.workbench.bound_accounts') }}</h3>
-                <p v-if="bindings.length === 0" class="profile-bindings__hint">
-                    {{ t('binding.no_accounts') }}
-                </p>
+                <AppEmptyState
+                    v-if="bindings.length === 0"
+                    :text="t('binding.no_accounts')"
+                    :icon="Link2"
+                />
                 <table v-else class="profile-bindings__table" role="table">
                     <caption class="sr-only">
                         {{
@@ -263,7 +265,7 @@ import {
     watch
 } from 'vue';
 import { ElMessageBox } from 'element-plus';
-import { RefreshCw } from 'lucide-vue-next';
+import { Link2, RefreshCw } from 'lucide-vue-next';
 import { useProfileBindings } from '~/composables/useProfileBindings';
 import { usePublicConfig } from '~/composables/usePublicConfig';
 import type { LinkedAccount, PublicConfigResponse } from '~/types/api';

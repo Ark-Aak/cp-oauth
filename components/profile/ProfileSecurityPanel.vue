@@ -374,6 +374,7 @@
                 :error="passkeysError"
                 :empty="passkeysStatus === 'success' && passkeys?.length === 0"
                 :empty-text="t('profile.security.no_passkeys')"
+                :empty-icon="KeyRound"
                 @retry="loadPasskeys(true)"
             >
                 <template v-if="passkeys">
@@ -525,7 +526,7 @@
 </template>
 
 <script setup lang="ts">
-import { Eye, EyeOff } from 'lucide-vue-next';
+import { Eye, EyeOff, KeyRound } from 'lucide-vue-next';
 import type { ButtonInstance, InputInstance } from 'element-plus';
 import type { TwoFactorMethod } from '~/types/auth';
 import { useProfileTaskGuard } from '~/components/profile/profile-workbench';

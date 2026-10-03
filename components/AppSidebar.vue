@@ -1,6 +1,6 @@
 <template>
     <div class="app-sidebar">
-        <NuxtLink to="/" class="app-sidebar__brand" @click="$emit('navigate')">
+        <NuxtLink to="/" class="app-sidebar__brand ui-navigation-link" @click="$emit('navigate')">
             <img src="/favicon.svg" alt="" width="26" height="26" />
             <span>{{ $t('app.name') }}</span>
         </NuxtLink>
@@ -9,7 +9,7 @@
                 v-for="item in navigation"
                 :key="item.path"
                 :to="item.path"
-                class="app-sidebar__link"
+                class="app-sidebar__link ui-menu-link"
                 :class="{ 'is-active': active(item.path) }"
                 :aria-current="active(item.path) ? 'page' : undefined"
                 @click="$emit('navigate')"
@@ -20,7 +20,11 @@
         </nav>
         <div class="app-sidebar__account">
             <template v-if="user">
-                <NuxtLink to="/profile" class="app-sidebar__identity" @click="$emit('navigate')">
+                <NuxtLink
+                    to="/profile"
+                    class="app-sidebar__link app-sidebar__identity ui-menu-link"
+                    @click="$emit('navigate')"
+                >
                     <AppUserAvatar
                         :size="38"
                         :src="user.avatarUrl"
@@ -33,7 +37,7 @@
                 </NuxtLink>
                 <button
                     type="button"
-                    class="app-sidebar__link app-sidebar__logout"
+                    class="app-sidebar__link app-sidebar__logout ui-menu-link"
                     :disabled="logoutPending"
                     :aria-busy="logoutPending"
                     @click="$emit('logout')"
@@ -44,7 +48,7 @@
             <NuxtLink
                 v-else-if="anonymous"
                 to="/login"
-                class="app-sidebar__link"
+                class="app-sidebar__link ui-menu-link"
                 @click="$emit('navigate')"
                 ><LogIn :size="19" aria-hidden="true" />{{ $t('nav.login') }}</NuxtLink
             >
@@ -103,41 +107,11 @@ function active(path: string) {
     display: grid;
     gap: var(--space-1);
 }
-.app-sidebar__link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: 10px var(--space-3);
-    min-height: 48px;
-    border-radius: var(--card-radius);
-    font-size: 16px;
-    color: var(--text-secondary);
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
-    text-decoration: none;
-    transition:
-        background 140ms ease,
-        color 140ms ease;
-}
-.app-sidebar__link:hover {
-    color: var(--accent);
-    background: var(--bg-secondary);
-}
-.app-sidebar__link.is-active {
-    color: var(--accent);
-    background: var(--accent-subtle);
-    font-weight: 600;
-}
 .app-sidebar__account {
     margin-top: auto;
     padding-top: var(--space-5);
 }
 .app-sidebar__identity {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
     padding: var(--space-3);
     border-top: 1px solid var(--border-color);
 }

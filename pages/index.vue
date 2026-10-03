@@ -9,33 +9,37 @@
                 @retry="retryIdentity"
             >
                 <template v-if="me">
-                    <div class="home__identity">
-                        <AppUserAvatar
-                            :size="48"
-                            :src="me.avatarUrl || undefined"
-                            :name="me.displayName || me.username"
-                        />
-                        <div class="home__identity-text">
-                            <p>
-                                {{ $t('nav.signed_in_as') }}
-                                <strong>{{ me.displayName || me.username }}</strong>
-                            </p>
-                            <p class="home__handle">@{{ me.username }}</p>
+                    <div class="home__account">
+                        <div class="home__identity">
+                            <AppUserAvatar
+                                :size="48"
+                                :src="me.avatarUrl || undefined"
+                                :name="me.displayName || me.username"
+                            />
+                            <div class="home__identity-text">
+                                <p>
+                                    <strong>{{ me.displayName || me.username }}</strong>
+                                </p>
+                                <p class="home__handle">@{{ me.username }}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div v-if="!me.emailVerified" class="home__verification" role="status">
-                        <p>{{ $t('profile.email_unverified') }}</p>
-                        <NuxtLink to="/profile?tab=basic">{{
-                            $t('profile.send_verify_email')
-                        }}</NuxtLink>
-                    </div>
-                    <div class="home__actions">
-                        <NuxtLink to="/profile?tab=bindings" class="el-button el-button--primary">
-                            {{ $t('binding.link_account') }}
-                        </NuxtLink>
-                        <NuxtLink to="/profile?tab=authorized_apps" class="el-button">
-                            {{ $t('home.manage_authorizations') }}
-                        </NuxtLink>
+                        <div v-if="!me.emailVerified" class="home__verification" role="status">
+                            <p>{{ $t('profile.email_unverified') }}</p>
+                            <NuxtLink to="/profile?tab=basic">{{
+                                $t('profile.send_verify_email')
+                            }}</NuxtLink>
+                        </div>
+                        <div class="home__actions home__actions--account">
+                            <NuxtLink
+                                to="/profile?tab=bindings"
+                                class="el-button el-button--primary"
+                            >
+                                {{ $t('binding.link_account') }}
+                            </NuxtLink>
+                            <NuxtLink to="/profile?tab=authorized_apps" class="el-button">
+                                {{ $t('home.manage_authorizations') }}
+                            </NuxtLink>
+                        </div>
                     </div>
                 </template>
                 <template v-else-if="authStatus === 'anonymous'">
@@ -52,7 +56,6 @@
                         </NuxtLink>
                         <NuxtLink to="/developer" class="home__text-action">
                             {{ $t('home.developer_path') }}
-                            <ArrowRight :size="18" aria-hidden="true" />
                         </NuxtLink>
                     </div>
                     <p v-if="publicConfig?.registrationEnabled === false" class="home__hint">
@@ -76,6 +79,7 @@
                     :error="noticeError ? $t('identity.network_error') : null"
                     :empty="!notices?.length"
                     :empty-text="$t('home.no_announcements')"
+                    :empty-icon="Bell"
                     @retry="refreshNotices()"
                 >
                     <div class="home__notices">
@@ -121,11 +125,15 @@
                         :error="usersError ? $t('identity.network_error') : null"
                         :empty="!recentUsers.length"
                         :empty-text="$t('home.no_users')"
+                        :empty-icon="UsersRound"
                         @retry="refreshUsers()"
                     >
                         <ul class="home__users">
                             <li v-for="u in recentUsers" :key="u.id">
-                                <NuxtLink :to="`/user/${u.username}`" class="home__user">
+                                <NuxtLink
+                                    :to="`/user/${u.username}`"
+                                    class="home__user ui-navigation-link"
+                                >
                                     <AppUserAvatar
                                         :size="40"
                                         :src="u.avatarUrl || undefined"
@@ -163,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Pin } from 'lucide-vue-next';
+import { Bell, Pin, UsersRound } from 'lucide-vue-next';
 import { formatCSTTime } from '~/utils/time';
 import type { NoticeSummary, QuoteSummary, SiteStatsResponse, UserSummary } from '~/types/api';
 
@@ -305,6 +313,13 @@ function formatNumber(value: number): string {
         border-bottom: 1px solid var(--border-color);
     }
 
+    &__account {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: var(--space-5);
+    }
+
     &__identity {
         display: flex;
         align-items: center;
@@ -328,21 +343,30 @@ function formatNumber(value: number): string {
     }
 
     &__verification {
+        grid-column: 1;
+        grid-row: 2;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: var(--space-2) var(--space-4);
         margin-top: var(--space-3);
-        color: var(--text-secondary);
-        font-size: 14px;
+        justify-self: start;
+        max-width: 100%;
+        min-width: 0;
+        padding: var(--space-1) var(--space-2);
+        border: 1px solid var(--el-color-warning);
+        border-radius: 0;
+        background: var(--el-color-warning-light-9);
+        color: var(--el-color-warning);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
 
         a {
             display: inline-flex;
             align-items: center;
-            min-height: 44px;
-            color: var(--accent);
-            text-decoration: underline;
-            text-underline-offset: 3px;
+            min-height: 28px;
         }
     }
 
@@ -362,12 +386,18 @@ function formatNumber(value: number): string {
         }
     }
 
+    &__actions--account {
+        grid-column: 2;
+        grid-row: 1;
+        justify-content: flex-end;
+        margin-top: 0;
+    }
+
     &__text-action {
         display: inline-flex;
         align-items: center;
         gap: var(--space-2);
         min-height: 44px;
-        color: var(--accent);
         font-size: 14px;
     }
 
@@ -393,23 +423,22 @@ function formatNumber(value: number): string {
         margin-bottom: var(--space-4);
     }
 
+    &__notices {
+        display: grid;
+        gap: var(--space-4);
+    }
+
     &__notice {
-        padding: var(--space-5) 0;
-        border-bottom: 1px solid var(--border-color);
-
-        &:first-child {
-            padding-top: 0;
-        }
-
-        &:last-child {
-            border-bottom: 0;
-            padding-bottom: 0;
-        }
+        min-width: 0;
+        padding: var(--space-5);
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        background: var(--card-bg);
     }
 
     &__notice-header {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         flex-wrap: wrap;
         gap: var(--space-2) var(--space-3);
 
@@ -422,8 +451,14 @@ function formatNumber(value: number): string {
         display: inline-flex;
         align-items: center;
         gap: var(--space-1);
-        color: var(--text-muted);
-        font-size: 14px;
+        flex-shrink: 0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: #febb45;
+        color: #431407;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 20px;
     }
 
     &__notice-content {
@@ -431,12 +466,6 @@ function formatNumber(value: number): string {
         color: var(--text-secondary);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
-
-        :deep(a[href]) {
-            color: var(--accent);
-            text-decoration: underline;
-            text-underline-offset: 3px;
-        }
 
         :deep(img) {
             max-width: 100%;
@@ -530,6 +559,24 @@ function formatNumber(value: number): string {
 }
 
 @media (max-width: 479px) {
+    .home__account {
+        column-gap: var(--space-3);
+    }
+
+    .home__actions--account {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-2);
+    }
+
+    .home__verification {
+        grid-column: 1 / -1;
+    }
+
+    .home__notice {
+        padding: var(--space-4);
+    }
+
     .home__actions > .el-button {
         width: 100%;
     }

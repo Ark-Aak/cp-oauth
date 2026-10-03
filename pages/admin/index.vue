@@ -40,6 +40,7 @@
             :error="loadError"
             :empty="users.length === 0"
             :empty-text="$t('admin.users.no_results')"
+            :empty-icon="UsersRound"
             @retry="loadUsers"
         >
             <p class="admin-users__result-count" role="status">
@@ -203,6 +204,7 @@
 </template>
 
 <script setup lang="ts">
+import { UsersRound } from 'lucide-vue-next';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import AdminSectionNav from '~/components/admin/AdminSectionNav.vue';
 import { adminUsersQuerySchema } from '~/utils/admin-validation';

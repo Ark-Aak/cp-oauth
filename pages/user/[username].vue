@@ -63,6 +63,7 @@
                             user.cpStatsStatus === 'available' && !user.cpStats?.accounts.length
                         "
                         :empty-text="$t('user.no_cp_stats')"
+                        :empty-icon="ChartNoAxesCombined"
                         @retry="refreshStats()"
                     >
                         <ul v-if="user.cpStats" class="user-profile__stats">
@@ -108,6 +109,7 @@
                                 :pending="false"
                                 :empty="!cpLinkedAccounts.length"
                                 :empty-text="$t('user.no_linked')"
+                                :empty-icon="Link2"
                             >
                                 <UserPublicLinkedAccounts :accounts="cpLinkedAccounts" />
                             </AppAsyncState>
@@ -118,6 +120,7 @@
                                 :pending="false"
                                 :empty="!otherLinkedAccounts.length"
                                 :empty-text="$t('user.no_other_accounts')"
+                                :empty-icon="Link2"
                             >
                                 <UserPublicLinkedAccounts :accounts="otherLinkedAccounts" />
                             </AppAsyncState>
@@ -142,6 +145,7 @@
                             user.ratingHistoryStatus === 'available' && !user.ratingHistory?.length
                         "
                         :empty-text="$t('user.no_rating_history')"
+                        :empty-icon="ChartNoAxesCombined"
                         @retry="refreshStats()"
                     >
                         <ClientOnly v-if="user.ratingHistory?.length">
@@ -161,6 +165,7 @@
                 :error="error && !isNotFound ? $t('identity.network_error') : null"
                 :empty="isNotFound"
                 :empty-text="$t('user.not_found')"
+                :empty-icon="UserRoundSearch"
                 @retry="refreshProfile()"
             />
         </template>
@@ -168,6 +173,7 @@
 </template>
 
 <script setup lang="ts">
+import { ChartNoAxesCombined, Link2, UserRoundSearch } from 'lucide-vue-next';
 import { renderMarkdown } from '~/utils/markdown';
 import { formatCSTTime } from '~/utils/time';
 import { normalizeUsername } from '~/utils/username';
@@ -476,12 +482,6 @@ const renderedHtml = computed(() =>
 
         :deep(p) {
             margin-bottom: var(--space-3);
-        }
-
-        :deep(a[href]) {
-            color: var(--accent);
-            text-decoration: underline;
-            text-underline-offset: 3px;
         }
 
         :deep(code) {

@@ -1,13 +1,16 @@
 <template>
     <footer class="app-footer">
-        <a
-            class="app-footer__link"
-            href="https://github.com/Ark-Aak/cp-oauth"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            {{ $t('app.footer.repo') }}: Ark-Aak/cp-oauth
-        </a>
+        <p class="app-footer__text">
+            {{ $t('app.footer.repo') }}:
+            <a
+                class="app-footer__link"
+                href="https://github.com/Ark-Aak/cp-oauth"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Ark-Aak/cp-oauth
+            </a>
+        </p>
         <span class="app-footer__separator">·</span>
         <p class="app-footer__text">
             {{ $t('app.footer.developer') }}:
@@ -44,14 +47,13 @@
     font-size: 14px;
     flex-wrap: wrap;
 
-    &__link {
-        color: var(--text-secondary);
-        text-decoration: none;
+    &__link,
+    &__link:hover {
+        color: var(--text-primary);
+    }
 
-        &:hover {
-            color: var(--text-primary);
-            text-decoration: underline;
-        }
+    &__link:hover {
+        text-decoration: underline;
     }
 
     &__separator {

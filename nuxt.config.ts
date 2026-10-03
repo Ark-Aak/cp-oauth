@@ -23,8 +23,7 @@ export default defineNuxtConfig({
         ['@element-plus/nuxt', { importStyle: false }]
     ],
     css: [
-        'element-plus/dist/index.css',
-        '@fontsource-variable/source-sans-3',
+        '~/assets/css/vendor.css',
         '~/assets/scss/main.scss',
         '~/assets/scss/element-overrides.scss'
     ],

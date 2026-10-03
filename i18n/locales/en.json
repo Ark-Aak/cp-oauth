@@ -14,6 +14,16 @@
         "error": "Operation failed",
         "success": "Operation successful"
     },
+    "input_format": {
+        "markdown": {
+            "label": "Markdown supported",
+            "description": "Use headings, lists, links and code blocks."
+        },
+        "html": {
+            "label": "HTML supported",
+            "description": "Use HTML tags for paragraphs, bold text, links and lists."
+        }
+    },
     "markdown": {
         "render_error": "Markdown could not be displayed. The source is shown below."
     },
@@ -74,6 +84,7 @@
         "about": "Docs",
         "login": "Login",
         "logout": "Logout",
+        "logout_confirm": "Are you sure you want to sign out of the current account?",
         "admin": "Admin",
         "signed_in_as": "Signed in as"
     },
@@ -395,7 +406,7 @@
         "joined": "Joined",
         "linked_accounts": "Linked CP Accounts",
         "other_accounts": "Other Platform Accounts",
-        "no_linked": "No competitive programming accounts linked yet.",
+        "no_linked": "This user has no public competitive programming accounts.",
         "no_other_accounts": "No other platform accounts linked yet.",
         "cp_stats": "Competitive Programming Stats",
         "rating": "Rating",
@@ -521,6 +532,7 @@
             "exact_callback": "Show the exact callback URI",
             "current_account": "Current account",
             "switch_account": "Sign out and switch account",
+            "switch_account_confirm": "Sign out of the current account and switch accounts? You will return to this authorization request after signing in.",
             "signed_out_hint": "You are not signed in. Sign in to grant access, or deny this request without signing in.",
             "verification_return_hint": "Your verification email will bring you back to this authorization request.",
             "sign_in_authorize": "Sign in to authorize"
