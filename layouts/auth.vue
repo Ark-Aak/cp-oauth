@@ -1,46 +1,58 @@
 <template>
-    <el-container class="auth-layout">
-        <el-main class="auth-layout__main">
-            <header class="auth-layout__topbar">
-                <NuxtLink to="/" class="auth-layout__home"
-                    ><img src="/favicon.svg" alt="" width="26" height="26" />{{
-                        $t('app.name')
-                    }}</NuxtLink
-                >
-                <el-popover trigger="click" placement="bottom-end" :width="288">
-                    <AppPreferences />
-                    <template #reference
-                        ><button
-                            type="button"
-                            class="auth-layout__preferences"
-                            :aria-label="$t('settings.title')"
-                        >
-                            <SlidersHorizontal :size="21" aria-hidden="true" /></button
-                    ></template>
-                </el-popover>
-            </header>
-            <div class="auth-layout__content">
-                <aside
-                    v-if="verificationEmailFailed"
-                    class="auth-layout__verification"
-                    role="status"
-                >
-                    <p>{{ $t('identity.verification_delivery_failed') }}</p>
-                    <NuxtLink :to="verificationPath">
-                        {{ $t('identity.verification_resend') }}
-                    </NuxtLink>
-                </aside>
-                <slot />
-            </div>
-            <AppFooter />
-        </el-main>
-    </el-container>
+    <NuxtLayout :name="sharedNavigation ? 'default' : false" :show-sidebar="false">
+        <el-container
+            class="auth-layout"
+            :class="{
+                'auth-layout--workspace': sharedNavigation,
+                'auth-layout--consent': authorizationPage
+            }"
+        >
+            <component :is="sharedNavigation ? 'div' : 'main'" class="auth-layout__main">
+                <header v-if="!sharedNavigation" class="auth-layout__topbar">
+                    <NuxtLink to="/" class="auth-layout__home ui-navigation-link"
+                        ><img src="/favicon.svg" alt="" width="26" height="26" />{{
+                            $t('app.name')
+                        }}</NuxtLink
+                    >
+                    <el-popover trigger="click" placement="bottom-end" :width="288">
+                        <AppPreferences />
+                        <template #reference
+                            ><button
+                                type="button"
+                                class="auth-layout__preferences"
+                                :aria-label="$t('settings.title')"
+                            >
+                                <SlidersHorizontal :size="21" aria-hidden="true" /></button
+                        ></template>
+                    </el-popover>
+                </header>
+                <div class="auth-layout__content">
+                    <aside
+                        v-if="verificationEmailFailed && !sharedNavigation"
+                        class="auth-layout__verification"
+                        role="status"
+                    >
+                        <p>{{ $t('identity.verification_delivery_failed') }}</p>
+                        <NuxtLink :to="verificationPath">
+                            {{ $t('identity.verification_resend') }}
+                        </NuxtLink>
+                    </aside>
+                    <slot />
+                </div>
+                <AppFooter v-if="!sharedNavigation" />
+            </component>
+        </el-container>
+    </NuxtLayout>
 </template>
 <script setup lang="ts">
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 import { SlidersHorizontal } from 'lucide-vue-next';
 
 const route = useRoute();
+const authorizationPage = computed(() => route.path.replace(/\/$/, '') === '/oauth/authorize');
+const sharedNavigation = computed(() =>
+    ['/login', '/oauth/authorize'].includes(route.path.replace(/\/$/, ''))
+);
 const { verificationEmailFailed } = useAuth();
 const verificationPath = computed(() => ({
     path: '/profile',
@@ -93,6 +105,9 @@ const verificationPath = computed(() => ({
     &__main {
         display: flex;
         flex-direction: column;
+        flex: 1;
+        width: 100%;
+        min-width: 0;
         min-height: 100dvh;
         padding: 32px 16px 16px;
         background: var(--bg-secondary);
@@ -104,6 +119,18 @@ const verificationPath = computed(() => ({
         margin: 0 auto;
         flex: 1;
         min-width: 0;
+    }
+
+    &--consent &__content {
+        max-width: 560px;
+    }
+
+    &--workspace &__main {
+        width: 100%;
+        min-width: 0;
+        min-height: 0;
+        padding: 0;
+        background: transparent;
     }
 
     &__verification {
@@ -118,8 +145,6 @@ const verificationPath = computed(() => ({
             display: inline-flex;
             align-items: center;
             min-height: 44px;
-            color: var(--text-primary);
-            text-decoration: underline;
         }
     }
 
@@ -187,8 +212,6 @@ const verificationPath = computed(() => ({
         display: inline-flex;
         align-items: center;
         min-height: 44px;
-        color: var(--text-primary);
-        text-decoration: underline;
     }
 
     :deep(.auth-card__footer) {

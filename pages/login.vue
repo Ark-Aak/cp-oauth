@@ -1,5 +1,5 @@
 <template>
-    <el-card class="auth-card" shadow="never" :aria-busy="operation !== null">
+    <el-card class="auth-card login-card" shadow="never" :aria-busy="operation !== null">
         <noscript
             ><p class="auth-card__error">{{ $t('auth.flow.javascript_required') }}</p></noscript
         >
@@ -167,7 +167,7 @@
                         </template>
                     </el-input>
                 </el-form-item>
-                <NuxtLink :to="forgotPath" class="auth-card__link">
+                <NuxtLink :to="forgotPath" class="auth-card__link login-card__recovery">
                     {{ $t('auth.login.forgot_password') }}
                 </NuxtLink>
                 <div v-if="turnstileEnabled" class="auth-card__captcha">
@@ -217,7 +217,7 @@
             <p v-if="providers.length" class="auth-card__desc">
                 {{ $t('auth.flow.oauth_registration_hint') }}
             </p>
-            <div class="auth-card__actions">
+            <div class="auth-card__actions login-card__providers">
                 <el-button
                     v-for="provider in providers"
                     :key="provider.name"
@@ -239,9 +239,11 @@
                     {{ $t('auth.login.with_luogu') }}
                 </el-button>
             </div>
-            <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
+            <p class="auth-card__desc login-card__hint">
+                {{ $t('auth.flow.luogu_existing_only') }}
+            </p>
             <p v-if="publicConfig?.registrationEnabled" class="auth-card__footer">
-                {{ $t('auth.login.footer') }}
+                <span>{{ $t('auth.login.footer') }}</span>
                 <NuxtLink :to="registerPath">{{ $t('auth.login.register_link') }}</NuxtLink>
             </p>
         </template>
@@ -554,6 +556,40 @@ async function loginWithLuogu() {
 </script>
 
 <style scoped lang="scss">
+.auth-card.login-card {
+    .login-card__recovery {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+        margin: -8px 0 8px;
+        font-size: 14px;
+    }
+
+    .login-card__providers {
+        margin-bottom: 0;
+    }
+
+    .login-card__hint {
+        margin: 12px 0 0;
+        color: var(--text-muted);
+        font-size: 13px;
+        line-height: 1.6;
+        text-align: center;
+    }
+
+    .auth-card__footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0 8px;
+        margin-top: 20px;
+        padding-top: 12px;
+        border-top: 1px solid var(--divider-subtle);
+        text-align: center;
+    }
+}
+
 .login-icon {
     margin-right: 8px;
     flex-shrink: 0;

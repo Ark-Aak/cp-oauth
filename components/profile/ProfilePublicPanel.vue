@@ -31,8 +31,9 @@
                     >
                 </div>
                 <p id="profile-public-homepage-hint" class="profile-public__hint">
-                    {{ t('profile.workbench.homepage_public') }} {{ t('profile.homepage_hint') }}
+                    {{ t('profile.workbench.homepage_public') }}
                 </p>
+                <AppInputFormatHint id="profile-public-homepage-format" format="markdown" />
                 <el-input
                     id="profile-public-homepage"
                     v-model="draft.homepage"
@@ -41,7 +42,7 @@
                     :rows="12"
                     :disabled="!ready || pending"
                     :aria-invalid="!!fieldErrors.homepage"
-                    aria-describedby="profile-public-homepage-hint profile-public-homepage-error"
+                    aria-describedby="profile-public-homepage-format profile-public-homepage-hint profile-public-homepage-error"
                     class="profile-public__editor"
                 />
                 <p
@@ -63,6 +64,7 @@
                         :error="previewError"
                         :empty="!draft.homepage"
                         :empty-text="t('profile.workbench.preview_empty')"
+                        :empty-icon="FileText"
                         @retry="retryPreview"
                     >
                         <div class="profile-public__preview" v-html="previewHtml" />
@@ -78,6 +80,7 @@
                     :error="bindingsError"
                     :empty="bindingsStatus === 'success' && !bindings.length"
                     :empty-text="t('profile.no_accounts_to_show')"
+                    :empty-icon="Link2"
                     @retry="loadBindings(true)"
                 >
                     <el-checkbox-group
@@ -162,6 +165,7 @@
 </template>
 
 <script setup lang="ts">
+import { FileText, Link2 } from 'lucide-vue-next';
 import type { MeResponse } from '~/types/api';
 import type { ProfileIdentityPatch } from '~/composables/useProfileIdentity';
 import { PLATFORMS } from '~/utils/platforms';

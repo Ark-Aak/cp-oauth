@@ -1,7 +1,9 @@
 <template>
-    <div class="app-layout">
-        <a class="app-layout__skip" href="#main-content">{{ $t('nav.skip_content') }}</a>
-        <aside class="app-layout__desktop-nav">
+    <div class="app-layout" :class="{ 'app-layout--without-sidebar': !showSidebar }">
+        <a class="app-layout__skip ui-navigation-link" href="#main-content">{{
+            $t('nav.skip_content')
+        }}</a>
+        <aside v-if="showSidebar" class="app-layout__desktop-nav">
             <AppSidebar
                 :user="user"
                 :anonymous="status === 'anonymous'"
@@ -10,6 +12,7 @@
             />
         </aside>
         <el-drawer
+            v-if="showSidebar"
             id="mobile-navigation"
             v-model="sidebarOpen"
             direction="ltr"
@@ -29,6 +32,7 @@
         <div class="app-layout__workspace">
             <header class="app-layout__topbar">
                 <button
+                    v-if="showSidebar"
                     ref="menuButton"
                     type="button"
                     class="app-layout__menu"
@@ -39,14 +43,23 @@
                 >
                     <Menu :size="21" aria-hidden="true" />
                 </button>
-                <span class="app-layout__context">{{ $t('app.name') }}</span>
-                <div class="app-layout__desktop-preferences"><AppPreferences /></div>
-                <el-popover trigger="click" placement="bottom-end" :width="288">
+                <span v-if="showSidebar" class="app-layout__context">{{ $t('app.name') }}</span>
+                <NuxtLink v-else to="/" class="app-layout__context ui-navigation-link">{{
+                    $t('app.name')
+                }}</NuxtLink>
+                <el-popover
+                    trigger="click"
+                    placement="bottom-end"
+                    :width="288"
+                    role="dialog"
+                    :aria-label="$t('settings.title')"
+                    focus-on-show
+                >
                     <AppPreferences />
                     <template #reference
                         ><button
                             type="button"
-                            class="app-layout__mobile-preferences"
+                            class="app-layout__preferences"
                             :aria-label="$t('settings.title')"
                         >
                             <SlidersHorizontal :size="21" aria-hidden="true" /></button
@@ -88,7 +101,11 @@
 
 <script setup lang="ts">
 import { Menu, SlidersHorizontal } from 'lucide-vue-next';
+import { getCurrentInstance } from 'vue';
+import { ElMessageBox } from 'element-plus';
+withDefaults(defineProps<{ showSidebar?: boolean }>(), { showSidebar: true });
 const { t } = useI18n();
+const messageBoxContext = getCurrentInstance()?.appContext;
 const { user, status, error: authError, load, logout, verificationEmailFailed } = useAuth();
 const { confirmed: identityConfirmed } = useReauthentication();
 const sidebarOpen = ref(false);
@@ -120,6 +137,23 @@ watch(
 );
 async function handleLogout() {
     if (logoutPending.value) return;
+    try {
+        await ElMessageBox.confirm(
+            t('nav.logout_confirm'),
+            t('nav.logout'),
+            {
+                type: 'warning',
+                confirmButtonText: t('nav.logout'),
+                cancelButtonText: t('common.cancel')
+            },
+            messageBoxContext
+        );
+    } catch (cause) {
+        if (cause !== 'cancel' && cause !== 'close') {
+            logoutError.value = t('common.error');
+        }
+        return;
+    }
     logoutPending.value = true;
     logoutError.value = '';
     try {
@@ -138,6 +172,9 @@ async function handleLogout() {
 .app-layout {
     min-height: 100dvh;
 }
+.app-layout--without-sidebar {
+    --sidebar-width: 0px;
+}
 .app-layout__desktop-nav {
     position: fixed;
     inset: 0 auto 0 0;
@@ -153,8 +190,8 @@ async function handleLogout() {
     flex-direction: column;
 }
 .app-layout__topbar {
-    min-height: 88px;
-    padding: var(--space-4) var(--space-6);
+    min-height: 56px;
+    padding: 6px var(--space-6);
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -167,11 +204,25 @@ async function handleLogout() {
     color: var(--text-secondary);
     letter-spacing: 0.06em;
 }
-.app-layout__desktop-preferences {
+.app-layout__preferences {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     margin-left: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
 }
-.app-layout__menu,
-.app-layout__mobile-preferences {
+.app-layout__preferences:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent);
+}
+.app-layout__menu {
     display: none;
 }
 .app-layout__main {
@@ -196,8 +247,6 @@ async function handleLogout() {
     margin-bottom: var(--space-5);
 }
 .app-layout__notice a {
-    color: var(--accent);
-    text-decoration: underline;
     display: inline-flex;
     min-height: 44px;
     align-items: center;
@@ -237,11 +286,7 @@ async function handleLogout() {
         font-size: 16px;
         letter-spacing: 0;
     }
-    .app-layout__desktop-preferences {
-        display: none;
-    }
-    .app-layout__menu,
-    .app-layout__mobile-preferences {
+    .app-layout__menu {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -252,9 +297,6 @@ async function handleLogout() {
         background: transparent;
         color: var(--text-primary);
         cursor: pointer;
-    }
-    .app-layout__mobile-preferences {
-        margin-left: auto;
     }
     .app-layout__main {
         padding: var(--space-5) var(--space-4);

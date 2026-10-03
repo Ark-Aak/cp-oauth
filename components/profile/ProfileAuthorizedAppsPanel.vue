@@ -21,6 +21,7 @@
             :error="error"
             :empty="status === 'success' && !apps.length"
             :empty-text="t('oauth.authorized_apps.no_apps')"
+            :empty-icon="AppWindow"
             @retry="reload(true)"
         >
             <table class="profile-apps__table">
@@ -148,6 +149,7 @@
 </template>
 
 <script setup lang="ts">
+import { AppWindow } from 'lucide-vue-next';
 import { getCurrentInstance } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import type { AuthorizedApp } from '~/types/api';

@@ -14,6 +14,16 @@
         "error": "操作に失敗しました",
         "success": "操作が完了しました"
     },
+    "input_format": {
+        "markdown": {
+            "label": "Markdown 対応",
+            "description": "見出し、リスト、リンク、コードブロックを使用できます。"
+        },
+        "html": {
+            "label": "HTML 対応",
+            "description": "段落、太字、リンク、リストなどの HTML タグを使用できます。"
+        }
+    },
     "markdown": {
         "render_error": "Markdown を表示できませんでした。以下に元のテキストを表示しています。"
     },
@@ -74,6 +84,7 @@
         "about": "ドキュメント",
         "login": "ログイン",
         "logout": "ログアウト",
+        "logout_confirm": "現在のアカウントからログアウトしますか？",
         "admin": "管理",
         "signed_in_as": "ログイン中"
     },
@@ -394,8 +405,8 @@
         "not_found": "ユーザーが見つかりません。",
         "joined": "登録日",
         "linked_accounts": "連携済みCPアカウント",
-        "other_accounts": "その他プラットフォームアカウント",
-        "no_linked": "まだ競技プログラミングのアカウントが連携されていません。",
+        "other_accounts": "その他のプラットフォームアカウント",
+        "no_linked": "このユーザーには公開されている競技プログラミングのアカウントがありません。",
         "no_other_accounts": "その他プラットフォームアカウントはまだ連携されていません。",
         "cp_stats": "競技プログラミングデータ",
         "rating": "Rating",
@@ -521,6 +532,7 @@
             "exact_callback": "完全なコールバック URI を表示",
             "current_account": "現在のアカウント",
             "switch_account": "ログアウトしてアカウントを切り替える",
+            "switch_account_confirm": "現在のアカウントからログアウトして切り替えますか？別のアカウントでログインした後、この認可リクエストに戻ります。",
             "signed_out_hint": "ログインしていません。許可するにはログインが必要ですが、このリクエストはログインせずに拒否できます。",
             "verification_return_hint": "確認メールのリンクから、この認可リクエストに戻れます。",
             "sign_in_authorize": "ログインして許可"

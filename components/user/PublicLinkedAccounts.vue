@@ -17,7 +17,6 @@
                 class="public-accounts__identity"
             >
                 {{ account.platformUsername || account.platformUid }}
-                <ExternalLink :size="12" :stroke-width="1.5" aria-hidden="true" />
             </a>
             <span v-else class="public-accounts__identity">
                 {{ account.platformUsername || account.platformUid }}
@@ -27,7 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { ExternalLink } from 'lucide-vue-next';
 import { PLATFORMS } from '~/utils/platforms';
 import type { PublicLinkedAccount } from '~/types/api';
 
@@ -85,7 +83,6 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
         gap: var(--space-2);
         min-width: 0;
         overflow-wrap: anywhere;
-        color: var(--text-primary);
     }
 
     &__platform {
@@ -98,18 +95,6 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
         max-width: 100%;
         min-height: 44px;
         padding: var(--space-2) 0;
-
-        svg {
-            flex-shrink: 0;
-        }
-    }
-
-    a {
-        color: var(--accent);
-
-        &:hover {
-            text-decoration: underline;
-        }
     }
 }
 

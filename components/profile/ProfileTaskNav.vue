@@ -5,8 +5,8 @@
                 v-for="task in PROFILE_TASKS"
                 :key="task"
                 :href="target(task)"
-                class="profile-task-nav__link"
-                :class="{ 'profile-task-nav__link--active': modelValue === task }"
+                class="profile-task-nav__link ui-menu-link"
+                :class="{ 'is-active': modelValue === task }"
                 :aria-current="modelValue === task ? 'page' : undefined"
                 @click="selectLink(task, $event)"
                 >{{ t(`profile.tabs.${task}`) }}</a
@@ -74,35 +74,18 @@ function selectLink(task: ProfileTask, event: MouseEvent) {
         width: 100%;
     }
     @media (min-width: 1024px) {
+        position: sticky;
+        top: var(--space-5);
+        align-self: start;
+        max-height: calc(100dvh - var(--space-5) - var(--space-5));
+        overflow-y: auto;
+
         &__mobile {
             display: none;
         }
         &__desktop {
             display: grid;
             gap: var(--space-1);
-            position: sticky;
-            top: var(--space-5);
-        }
-        &__link {
-            display: flex;
-            align-items: center;
-            min-height: 44px;
-            padding: var(--space-3) var(--space-4);
-            border-radius: var(--card-radius);
-            font-size: 14px;
-            color: var(--text-secondary);
-            overflow-wrap: anywhere;
-            border-left: 2px solid transparent;
-        }
-        &__link:hover {
-            color: var(--accent);
-            background: var(--bg-secondary);
-        }
-        &__link--active {
-            color: var(--accent);
-            background: var(--accent-subtle);
-            border-left-color: var(--accent);
-            font-weight: 600;
         }
     }
 }
