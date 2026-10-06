@@ -131,7 +131,7 @@ function closed() {
 
     &__hint {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
     }
 
     &__field {
@@ -141,7 +141,7 @@ function closed() {
     }
 
     label {
-        font-size: 14px;
+        font-size: var(--font-size-control);
         font-weight: 600;
     }
 
@@ -151,7 +151,7 @@ function closed() {
 
     &__message {
         color: var(--text-primary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
@@ -161,7 +161,7 @@ function closed() {
 
     :deep(input),
     :deep(textarea) {
-        font-family: monospace;
+        font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
         overflow-wrap: anywhere;
     }
 }

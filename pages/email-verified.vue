@@ -1,7 +1,6 @@
 <template>
-    <el-card class="auth-card" shadow="never">
-        <p class="auth-card__brand">{{ siteTitle }}</p>
-        <h1 class="auth-card__title">{{ $t(titleKey) }}</h1>
+    <section class="auth-card" aria-labelledby="email-verification-title">
+        <h1 id="email-verification-title" class="auth-card__title">{{ $t(titleKey) }}</h1>
         <p class="auth-card__desc" :role="outcome === 'success' ? 'status' : 'alert'">
             {{ $t(descriptionKey) }}
         </p>
@@ -19,7 +18,7 @@
                 {{ $t('auth.flow.verification_request_again') }}
             </NuxtLink>
         </div>
-    </el-card>
+    </section>
 </template>
 
 <script setup lang="ts">

@@ -1,10 +1,9 @@
 <template>
-    <el-card class="auth-card" shadow="never" :aria-busy="operation !== null">
+    <section class="auth-card login" aria-labelledby="login-title" :aria-busy="operation !== null">
         <noscript
             ><p class="auth-card__error">{{ $t('auth.flow.javascript_required') }}</p></noscript
         >
-        <p class="auth-card__brand">{{ siteTitle }}</p>
-        <h1 class="auth-card__title">
+        <h1 id="login-title" class="auth-card__title">
             {{ twoFactorStep ? $t('auth.flow.two_factor_title') : $t('auth.login.title') }}
         </h1>
         <el-alert
@@ -45,6 +44,7 @@
                     }}
                 </p>
                 <el-form
+                    class="auth-card__form"
                     method="post"
                     :disabled="!hydrationReady"
                     :model="twoFactorForm"
@@ -61,7 +61,6 @@
                             inputmode="numeric"
                             maxlength="6"
                             :disabled="!hydrationReady || operation !== null"
-                            size="large"
                         />
                     </el-form-item>
                     <p v-if="codeAlreadySubmitted" class="auth-card__status" role="status">
@@ -79,7 +78,6 @@
                                 codeAlreadySubmitted
                             "
                             class="auth-card__button"
-                            size="large"
                         >
                             {{ $t('auth.login.verify_2fa') }}
                         </el-button>
@@ -111,6 +109,7 @@
             </div>
             <el-form
                 ref="formRef"
+                class="auth-card__form"
                 method="post"
                 :disabled="!hydrationReady"
                 :model="form"
@@ -127,10 +126,10 @@
                         :aria-label="$t('auth.login.email')"
                         autocomplete="email"
                         :disabled="!hydrationReady || operation !== null"
-                        size="large"
                     />
                 </el-form-item>
                 <el-form-item
+                    class="auth-card__field--with-help"
                     prop="password"
                     :label="$t('auth.login.password')"
                     for="login-password"
@@ -143,7 +142,6 @@
                         :aria-label="$t('auth.login.password')"
                         autocomplete="current-password"
                         :disabled="!hydrationReady || operation !== null"
-                        size="large"
                     >
                         <template #suffix>
                             <el-button
@@ -167,7 +165,7 @@
                         </template>
                     </el-input>
                 </el-form-item>
-                <NuxtLink :to="forgotPath" class="auth-card__link">
+                <NuxtLink :to="forgotPath" class="auth-card__link auth-card__recovery">
                     {{ $t('auth.login.forgot_password') }}
                 </NuxtLink>
                 <div v-if="turnstileEnabled" class="auth-card__captcha">
@@ -192,7 +190,6 @@
                             !hydrationReady || operation !== null || !configReady || !captchaReady
                         "
                         class="auth-card__button"
-                        size="large"
                     >
                         {{
                             operation === 'password'
@@ -203,49 +200,51 @@
                 </el-form-item>
             </el-form>
 
-            <div class="auth-card__actions">
-                <el-button
-                    :loading="operation === 'passkey'"
-                    :disabled="!hydrationReady || operation !== null || !configReady"
-                    @click="loginWithPasskey"
-                >
-                    <Fingerprint :size="18" :stroke-width="1.5" class="login-icon" />
-                    {{ $t('auth.login.with_passkey') }}
-                </el-button>
+            <div class="login__alternatives">
+                <div class="auth-card__actions">
+                    <el-button
+                        :loading="operation === 'passkey'"
+                        :disabled="!hydrationReady || operation !== null || !configReady"
+                        @click="loginWithPasskey"
+                    >
+                        <Fingerprint :size="18" :stroke-width="1.5" class="login__icon" />
+                        {{ $t('auth.login.with_passkey') }}
+                    </el-button>
+                </div>
+                <p class="login__divider">{{ $t('auth.login.oauth_divider') }}</p>
+                <p v-if="providers.length" class="auth-card__desc">
+                    {{ $t('auth.flow.oauth_registration_hint') }}
+                </p>
+                <div class="auth-card__actions login__providers">
+                    <el-button
+                        v-for="provider in providers"
+                        :key="provider.name"
+                        :loading="operation === provider.name"
+                        :disabled="
+                            !hydrationReady || operation !== null || !configReady || !captchaReady
+                        "
+                        @click="loginWithProvider(provider.name)"
+                    >
+                        <AppPlatformIcon :platform="provider.name" class="login__icon" />
+                        {{ $t(provider.label) }}
+                    </el-button>
+                    <el-button
+                        :loading="operation === 'luogu'"
+                        :disabled="!hydrationReady || operation !== null"
+                        @click="loginWithLuogu"
+                    >
+                        <AppPlatformIcon platform="luogu" class="login__icon" />
+                        {{ $t('auth.login.with_luogu') }}
+                    </el-button>
+                </div>
+                <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
             </div>
-            <el-divider>{{ $t('auth.login.oauth_divider') }}</el-divider>
-            <p v-if="providers.length" class="auth-card__desc">
-                {{ $t('auth.flow.oauth_registration_hint') }}
-            </p>
-            <div class="auth-card__actions">
-                <el-button
-                    v-for="provider in providers"
-                    :key="provider.name"
-                    :loading="operation === provider.name"
-                    :disabled="
-                        !hydrationReady || operation !== null || !configReady || !captchaReady
-                    "
-                    @click="loginWithProvider(provider.name)"
-                >
-                    <AppPlatformIcon :platform="provider.name" class="login-icon" />
-                    {{ $t(provider.label) }}
-                </el-button>
-                <el-button
-                    :loading="operation === 'luogu'"
-                    :disabled="!hydrationReady || operation !== null"
-                    @click="loginWithLuogu"
-                >
-                    <AppPlatformIcon platform="luogu" class="login-icon" />
-                    {{ $t('auth.login.with_luogu') }}
-                </el-button>
-            </div>
-            <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
             <p v-if="publicConfig?.registrationEnabled" class="auth-card__footer">
                 {{ $t('auth.login.footer') }}
                 <NuxtLink :to="registerPath">{{ $t('auth.login.register_link') }}</NuxtLink>
             </p>
         </template>
-    </el-card>
+    </section>
 </template>
 
 <script setup lang="ts">
@@ -554,8 +553,35 @@ async function loginWithLuogu() {
 </script>
 
 <style scoped lang="scss">
-.login-icon {
-    margin-right: 8px;
-    flex-shrink: 0;
+.login {
+    &__alternatives {
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-color);
+
+        > :last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &__divider {
+        margin-bottom: var(--space-3);
+        color: var(--text-secondary);
+        font-size: var(--font-size-control);
+    }
+
+    &__providers {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__icon {
+        margin-right: var(--space-2);
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 479px) {
+    .login__providers {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 </style>

@@ -1,9 +1,11 @@
 <template>
     <div ref="container" class="rating-history">
-        <div class="rating-history__chart">
+        <div class="rating-history__chart ui-card">
             <canvas ref="canvas" :aria-label="$t('user.rating_history')" role="img" />
-            <p v-if="pending" role="status">{{ $t('user.loading') }}</p>
-            <div v-if="error" role="alert">
+            <p v-if="pending" role="status" class="rating-history__status">
+                {{ $t('user.loading') }}
+            </p>
+            <div v-if="error" role="alert" class="rating-history__status">
                 <p>{{ $t('identity.network_error') }}</p>
                 <el-button @click="renderChart()">{{ $t('common.retry') }}</el-button>
             </div>
@@ -13,6 +15,7 @@
             <div
                 class="rating-history__table"
                 tabindex="0"
+                role="region"
                 :aria-label="$t('user.rating_history_table')"
             >
                 <table>
@@ -271,18 +274,37 @@ onBeforeUnmount(() => {
 
     &__chart {
         position: relative;
-        height: 280px;
+        height: 260px;
         width: 100%;
+        min-width: 0;
+        padding: var(--space-3);
+    }
+
+    &__status {
+        position: absolute;
+        inset: var(--space-1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        font-size: var(--font-size-control);
+        text-align: center;
     }
 
     &__data {
-        margin-top: var(--space-4);
+        margin-top: var(--space-3);
 
         summary {
             min-height: 44px;
             cursor: pointer;
-            padding: var(--space-3) 0;
+            padding: var(--space-2) 0;
             color: var(--accent);
+            font-size: var(--font-size-control);
+            overflow-wrap: anywhere;
         }
     }
 
@@ -293,12 +315,12 @@ onBeforeUnmount(() => {
         table {
             border-collapse: collapse;
             width: 100%;
-            font-size: 14px;
+            font-size: var(--font-size-control);
         }
 
         caption {
             text-align: left;
-            padding: var(--space-2);
+            padding: var(--space-2) 0;
         }
 
         th,
@@ -309,12 +331,13 @@ onBeforeUnmount(() => {
             border-bottom: 1px solid var(--card-border);
             color: var(--text-primary);
             min-width: 80px;
+            overflow-wrap: anywhere;
         }
     }
 }
 @media (max-width: 479px) {
     .rating-history__chart {
-        height: 240px;
+        height: 220px;
     }
 }
 </style>

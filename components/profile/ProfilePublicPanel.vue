@@ -300,14 +300,13 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .profile-public {
-    max-width: 680px;
     min-width: 0;
     &__intro {
         margin: var(--space-2) 0;
     }
     &__hint {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         margin: var(--space-2) 0;
     }
     &__form {
@@ -334,12 +333,12 @@ onBeforeUnmount(() => {
     &__heading label,
     &__accounts legend {
         font-weight: 600;
+        font-size: var(--font-size-control);
     }
     &__editor {
         :deep(textarea) {
-            font-family: monospace;
-            font-size: 14px;
-            line-height: 1.6;
+            font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+            line-height: 1.65;
         }
     }
     &__accounts {
@@ -370,7 +369,7 @@ onBeforeUnmount(() => {
     &__account-name {
         display: block;
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
     }
     &__option {
         margin-top: var(--space-4);
@@ -389,9 +388,8 @@ onBeforeUnmount(() => {
     }
     &__preview-region {
         margin-top: var(--space-4);
-        padding: var(--space-4);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-color);
         min-width: 0;
     }
     &__preview-region h3 {

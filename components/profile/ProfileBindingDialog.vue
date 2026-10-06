@@ -618,17 +618,18 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
     &__field label {
         color: var(--text-primary);
         font-weight: 600;
+        font-size: var(--font-size-control);
     }
 
     &__hint {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
     &__error {
         color: var(--el-color-danger);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 

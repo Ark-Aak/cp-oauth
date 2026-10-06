@@ -1,6 +1,12 @@
 <template>
-    <el-card class="auth-card" shadow="never" :aria-busy="operation !== null">
-        <h1 class="auth-card__title">{{ $t('auth.login.luogu_guide_title') }}</h1>
+    <section
+        class="auth-card luogu-auth"
+        aria-labelledby="luogu-auth-title"
+        :aria-busy="operation !== null"
+    >
+        <h1 id="luogu-auth-title" class="auth-card__title">
+            {{ $t('auth.login.luogu_guide_title') }}
+        </h1>
         <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
         <p class="auth-card__desc">{{ $t('auth.flow.luogu_setup_hint') }}</p>
         <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
@@ -27,8 +33,8 @@
             <p class="auth-card__desc">
                 {{ $t('binding.step2_desc', { platform: 'Luogu' }) }}
             </p>
-            <p class="luogu-code-label">{{ $t('binding.code_label') }}</p>
-            <pre class="luogu-code"><code>{{ challenge.code }}</code></pre>
+            <p class="luogu-auth__code-label">{{ $t('binding.code_label') }}</p>
+            <pre class="luogu-auth__code"><code>{{ challenge.code }}</code></pre>
             <div class="auth-card__actions">
                 <el-button
                     :loading="copyPending"
@@ -41,6 +47,7 @@
             <p class="auth-card__desc">{{ $t('binding.code_expires', { minutes: 10 }) }}</p>
             <el-form
                 ref="verifyFormRef"
+                class="auth-card__form"
                 method="post"
                 :disabled="!hydrationReady"
                 :model="form"
@@ -59,7 +66,6 @@
                         name="luogu-paste"
                         :aria-label="$t('auth.login.luogu_paste_id')"
                         :disabled="!hydrationReady || operation !== null"
-                        size="large"
                     />
                 </el-form-item>
                 <el-form-item>
@@ -69,7 +75,6 @@
                         native-type="submit"
                         :loading="operation === 'verify'"
                         :disabled="!hydrationReady || operation !== null"
-                        size="large"
                     >
                         {{ $t('auth.login.luogu_login_by_challenge') }}
                     </el-button>
@@ -93,6 +98,7 @@
             <p class="auth-card__desc">{{ $t('auth.login.luogu_challenge_tip') }}</p>
             <el-form
                 ref="requestFormRef"
+                class="auth-card__form"
                 method="post"
                 :disabled="!hydrationReady"
                 :model="form"
@@ -109,7 +115,6 @@
                         inputmode="numeric"
                         :aria-label="$t('auth.flow.luogu_uid')"
                         :disabled="!hydrationReady || operation !== null"
-                        size="large"
                     />
                 </el-form-item>
                 <div v-if="turnstileEnabled" class="auth-card__captcha">
@@ -132,7 +137,6 @@
                         :disabled="
                             !hydrationReady || operation !== null || !configReady || !captchaReady
                         "
-                        size="large"
                     >
                         {{ $t('binding.get_code') }}
                     </el-button>
@@ -142,7 +146,7 @@
         <p class="auth-card__footer">
             <NuxtLink :to="loginPath">{{ $t('auth.login.with_account_password') }}</NuxtLink>
         </p>
-    </el-card>
+    </section>
 </template>
 
 <script setup lang="ts">
@@ -357,21 +361,23 @@ async function copyChallengeCode() {
 </script>
 
 <style scoped lang="scss">
-.luogu-code-label {
-    margin-bottom: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
-}
+.luogu-auth {
+    &__code-label {
+        margin-bottom: var(--space-2);
+        color: var(--text-primary);
+        font-size: var(--font-size-control);
+    }
 
-.luogu-code {
-    margin-bottom: 12px;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--card-radius);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    &__code {
+        margin: 0 0 var(--space-3);
+        padding: var(--space-3);
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: var(--font-size-control);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
 }
 </style>

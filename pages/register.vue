@@ -1,7 +1,6 @@
 <template>
-    <el-card class="auth-card" shadow="never" :aria-busy="pending">
-        <p class="auth-card__brand">{{ siteTitle }}</p>
-        <h1 class="auth-card__title">{{ $t('auth.register.title') }}</h1>
+    <section class="auth-card" aria-labelledby="register-title" :aria-busy="pending">
+        <h1 id="register-title" class="auth-card__title">{{ $t('auth.register.title') }}</h1>
         <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ errorMessage }}
         </p>
@@ -20,6 +19,7 @@
         <el-form
             v-else
             ref="formRef"
+            class="auth-card__form"
             method="post"
             :disabled="!hydrationReady"
             :model="form"
@@ -39,7 +39,6 @@
                     name="username"
                     autocomplete="username"
                     :disabled="!hydrationReady || pending"
-                    size="large"
                 />
             </el-form-item>
             <el-form-item prop="email" :label="$t('auth.register.email')" for="register-email">
@@ -51,7 +50,6 @@
                     name="email"
                     autocomplete="email"
                     :disabled="!hydrationReady || pending"
-                    size="large"
                 />
             </el-form-item>
             <el-form-item
@@ -67,7 +65,6 @@
                     name="password"
                     autocomplete="new-password"
                     :disabled="!hydrationReady || pending"
-                    size="large"
                 >
                     <template #suffix>
                         <el-button
@@ -109,7 +106,6 @@
                     native-type="submit"
                     :loading="pending"
                     :disabled="!hydrationReady || pending || !captchaReady"
-                    size="large"
                     class="auth-card__button"
                 >
                     {{ pending ? $t('auth.register.loading') : $t('auth.register.submit') }}
@@ -120,7 +116,7 @@
             {{ $t('auth.register.footer') }}
             <NuxtLink :to="loginPath">{{ $t('auth.register.login_link') }}</NuxtLink>
         </p>
-    </el-card>
+    </section>
 </template>
 
 <script setup lang="ts">

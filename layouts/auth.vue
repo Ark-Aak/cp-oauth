@@ -32,7 +32,7 @@
                 </aside>
                 <slot />
             </div>
-            <AppFooter />
+            <AppFooter class="auth-layout__footer" />
         </el-main>
     </el-container>
 </template>
@@ -52,215 +52,227 @@ const verificationPath = computed(() => ({
 </script>
 
 <style scoped lang="scss">
-.auth-layout__topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto 24px;
-    gap: 16px;
-}
-.auth-layout__home {
-    display: inline-flex;
-    gap: 10px;
-    align-items: center;
-    min-height: 44px;
-    font-size: 20px;
-    font-weight: 700;
-}
-.auth-layout__preferences {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--card-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    cursor: pointer;
-}
-@media (max-width: 767px) {
-    :deep(.auth-card__title) {
-        font-size: 24px;
-    }
-}
-</style>
-
-<style scoped lang="scss">
 .auth-layout {
     &__main {
         display: flex;
         flex-direction: column;
         min-height: 100dvh;
-        padding: 32px 16px 16px;
+        padding: var(--space-5) var(--space-4) var(--space-4);
         background: var(--bg-secondary);
+    }
+
+    &__topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto var(--space-5);
+        gap: var(--space-4);
+    }
+
+    &__home {
+        display: inline-flex;
+        gap: var(--space-2);
+        align-items: center;
+        min-width: 0;
+        min-height: 44px;
+        font-size: var(--font-size-subheading);
+        font-weight: 600;
+        overflow-wrap: anywhere;
+
+        img {
+            flex-shrink: 0;
+        }
+    }
+
+    &__preferences {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        cursor: pointer;
     }
 
     &__content {
         width: 100%;
-        max-width: 440px;
+        max-width: 420px;
         margin: 0 auto;
         flex: 1;
         min-width: 0;
     }
 
     &__verification {
-        margin-bottom: 16px;
-        padding: 16px;
+        margin-bottom: var(--space-4);
+        padding: var(--panel-padding);
         border: 1px solid var(--border-color);
         border-radius: var(--card-radius);
         background: var(--bg-primary);
         color: var(--text-primary);
+        font-size: var(--font-size-control);
+        overflow-wrap: anywhere;
 
         a {
             display: inline-flex;
             align-items: center;
             min-height: 44px;
-            color: var(--text-primary);
             text-decoration: underline;
         }
     }
 
-    :deep(.auth-card) {
+    &__footer {
         width: 100%;
-        max-width: 440px;
-        border: 1px solid var(--border-color);
+        max-width: 1100px;
+        margin: var(--space-6) auto 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .auth-layout__main {
+        padding-top: var(--space-4);
     }
 
-    :deep(.auth-card__brand) {
-        margin-bottom: 12px;
-        color: var(--text-secondary);
-        font-size: 13px;
-        font-weight: 600;
+    .auth-layout__topbar {
+        margin-bottom: var(--space-4);
+    }
+}
+</style>
+
+<style lang="scss">
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    min-width: 0;
+    padding: var(--panel-padding);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+
+    > :last-child {
+        margin-bottom: 0;
     }
 
-    :deep(.auth-card__title) {
-        margin-bottom: 16px;
+    &__title {
+        margin-bottom: var(--space-4);
         color: var(--text-primary);
-        font-size: 28px;
+        font-size: var(--font-size-title);
         font-weight: 600;
         line-height: 1.3;
         overflow-wrap: anywhere;
     }
 
-    :deep(.auth-card__desc),
-    :deep(.auth-card__status) {
-        margin-bottom: 16px;
+    &__desc,
+    &__status {
+        margin-bottom: var(--space-4);
         color: var(--text-secondary);
-        font-size: 14px;
-        line-height: 1.6;
+        font-size: var(--font-size-control);
+        line-height: 1.65;
         overflow-wrap: anywhere;
     }
 
-    :deep(.auth-card__alert) {
-        margin-bottom: 16px;
+    &__alert {
+        margin-bottom: var(--space-4);
     }
 
-    :deep(.auth-card__error) {
-        margin-bottom: 16px;
-        padding: 12px;
+    &__error {
+        margin-bottom: var(--space-4);
+        padding: var(--space-3);
         border-left: 3px solid var(--el-color-danger);
         background: var(--bg-secondary);
         color: var(--text-primary);
-        line-height: 1.6;
+        font-size: var(--font-size-control);
+        line-height: 1.65;
         overflow-wrap: anywhere;
     }
 
-    :deep(.auth-card__button) {
+    &__form {
+        margin-bottom: var(--space-4);
+
+        > :last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &__field--with-help {
+        margin-bottom: 0;
+    }
+
+    &__button {
         width: 100%;
     }
 
-    :deep(.auth-card__actions) {
+    &__actions {
         display: grid;
-        gap: 8px;
-        margin-bottom: 16px;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+
+        > .el-button {
+            margin: 0;
+        }
     }
 
-    :deep(.auth-card__actions .el-button + .el-button) {
-        margin-left: 0;
-    }
-
-    :deep(.auth-card__link),
-    :deep(.auth-card__footer a) {
+    &__link,
+    &__footer a {
         display: inline-flex;
         align-items: center;
+        min-width: 44px;
         min-height: 44px;
         color: var(--text-primary);
         text-decoration: underline;
+        overflow-wrap: anywhere;
     }
 
-    :deep(.auth-card__footer) {
-        margin-top: 8px;
+    &__recovery {
+        display: flex;
+        width: fit-content;
+        margin: 0 0 var(--space-2) auto;
+        font-size: var(--font-size-control);
+    }
+
+    &__footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--space-1);
+        margin-top: var(--space-2);
         color: var(--text-secondary);
-        font-size: 14px;
-        line-height: 1.6;
+        font-size: var(--font-size-control);
+        line-height: 1.65;
+        overflow-wrap: anywhere;
     }
 
-    :deep(.auth-card .el-button) {
-        min-height: 44px;
-        height: auto;
-        white-space: normal;
-    }
-
-    :deep(.auth-card .el-button > span) {
-        white-space: normal;
-        line-height: 1.5;
-    }
-
-    :deep(.auth-card .el-input__wrapper) {
-        min-height: 44px;
-    }
-
-    :deep(.auth-card__captcha) {
+    &__captcha {
         min-width: 0;
-        margin-bottom: 16px;
+        margin-bottom: var(--space-4);
     }
 
-    :deep(.auth-card__captcha-widget) {
+    &__captcha-widget {
         display: flex;
         justify-content: center;
     }
 
-    :deep(.auth-card__captcha .auth-card__status) {
-        margin: 8px 0;
+    &__captcha &__status {
+        margin: var(--space-2) 0;
     }
 
-    :deep(.app-footer) {
-        margin-top: 32px;
-    }
-
-    :deep(.app-footer a) {
-        display: inline-flex;
-        align-items: center;
-        min-height: 44px;
-    }
-
-    :deep(.auth-card .auth-card__password-toggle) {
+    &__password-toggle {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-width: 44px;
-        min-height: 44px;
         padding: 0;
     }
 }
 
-@media (max-width: 480px) {
-    .auth-layout {
-        &__main {
-            padding-top: 16px;
-        }
-
-        :deep(.auth-card .el-card__body) {
-            padding: 16px;
-        }
-    }
-}
 @media (max-width: 767px) {
-    .auth-layout :deep(.auth-card__title) {
-        font-size: 24px;
+    .auth-card__title {
+        font-size: var(--font-size-title-mobile);
     }
 }
 </style>

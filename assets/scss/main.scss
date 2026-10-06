@@ -10,7 +10,7 @@
     --accent: var(--el-color-primary);
     --card-bg: var(--el-bg-color);
     --card-border: var(--el-border-color);
-    --card-radius: 8px;
+    --card-radius: 10px;
     --card-shadow: none;
     --divider-subtle: var(--el-border-color-light);
     --accent-subtle: var(--el-color-primary-light-9);
@@ -20,11 +20,24 @@
     --space-4: 16px;
     --space-5: 24px;
     --space-6: 32px;
-    --sidebar-width: 240px;
+    --sidebar-width: 220px;
+    --panel-padding: 20px;
+    --font-size-body: 15px;
+    --font-size-control: 14px;
+    --font-size-meta: 13px;
+    --font-size-title: 26px;
+    --font-size-title-mobile: 22px;
+    --font-size-section: 18px;
+    --font-size-subheading: 16px;
     --font-body:
         'Source Sans 3 Variable', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'Microsoft YaHei',
         sans-serif;
     --el-font-family: var(--font-body);
+    --el-font-size-base: var(--font-size-control);
+    --el-component-size: 44px;
+    --el-component-size-large: 44px;
+    --el-component-size-small: 44px;
+    --el-border-radius-base: 6px;
 }
 html:lang(ja) {
     --font-body: 'Source Sans 3 Variable', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif;
@@ -39,8 +52,8 @@ body {
     margin: 0;
     padding: 0;
     font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: var(--font-size-body);
+    line-height: 1.65;
     color: var(--text-primary);
     background: var(--bg-secondary);
     -webkit-font-smoothing: antialiased;
@@ -80,11 +93,11 @@ p {
     margin: 0;
 }
 h2 {
-    font-size: 20px;
+    font-size: var(--font-size-section);
     line-height: 1.4;
 }
 h3 {
-    font-size: 17px;
+    font-size: var(--font-size-subheading);
     line-height: 1.4;
 }
 img,
@@ -126,6 +139,10 @@ pre {
 .task-panel {
     max-width: 680px;
     min-width: 0;
+    padding: var(--panel-padding);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
 }
 .task-section {
     padding: var(--space-5) 0;
@@ -143,7 +160,7 @@ pre {
 .task-section__hint {
     margin-bottom: var(--space-4);
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: var(--font-size-control);
 }
 .task-actions {
     display: flex;
@@ -167,6 +184,11 @@ pre {
     font-style: var(--shiki-dark-font-style);
     font-weight: var(--shiki-dark-font-weight);
     text-decoration: var(--shiki-dark-text-decoration);
+}
+@media (max-width: 767px) {
+    :root {
+        --panel-padding: var(--space-4);
+    }
 }
 @media (prefers-reduced-motion: reduce) {
     *,

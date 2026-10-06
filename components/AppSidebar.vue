@@ -85,16 +85,16 @@ function active(path: string) {
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    padding: var(--space-5) var(--space-3) var(--space-4);
+    padding: var(--space-3) var(--space-3) var(--space-4);
     background: var(--bg-primary);
 }
 .app-sidebar__brand {
     display: flex;
-    gap: var(--space-3);
+    gap: var(--space-2);
     align-items: center;
-    padding: 0 var(--space-3) var(--space-5);
+    padding: 0 var(--space-3) var(--space-4);
     min-height: 52px;
-    font-size: 20px;
+    font-size: var(--font-size-section);
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text-primary);
@@ -107,10 +107,10 @@ function active(path: string) {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: 10px var(--space-3);
-    min-height: 48px;
-    border-radius: var(--card-radius);
-    font-size: 16px;
+    padding: var(--space-2) var(--space-3);
+    min-height: 44px;
+    border-radius: var(--el-border-radius-base);
+    font-size: var(--font-size-control);
     color: var(--text-secondary);
     border: 0;
     background: transparent;
@@ -129,17 +129,19 @@ function active(path: string) {
     color: var(--accent);
     background: var(--accent-subtle);
     font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--accent);
 }
 .app-sidebar__account {
     margin-top: auto;
     padding-top: var(--space-5);
+    border-top: 1px solid var(--divider-subtle);
 }
 .app-sidebar__identity {
     display: flex;
     gap: var(--space-3);
     align-items: center;
     padding: var(--space-3);
-    border-top: 1px solid var(--border-color);
+    min-height: 44px;
 }
 .app-sidebar__identity-text {
     min-width: 0;
@@ -149,12 +151,12 @@ function active(path: string) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 16px;
+    font-size: var(--font-size-body);
     font-weight: 600;
 }
 .app-sidebar__identity-text > span {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: var(--font-size-meta);
     overflow-wrap: anywhere;
 }
 .app-sidebar__logout {
@@ -162,5 +164,9 @@ function active(path: string) {
 }
 .app-sidebar__logout:disabled {
     cursor: wait;
+}
+.app-sidebar__identity:hover {
+    background: var(--bg-secondary);
+    border-radius: var(--el-border-radius-base);
 }
 </style>

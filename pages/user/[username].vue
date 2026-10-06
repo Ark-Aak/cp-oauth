@@ -1,9 +1,9 @@
 <template>
     <div class="user-profile">
         <template v-if="user">
-            <header class="user-profile__identity">
+            <header class="user-profile__identity ui-card">
                 <AppUserAvatar
-                    :size="64"
+                    :size="56"
                     :src="user.avatarUrl || undefined"
                     :name="user.displayName || user.username"
                 />
@@ -44,6 +44,32 @@
                     <pre v-if="markdownError" class="user-profile__markdown-source">{{
                         homepageSource
                     }}</pre>
+                </section>
+
+                <section class="user-profile__section" aria-labelledby="public-accounts">
+                    <h2 id="public-accounts">{{ $t('profile.public_accounts') }}</h2>
+                    <div class="user-profile__accounts">
+                        <div class="user-profile__account-group">
+                            <h3>{{ $t('user.linked_accounts') }}</h3>
+                            <AppAsyncState
+                                :pending="false"
+                                :empty="!cpLinkedAccounts.length"
+                                :empty-text="$t('user.no_linked')"
+                            >
+                                <UserPublicLinkedAccounts :accounts="cpLinkedAccounts" />
+                            </AppAsyncState>
+                        </div>
+                        <div class="user-profile__account-group">
+                            <h3>{{ $t('user.other_accounts') }}</h3>
+                            <AppAsyncState
+                                :pending="false"
+                                :empty="!otherLinkedAccounts.length"
+                                :empty-text="$t('user.no_other_accounts')"
+                            >
+                                <UserPublicLinkedAccounts :accounts="otherLinkedAccounts" />
+                            </AppAsyncState>
+                        </div>
+                    </div>
                 </section>
 
                 <section
@@ -97,32 +123,6 @@
                             </li>
                         </ul>
                     </AppAsyncState>
-                </section>
-
-                <section class="user-profile__section" aria-labelledby="public-accounts">
-                    <h2 id="public-accounts">{{ $t('profile.public_accounts') }}</h2>
-                    <div class="user-profile__accounts">
-                        <div class="user-profile__account-group">
-                            <h3>{{ $t('user.linked_accounts') }}</h3>
-                            <AppAsyncState
-                                :pending="false"
-                                :empty="!cpLinkedAccounts.length"
-                                :empty-text="$t('user.no_linked')"
-                            >
-                                <UserPublicLinkedAccounts :accounts="cpLinkedAccounts" />
-                            </AppAsyncState>
-                        </div>
-                        <div class="user-profile__account-group">
-                            <h3>{{ $t('user.other_accounts') }}</h3>
-                            <AppAsyncState
-                                :pending="false"
-                                :empty="!otherLinkedAccounts.length"
-                                :empty-text="$t('user.no_other_accounts')"
-                            >
-                                <UserPublicLinkedAccounts :accounts="otherLinkedAccounts" />
-                            </AppAsyncState>
-                        </div>
-                    </div>
                 </section>
 
                 <section
@@ -346,7 +346,8 @@ const renderedHtml = computed(() =>
         display: flex;
         align-items: flex-start;
         gap: var(--space-4);
-        margin-bottom: var(--space-6);
+        margin-bottom: var(--space-5);
+        padding: var(--panel-padding);
     }
 
     &__identity-text {
@@ -365,8 +366,8 @@ const renderedHtml = computed(() =>
     }
 
     &__joined {
-        font-size: 14px;
-        color: var(--text-muted);
+        font-size: var(--font-size-meta);
+        color: var(--text-secondary);
         margin-top: var(--space-2);
     }
 
@@ -380,14 +381,14 @@ const renderedHtml = computed(() =>
         border-top: 1px solid var(--border-color);
 
         h2 {
-            margin-bottom: var(--space-4);
+            margin-bottom: var(--space-3);
         }
     }
 
     &__accounts {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-6);
+        gap: var(--space-5);
     }
 
     &__account-group {
@@ -410,7 +411,7 @@ const renderedHtml = computed(() =>
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: var(--space-4) var(--space-6);
+        gap: var(--space-3) var(--space-5);
         padding: var(--space-4) 0;
 
         & + & {
@@ -420,6 +421,7 @@ const renderedHtml = computed(() =>
 
     &__stat-identity {
         min-width: 0;
+        flex: 1 1 180px;
         overflow-wrap: anywhere;
     }
 
@@ -431,28 +433,38 @@ const renderedHtml = computed(() =>
     }
 
     &__stat-handle {
-        font-size: 14px;
+        font-size: var(--font-size-control);
         color: var(--text-secondary);
     }
 
     &__stat-values {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--space-4) var(--space-6);
+        gap: var(--space-3) var(--space-5);
         margin: 0;
+        min-width: 0;
+        max-width: 100%;
+
+        > div {
+            min-width: 0;
+        }
 
         dt {
-            font-size: 14px;
-            color: var(--text-muted);
+            font-size: var(--font-size-control);
+            color: var(--text-secondary);
         }
 
         dd {
             margin: 0;
             font-weight: 600;
+            font-size: var(--font-size-subheading);
+            overflow-wrap: anywhere;
         }
     }
 
     &__markdown-source {
+        max-width: 880px;
+        font-size: var(--font-size-control);
         margin-top: var(--space-4);
         padding: var(--space-4);
         border: 1px solid var(--border-color);
@@ -463,6 +475,8 @@ const renderedHtml = computed(() =>
 
     &__markdown {
         min-width: 0;
+        max-width: 880px;
+        font-size: var(--font-size-body);
         overflow-wrap: anywhere;
 
         :deep(h2),
@@ -485,7 +499,7 @@ const renderedHtml = computed(() =>
         }
 
         :deep(code) {
-            font-size: 14px;
+            font-size: var(--font-size-control);
             background: var(--bg-tertiary);
             padding: var(--space-1);
             border-radius: var(--card-radius);
@@ -498,7 +512,7 @@ const renderedHtml = computed(() =>
             padding: var(--space-4);
             overflow-x: auto;
             margin-bottom: var(--space-4);
-            font-size: 14px;
+            font-size: var(--font-size-control);
 
             code {
                 background: none;
@@ -565,7 +579,7 @@ const renderedHtml = computed(() =>
 
 @media (max-width: 479px) {
     .user-profile__identity {
-        flex-direction: column;
+        gap: var(--space-3);
     }
 }
 </style>

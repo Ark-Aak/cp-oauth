@@ -18,13 +18,13 @@ defineProps<{ title: string; description?: string }>();
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-5);
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-5);
     &__text {
         min-width: 0;
     }
     h1 {
         margin: 0;
-        font-size: 28px;
+        font-size: var(--font-size-title);
         line-height: 1.3;
         font-weight: 700;
         letter-spacing: -0.025em;
@@ -34,13 +34,18 @@ defineProps<{ title: string; description?: string }>();
         margin-top: var(--space-2);
         color: var(--text-secondary);
         max-width: 64ch;
-        font-size: 16px;
+        font-size: var(--font-size-body);
     }
     &__actions {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-2);
         flex-shrink: 0;
+        align-items: center;
+        max-width: 100%;
+    }
+    &__actions :deep(.el-button + .el-button) {
+        margin-left: 0;
     }
 }
 @media (max-width: 767px) {
@@ -48,7 +53,7 @@ defineProps<{ title: string; description?: string }>();
         flex-direction: column;
         gap: var(--space-4);
         h1 {
-            font-size: 24px;
+            font-size: var(--font-size-title-mobile);
         }
     }
 }

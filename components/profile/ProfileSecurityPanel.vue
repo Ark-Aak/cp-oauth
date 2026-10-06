@@ -763,6 +763,10 @@ onBeforeUnmount(() => {
         }
     }
 
+    &__section:last-child {
+        padding-bottom: 0;
+    }
+
     &__form {
         display: grid;
         gap: var(--space-4);
@@ -777,19 +781,20 @@ onBeforeUnmount(() => {
         label {
             color: var(--text-primary);
             font-weight: 600;
+            font-size: var(--font-size-control);
         }
     }
 
     &__actions {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--space-3);
+        gap: var(--space-2);
         margin-top: var(--space-3);
     }
 
     &__hint {
         color: var(--text-secondary);
-        font-size: 0.875rem;
+        font-size: var(--font-size-control);
     }
     &__error {
         color: var(--el-color-danger);
@@ -801,11 +806,9 @@ onBeforeUnmount(() => {
     }
 
     &__notice {
-        padding: var(--space-4);
+        padding: var(--space-3) var(--space-4);
         margin-block: var(--space-4);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
-        background: var(--bg-secondary);
+        border-left: 2px solid var(--border-color);
 
         p {
             margin-bottom: var(--space-3);
@@ -878,7 +881,7 @@ onBeforeUnmount(() => {
         }
         dt {
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: var(--font-size-meta);
         }
         dd {
             margin: 0;

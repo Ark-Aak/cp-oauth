@@ -9,196 +9,206 @@
             <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
         </p>
 
-        <div class="admin-users__search">
-            <label for="admin-user-search">{{ $t('admin.users.search') }}</label>
-            <el-input
-                id="admin-user-search"
-                v-model="search"
-                clearable
-                :aria-invalid="!!fieldErrors.search"
-                :aria-describedby="fieldErrors.search ? 'admin-user-search-error' : undefined"
-                @input="debouncedLoad"
-            />
-            <p
-                v-if="fieldErrors.search"
-                id="admin-user-search-error"
-                class="admin-users__error"
-                role="alert"
-            >
-                {{ fieldErrors.search }}
-            </p>
-        </div>
-        <div v-if="fieldErrors.page" class="admin-users__query-error" role="alert">
-            <p>{{ fieldErrors.page }}</p>
-            <el-button native-type="button" @click="changePage(1)">
-                {{ $t('admin.workbench.first_page') }}
-            </el-button>
-        </div>
-
-        <AppAsyncState
-            :pending="tableLoading"
-            :error="loadError"
-            :empty="users.length === 0"
-            :empty-text="$t('admin.users.no_results')"
-            @retry="loadUsers"
-        >
-            <p class="admin-users__result-count" role="status">
-                {{ $t('admin.workbench.results', { count: total }) }}
-            </p>
-            <div class="admin-users__table-wrap">
-                <table class="admin-users__table">
-                    <thead>
-                        <tr>
-                            <th scope="col">{{ $t('admin.users.username') }}</th>
-                            <th scope="col">{{ $t('admin.users.email') }}</th>
-                            <th scope="col">{{ $t('admin.users.role') }}</th>
-                            <th scope="col">{{ $t('admin.users.verified') }}</th>
-                            <th scope="col">{{ $t('admin.users.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="row in users" :key="row.id" :aria-busy="isRowPending(row.id)">
-                            <td>
-                                <strong>{{ row.displayName || row.username }}</strong>
-                                <span class="admin-users__username">@{{ row.username }}</span>
-                            </td>
-                            <td>{{ row.email }}</td>
-                            <td>
-                                <el-select
-                                    :model-value="row.role"
-                                    :disabled="isRowPending(row.id)"
-                                    :aria-label="`${$t('admin.users.role')}: ${row.username}`"
-                                    @change="(value: string) => updateRole(row, value)"
-                                >
-                                    <el-option
-                                        value="user"
-                                        :label="$t('admin.workbench.role_user')"
-                                    />
-                                    <el-option
-                                        value="admin"
-                                        :label="$t('admin.workbench.role_admin')"
-                                    />
-                                </el-select>
-                            </td>
-                            <td>
-                                {{
-                                    $t(
-                                        row.emailVerified
-                                            ? 'admin.workbench.email_verified'
-                                            : 'admin.workbench.email_unverified'
-                                    )
-                                }}
-                            </td>
-                            <td>
-                                <div class="admin-users__actions">
-                                    <el-button
-                                        v-if="!row.emailVerified"
-                                        native-type="button"
-                                        :loading="!!verificationPending[row.id]"
-                                        :disabled="isRowPending(row.id)"
-                                        :aria-label="`${$t('admin.users.verify')}: ${row.username}`"
-                                        @click="verifyUser(row)"
-                                    >
-                                        {{ $t('admin.users.verify') }}
-                                    </el-button>
-                                    <el-button
-                                        type="danger"
-                                        plain
-                                        native-type="button"
-                                        :loading="!!deletionPending[row.id]"
-                                        :disabled="isRowPending(row.id)"
-                                        :aria-label="`${$t('admin.users.delete')}: ${row.username}`"
-                                        @click="deleteUser(row)"
-                                    >
-                                        {{ $t('admin.users.delete') }}
-                                    </el-button>
-                                </div>
-                                <p v-if="rowErrors[row.id]" class="admin-users__error" role="alert">
-                                    {{ rowErrors[row.id] }}
-                                </p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <section class="admin-users__results ui-card" :aria-label="$t('admin.users.tab')">
+            <div class="admin-users__search">
+                <label for="admin-user-search">{{ $t('admin.users.search') }}</label>
+                <el-input
+                    id="admin-user-search"
+                    v-model="search"
+                    clearable
+                    :aria-invalid="!!fieldErrors.search"
+                    :aria-describedby="fieldErrors.search ? 'admin-user-search-error' : undefined"
+                    @input="debouncedLoad"
+                />
+                <p
+                    v-if="fieldErrors.search"
+                    id="admin-user-search-error"
+                    class="admin-users__error"
+                    role="alert"
+                >
+                    {{ fieldErrors.search }}
+                </p>
+            </div>
+            <div v-if="fieldErrors.page" class="admin-users__query-error" role="alert">
+                <p>{{ fieldErrors.page }}</p>
+                <el-button native-type="button" @click="changePage(1)">
+                    {{ $t('admin.workbench.first_page') }}
+                </el-button>
             </div>
 
-            <ul class="admin-users__cards">
-                <li
-                    v-for="row in users"
-                    :key="row.id"
-                    class="admin-users__card"
-                    :aria-busy="isRowPending(row.id)"
-                >
-                    <h2>{{ row.displayName || row.username }}</h2>
-                    <p class="admin-users__username">@{{ row.username }}</p>
-                    <dl>
-                        <div>
-                            <dt>{{ $t('admin.users.email') }}</dt>
-                            <dd>{{ row.email }}</dd>
-                        </div>
-                        <div>
-                            <dt>{{ $t('admin.users.verified') }}</dt>
-                            <dd>
-                                {{
-                                    $t(
-                                        row.emailVerified
-                                            ? 'admin.workbench.email_verified'
-                                            : 'admin.workbench.email_unverified'
-                                    )
-                                }}
-                            </dd>
-                        </div>
-                    </dl>
-                    <label :for="`admin-role-${row.id}`">{{ $t('admin.users.role') }}</label>
-                    <el-select
-                        :id="`admin-role-${row.id}`"
-                        :model-value="row.role"
-                        :disabled="isRowPending(row.id)"
-                        @change="(value: string) => updateRole(row, value)"
-                    >
-                        <el-option value="user" :label="$t('admin.workbench.role_user')" />
-                        <el-option value="admin" :label="$t('admin.workbench.role_admin')" />
-                    </el-select>
-                    <div class="admin-users__actions">
-                        <el-button
-                            v-if="!row.emailVerified"
-                            native-type="button"
-                            :loading="!!verificationPending[row.id]"
-                            :disabled="isRowPending(row.id)"
-                            :aria-label="`${$t('admin.users.verify')}: ${row.username}`"
-                            @click="verifyUser(row)"
-                        >
-                            {{ $t('admin.users.verify') }}
-                        </el-button>
-                        <el-button
-                            type="danger"
-                            plain
-                            native-type="button"
-                            :loading="!!deletionPending[row.id]"
-                            :disabled="isRowPending(row.id)"
-                            :aria-label="`${$t('admin.users.delete')}: ${row.username}`"
-                            @click="deleteUser(row)"
-                        >
-                            {{ $t('admin.users.delete') }}
-                        </el-button>
-                    </div>
-                    <p v-if="rowErrors[row.id]" class="admin-users__error" role="alert">
-                        {{ rowErrors[row.id] }}
-                    </p>
-                </li>
-            </ul>
+            <AppAsyncState
+                :pending="tableLoading"
+                :error="loadError"
+                :empty="users.length === 0"
+                :empty-text="$t('admin.users.no_results')"
+                @retry="loadUsers"
+            >
+                <p class="admin-users__result-count" role="status">
+                    {{ $t('admin.workbench.results', { count: total }) }}
+                </p>
+                <div class="admin-users__table-wrap">
+                    <table class="admin-users__table">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ $t('admin.users.username') }}</th>
+                                <th scope="col">{{ $t('admin.users.email') }}</th>
+                                <th scope="col">{{ $t('admin.users.role') }}</th>
+                                <th scope="col">{{ $t('admin.users.verified') }}</th>
+                                <th scope="col">{{ $t('admin.users.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in users"
+                                :key="row.id"
+                                :aria-busy="isRowPending(row.id)"
+                            >
+                                <td>
+                                    <strong>{{ row.displayName || row.username }}</strong>
+                                    <span class="admin-users__username">@{{ row.username }}</span>
+                                </td>
+                                <td>{{ row.email }}</td>
+                                <td>
+                                    <el-select
+                                        :model-value="row.role"
+                                        :disabled="isRowPending(row.id)"
+                                        :aria-label="`${$t('admin.users.role')}: ${row.username}`"
+                                        @change="(value: string) => updateRole(row, value)"
+                                    >
+                                        <el-option
+                                            value="user"
+                                            :label="$t('admin.workbench.role_user')"
+                                        />
+                                        <el-option
+                                            value="admin"
+                                            :label="$t('admin.workbench.role_admin')"
+                                        />
+                                    </el-select>
+                                </td>
+                                <td>
+                                    {{
+                                        $t(
+                                            row.emailVerified
+                                                ? 'admin.workbench.email_verified'
+                                                : 'admin.workbench.email_unverified'
+                                        )
+                                    }}
+                                </td>
+                                <td>
+                                    <div class="admin-users__actions">
+                                        <el-button
+                                            v-if="!row.emailVerified"
+                                            native-type="button"
+                                            :loading="!!verificationPending[row.id]"
+                                            :disabled="isRowPending(row.id)"
+                                            :aria-label="`${$t('admin.users.verify')}: ${row.username}`"
+                                            @click="verifyUser(row)"
+                                        >
+                                            {{ $t('admin.users.verify') }}
+                                        </el-button>
+                                        <el-button
+                                            type="danger"
+                                            plain
+                                            native-type="button"
+                                            :loading="!!deletionPending[row.id]"
+                                            :disabled="isRowPending(row.id)"
+                                            :aria-label="`${$t('admin.users.delete')}: ${row.username}`"
+                                            @click="deleteUser(row)"
+                                        >
+                                            {{ $t('admin.users.delete') }}
+                                        </el-button>
+                                    </div>
+                                    <p
+                                        v-if="rowErrors[row.id]"
+                                        class="admin-users__error"
+                                        role="alert"
+                                    >
+                                        {{ rowErrors[row.id] }}
+                                    </p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            <el-pagination
-                v-if="totalPages > 1"
-                :current-page="page"
-                :page-size="20"
-                :total="total"
-                :pager-count="5"
-                layout="prev, pager, next"
-                class="admin-users__pagination"
-                @current-change="changePage"
-            />
-        </AppAsyncState>
+                <ul class="admin-users__cards">
+                    <li
+                        v-for="row in users"
+                        :key="row.id"
+                        class="admin-users__card"
+                        :aria-busy="isRowPending(row.id)"
+                    >
+                        <h2>{{ row.displayName || row.username }}</h2>
+                        <p class="admin-users__username">@{{ row.username }}</p>
+                        <dl>
+                            <div>
+                                <dt>{{ $t('admin.users.email') }}</dt>
+                                <dd>{{ row.email }}</dd>
+                            </div>
+                            <div>
+                                <dt>{{ $t('admin.users.verified') }}</dt>
+                                <dd>
+                                    {{
+                                        $t(
+                                            row.emailVerified
+                                                ? 'admin.workbench.email_verified'
+                                                : 'admin.workbench.email_unverified'
+                                        )
+                                    }}
+                                </dd>
+                            </div>
+                        </dl>
+                        <label :for="`admin-role-${row.id}`">{{ $t('admin.users.role') }}</label>
+                        <el-select
+                            :id="`admin-role-${row.id}`"
+                            :model-value="row.role"
+                            :disabled="isRowPending(row.id)"
+                            @change="(value: string) => updateRole(row, value)"
+                        >
+                            <el-option value="user" :label="$t('admin.workbench.role_user')" />
+                            <el-option value="admin" :label="$t('admin.workbench.role_admin')" />
+                        </el-select>
+                        <div class="admin-users__actions">
+                            <el-button
+                                v-if="!row.emailVerified"
+                                native-type="button"
+                                :loading="!!verificationPending[row.id]"
+                                :disabled="isRowPending(row.id)"
+                                :aria-label="`${$t('admin.users.verify')}: ${row.username}`"
+                                @click="verifyUser(row)"
+                            >
+                                {{ $t('admin.users.verify') }}
+                            </el-button>
+                            <el-button
+                                type="danger"
+                                plain
+                                native-type="button"
+                                :loading="!!deletionPending[row.id]"
+                                :disabled="isRowPending(row.id)"
+                                :aria-label="`${$t('admin.users.delete')}: ${row.username}`"
+                                @click="deleteUser(row)"
+                            >
+                                {{ $t('admin.users.delete') }}
+                            </el-button>
+                        </div>
+                        <p v-if="rowErrors[row.id]" class="admin-users__error" role="alert">
+                            {{ rowErrors[row.id] }}
+                        </p>
+                    </li>
+                </ul>
+
+                <el-pagination
+                    v-if="totalPages > 1"
+                    :current-page="page"
+                    :page-size="20"
+                    :total="total"
+                    :pager-count="5"
+                    layout="prev, pager, next"
+                    class="admin-users__pagination"
+                    @current-change="changePage"
+                />
+            </AppAsyncState>
+        </section>
     </div>
 </template>
 
@@ -456,11 +466,20 @@ await loadUsers();
 .admin-users {
     min-width: 0;
 
+    &__results {
+        padding: var(--panel-padding);
+    }
+
     &__search {
         display: grid;
         gap: var(--space-2);
         max-width: 480px;
         margin-bottom: var(--space-5);
+    }
+
+    &__search label {
+        font-size: var(--font-size-control);
+        font-weight: 600;
     }
 
     &__query-error {
@@ -471,7 +490,7 @@ await loadUsers();
     &__result-count {
         margin-bottom: var(--space-3);
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
     }
 
     &__table-wrap {
@@ -481,6 +500,7 @@ await loadUsers();
 
     &__table {
         width: 100%;
+        min-width: 720px;
         border-collapse: collapse;
         table-layout: fixed;
 
@@ -496,6 +516,7 @@ await loadUsers();
         th {
             color: var(--text-secondary);
             font-weight: 600;
+            font-size: var(--font-size-control);
         }
 
         th:nth-child(3) {
@@ -512,7 +533,7 @@ await loadUsers();
     &__username {
         display: block;
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
         overflow-wrap: anywhere;
     }
 
@@ -522,10 +543,18 @@ await loadUsers();
         gap: var(--space-2);
     }
 
+    &__actions :deep(.el-button) {
+        margin: 0;
+        max-width: 100%;
+        min-height: 44px;
+        height: auto;
+        white-space: normal;
+    }
+
     &__error {
         margin-top: var(--space-2);
         color: var(--el-color-danger);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
@@ -548,7 +577,6 @@ await loadUsers();
 
         &__cards {
             display: grid;
-            gap: var(--space-4);
             padding: 0;
             margin: 0;
             list-style: none;
@@ -556,10 +584,17 @@ await loadUsers();
 
         &__card {
             min-width: 0;
-            padding: var(--space-4);
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--card-radius);
+            padding: var(--space-4) 0;
+            border-bottom: 1px solid var(--border-color);
+
+            &:first-child {
+                padding-top: 0;
+            }
+
+            &:last-child {
+                padding-bottom: 0;
+                border-bottom: 0;
+            }
 
             h2,
             dd {
@@ -573,7 +608,7 @@ await loadUsers();
             }
             dt {
                 color: var(--text-secondary);
-                font-size: 14px;
+                font-size: var(--font-size-control);
             }
             dd {
                 margin: 0 0 var(--space-2);

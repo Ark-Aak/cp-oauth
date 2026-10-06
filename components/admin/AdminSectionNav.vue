@@ -40,6 +40,8 @@ const sections = [
         min-height: 44px;
         padding: var(--space-2) var(--space-4);
         border-radius: var(--card-radius);
+        border-bottom: 2px solid transparent;
+        font-size: var(--font-size-control);
         color: var(--text-secondary);
         text-decoration: none;
         overflow-wrap: anywhere;
@@ -50,8 +52,9 @@ const sections = [
         }
 
         &--current {
-            background: var(--bg-tertiary);
+            background: var(--accent-subtle);
             color: var(--accent);
+            border-bottom-color: var(--accent);
             font-weight: 600;
         }
     }

@@ -22,7 +22,7 @@
         </p>
 
         <AppAsyncState :pending="formLoading" :error="loadError" @retry="loadConfig">
-            <div class="admin-config__editor">
+            <div class="admin-config__editor task-panel">
                 <p v-if="saveNotice" class="admin-config__notice" role="status">{{ saveNotice }}</p>
                 <div
                     v-if="saveError"
@@ -111,6 +111,7 @@
                                     </p>
                                     <el-checkbox
                                         v-model="clearSecret[field.key]"
+                                        class="admin-config__secret-clear"
                                         :disabled="
                                             !clientReady ||
                                             saving ||
@@ -760,10 +761,6 @@ await loadConfig();
 .admin-config {
     min-width: 0;
 
-    &__editor {
-        max-width: 680px;
-    }
-
     &__group {
         padding: var(--space-5) 0 var(--space-2);
         border-bottom: 1px solid var(--border-color);
@@ -789,8 +786,12 @@ await loadConfig();
         width: 100%;
         margin: var(--space-2) 0;
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
+    }
+
+    &__secret-clear:not(.is-disabled) :deep(.el-checkbox__label) {
+        color: var(--el-color-danger);
     }
 
     &__summary {
@@ -819,6 +820,10 @@ await loadConfig();
         flex-wrap: wrap;
         gap: var(--space-2);
         margin-top: var(--space-4);
+    }
+
+    &__actions :deep(.el-button) {
+        margin: 0;
     }
 }
 </style>

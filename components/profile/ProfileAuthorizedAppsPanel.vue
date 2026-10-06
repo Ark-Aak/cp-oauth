@@ -234,7 +234,7 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
     }
     &__table thead th {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         font-weight: 600;
     }
     &__table th:first-child {
@@ -248,20 +248,21 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
         font-weight: 400;
     }
     &__id {
-        font-family: monospace;
+        font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
         overflow-wrap: anywhere;
         margin: var(--space-1) 0 var(--space-3);
     }
     &__meta {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
         margin: var(--space-1) 0;
     }
     &__scopes {
         margin: 0;
         padding-left: var(--space-4);
+        font-size: var(--font-size-control);
     }
     &__scopes li + li {
         margin-top: var(--space-2);
@@ -296,7 +297,7 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
         }
         &__card dt {
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: var(--font-size-control);
             margin-top: var(--space-3);
         }
         &__card dd {

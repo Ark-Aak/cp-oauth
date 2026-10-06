@@ -39,8 +39,8 @@
                 >
                     <Menu :size="21" aria-hidden="true" />
                 </button>
-                <span class="app-layout__context">{{ $t('app.name') }}</span>
-                <div class="app-layout__desktop-preferences"><AppPreferences /></div>
+                <span class="app-layout__context">{{ $t(contextLabel) }}</span>
+                <div class="app-layout__desktop-preferences"><AppPreferences inline /></div>
                 <el-popover trigger="click" placement="bottom-end" :width="288">
                     <AppPreferences />
                     <template #reference
@@ -112,6 +112,16 @@ try {
     /* Network failure is not anonymous identity. */
 }
 const route = useRoute();
+const contextLabels: Record<string, string> = {
+    '/': 'nav.home',
+    '/profile': 'nav.my_profile',
+    '/developer': 'nav.developer',
+    '/showcase': 'nav.showcase',
+    '/about': 'nav.about'
+};
+const contextLabel = computed(() =>
+    route.path.startsWith('/admin') ? 'nav.admin' : contextLabels[route.path] || 'app.name'
+);
 watch(
     () => route.fullPath,
     () => {
@@ -153,8 +163,8 @@ async function handleLogout() {
     flex-direction: column;
 }
 .app-layout__topbar {
-    min-height: 88px;
-    padding: var(--space-4) var(--space-6);
+    min-height: 64px;
+    padding: var(--space-2) var(--space-5);
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -162,7 +172,7 @@ async function handleLogout() {
     background: var(--bg-primary);
 }
 .app-layout__context {
-    font-size: 14px;
+    font-size: var(--font-size-control);
     font-weight: 600;
     color: var(--text-secondary);
     letter-spacing: 0.06em;
@@ -176,20 +186,24 @@ async function handleLogout() {
 }
 .app-layout__main {
     width: 100%;
-    max-width: 1264px;
-    padding: var(--space-6);
+    max-width: 1248px;
+    padding: var(--space-5);
     margin: 0 auto;
     flex: 1;
     min-width: 0;
 }
 .app-layout__footer {
     width: 100%;
-    max-width: 1264px;
-    padding: 0 var(--space-6) var(--space-4);
+    max-width: 1248px;
+    padding: 0 var(--space-5) var(--space-4);
     margin: 0 auto;
 }
 .app-layout__notice {
     padding: var(--space-4);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
     border: 1px solid var(--border-color);
     background: var(--bg-primary);
     border-radius: var(--card-radius);
@@ -234,7 +248,7 @@ async function handleLogout() {
         z-index: 15;
     }
     .app-layout__context {
-        font-size: 16px;
+        font-size: var(--font-size-body);
         letter-spacing: 0;
     }
     .app-layout__desktop-preferences {

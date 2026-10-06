@@ -11,7 +11,7 @@
                 <section
                     v-for="section in sections"
                     :key="section.id"
-                    class="showcase__section"
+                    class="showcase__section ui-card"
                     :aria-labelledby="`showcase-${section.id}`"
                 >
                     <h2 :id="`showcase-${section.id}`">{{ section.title }}</h2>
@@ -121,15 +121,16 @@ function getFavicon(url: string | null): string {
     &__content {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-6);
+        gap: var(--space-5);
         align-items: start;
     }
 
     &__section {
         min-width: 0;
+        padding: var(--panel-padding);
 
         h2 {
-            margin-bottom: var(--space-4);
+            margin-bottom: var(--space-3);
         }
     }
 
@@ -137,6 +138,10 @@ function getFavicon(url: string | null): string {
         list-style: none;
         margin: 0;
         padding: 0;
+
+        li {
+            min-width: 0;
+        }
 
         li + li {
             border-top: 1px solid var(--border-color);
@@ -146,10 +151,16 @@ function getFavicon(url: string | null): string {
     &__item {
         display: flex;
         align-items: flex-start;
-        gap: var(--space-4);
-        padding: var(--space-5) 0;
-        min-height: 80px;
+        gap: var(--space-3);
+        padding: var(--space-4) 0;
+        min-height: 72px;
         text-decoration: none;
+        min-width: 44px;
+        border-radius: var(--card-radius);
+    }
+
+    a.showcase__item:hover {
+        background: var(--bg-secondary);
     }
 
     a.showcase__item:hover .showcase__item-name {
@@ -159,8 +170,8 @@ function getFavicon(url: string | null): string {
     }
 
     &__icon {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         flex-shrink: 0;
         object-fit: contain;
         border-radius: var(--card-radius);
@@ -183,15 +194,19 @@ function getFavicon(url: string | null): string {
         gap: var(--space-2);
         color: var(--text-primary);
 
+        span {
+            min-width: 0;
+        }
+
         svg {
             flex-shrink: 0;
         }
     }
 
     &__item-description {
-        margin-top: var(--space-2);
+        margin-top: var(--space-1);
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-body);
     }
 }
 

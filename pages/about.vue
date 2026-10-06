@@ -1,8 +1,8 @@
 <template>
-    <div class="about">
+    <article class="about">
         <AppPageHeader :title="$t('about.title')" :description="$t('about.guide_intro')" />
 
-        <nav class="about__contents" :aria-label="$t('about.contents')">
+        <nav class="about__contents ui-card" :aria-label="$t('about.contents')">
             <h2>{{ $t('about.contents') }}</h2>
             <ol>
                 <li>
@@ -178,7 +178,7 @@
                 <pre v-else class="about__source"><code>{{ snippetSources.card }}</code></pre>
             </div>
         </section>
-    </div>
+    </article>
 </template>
 
 <script setup lang="ts">
@@ -374,12 +374,13 @@ const {
 <style scoped lang="scss">
 .about {
     min-width: 0;
-    max-width: 900px;
+    max-width: 880px;
+    font-size: var(--font-size-body);
 
     &__contents {
-        margin-bottom: var(--space-6);
-        padding-bottom: var(--space-5);
-        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 0;
+        padding: var(--panel-padding);
+        font-size: var(--font-size-control);
 
         ol {
             display: grid;
@@ -398,6 +399,7 @@ const {
             display: flex;
             align-items: center;
             min-height: 44px;
+            min-width: 44px;
             padding: var(--space-2) var(--space-1);
             color: var(--accent);
             overflow-wrap: anywhere;
@@ -419,11 +421,15 @@ const {
             margin-bottom: var(--space-3);
             overflow-wrap: anywhere;
         }
+
+        > :last-child {
+            margin-bottom: 0;
+        }
     }
 
     &__text {
         color: var(--text-secondary);
-        margin-bottom: var(--space-4);
+        margin-bottom: var(--space-3);
         overflow-wrap: anywhere;
     }
 
@@ -434,7 +440,7 @@ const {
 
     &__steps {
         padding-left: var(--space-5);
-        margin: 0 0 var(--space-5);
+        margin: 0 0 var(--space-4);
         color: var(--text-secondary);
 
         li + li {
@@ -443,6 +449,8 @@ const {
     }
 
     &__action {
+        max-width: 100%;
+        min-width: 44px;
         white-space: normal;
         min-height: 44px;
         height: auto;
@@ -450,7 +458,7 @@ const {
     }
 
     &__endpoint + &__endpoint {
-        margin-top: var(--space-6);
+        margin-top: var(--space-5);
     }
 
     &__source {
@@ -461,7 +469,7 @@ const {
 
     &__code {
         min-width: 0;
-        margin-bottom: var(--space-5);
+        margin-bottom: var(--space-4);
 
         :deep(pre) {
             max-width: 100%;
@@ -470,12 +478,12 @@ const {
             padding: var(--space-4);
             overflow-x: auto;
             margin: 0;
-            font-size: 14px;
+            font-size: var(--font-size-control);
             line-height: 1.6;
         }
 
         :deep(code) {
-            font-size: 14px;
+            font-size: var(--font-size-control);
         }
     }
 
@@ -486,7 +494,7 @@ const {
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: var(--font-size-control);
         }
 
         th,
@@ -519,7 +527,7 @@ const {
 
 @media (max-width: 767px) {
     .about__contents ol {
-        grid-template-columns: minmax(0, 1fr);
+        column-gap: var(--space-4);
     }
 }
 </style>

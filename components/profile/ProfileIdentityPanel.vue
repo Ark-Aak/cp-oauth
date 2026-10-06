@@ -345,7 +345,6 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .profile-identity {
-    max-width: 680px;
     min-width: 0;
     &__intro,
     &__hint,
@@ -356,7 +355,7 @@ onBeforeUnmount(() => {
         margin: var(--space-2) 0 var(--space-5);
     }
     &__hint {
-        font-size: 14px;
+        font-size: var(--font-size-control);
         margin: var(--space-1) 0 0;
     }
     &__person {
@@ -368,7 +367,7 @@ onBeforeUnmount(() => {
     }
     &__username {
         margin: 0;
-        font-size: 14px;
+        font-size: var(--font-size-meta);
     }
     &__form {
         display: grid;
@@ -379,7 +378,7 @@ onBeforeUnmount(() => {
         gap: var(--space-2);
     }
     &__field label {
-        font-size: 14px;
+        font-size: var(--font-size-control);
         font-weight: 600;
     }
     &__error {
@@ -392,7 +391,7 @@ onBeforeUnmount(() => {
     }
     &__email {
         border-top: 1px solid var(--border-color);
-        margin-top: var(--space-6);
+        margin-top: var(--space-5);
         padding-top: var(--space-5);
     }
     &__email-details {
@@ -403,7 +402,7 @@ onBeforeUnmount(() => {
     }
     &__email-details dt {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
     }
     &__email-details dd {
         margin: 0;

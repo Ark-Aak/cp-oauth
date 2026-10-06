@@ -15,7 +15,7 @@
             <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
         </p>
 
-        <section aria-labelledby="notice-list-title">
+        <section class="admin-notices__results ui-card" aria-labelledby="notice-list-title">
             <h2 id="notice-list-title">{{ $t('admin.notices.list_title') }}</h2>
             <AppAsyncState
                 :pending="loading"
@@ -372,14 +372,27 @@ await loadNotices();
 .admin-notices {
     min-width: 0;
 
+    &__results {
+        padding: var(--panel-padding);
+
+        > h2 {
+            margin-bottom: var(--space-4);
+        }
+    }
+
     &__list {
         border-top: 1px solid var(--border-color);
     }
 
     &__item {
-        padding: var(--space-5) 0;
+        padding: var(--space-4) 0;
         border-bottom: 1px solid var(--border-color);
         min-width: 0;
+
+        &:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
     }
 
     &__item-header {
@@ -402,7 +415,12 @@ await loadNotices();
     &__time,
     &__help {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
+    }
+
+    &__pin,
+    &__time {
+        font-size: var(--font-size-meta);
     }
 
     &__pin {
@@ -431,6 +449,10 @@ await loadNotices();
         justify-content: flex-end;
         flex-wrap: wrap;
         gap: var(--space-2);
+    }
+
+    &__form-actions :deep(.el-button) {
+        margin: 0;
     }
 }
 

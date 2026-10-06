@@ -1,7 +1,9 @@
 <template>
     <div class="consent">
-        <section class="consent__surface">
-            <AppPageHeader :title="$t('oauth.consent.title')" />
+        <section class="auth-card" aria-labelledby="oauth-authorize-title">
+            <h1 id="oauth-authorize-title" class="auth-card__title">
+                {{ $t('oauth.consent.title') }}
+            </h1>
             <AppAsyncState
                 :pending="authorizationPending"
                 :error="loadError"
@@ -53,7 +55,7 @@
                         <h2 id="consent-account-title">
                             {{ $t('oauth.consent.current_account') }}
                         </h2>
-                        <template v-if="user && status === 'authenticated'">
+                        <div v-if="user && status === 'authenticated'" class="consent__account-row">
                             <p class="consent__account-name">
                                 <strong>{{ user.displayName || user.username }}</strong>
                                 <span>{{ '@' + user.username }}</span>
@@ -66,7 +68,7 @@
                             >
                                 {{ $t('oauth.consent.switch_account') }}
                             </el-button>
-                        </template>
+                        </div>
                         <p v-else-if="status === 'anonymous'" class="consent__account-hint">
                             {{ $t('oauth.consent.signed_out_hint') }}
                         </p>
@@ -332,18 +334,12 @@ async function handleDecision(approved: boolean) {
 .consent {
     width: 100%;
     min-width: 0;
-
-    &__surface {
-        min-width: 0;
-        padding: var(--space-5);
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
-    }
+    font-size: var(--font-size-control);
 
     &__request {
-        margin-bottom: var(--space-5);
+        margin-bottom: var(--space-4);
         color: var(--text-secondary);
+        font-size: var(--font-size-body);
         overflow-wrap: anywhere;
 
         strong {
@@ -353,9 +349,9 @@ async function handleDecision(approved: boolean) {
 
     h2 {
         margin-bottom: var(--space-2);
-        font-size: 16px;
+        font-size: var(--font-size-subheading);
         font-weight: 600;
-        line-height: 1.5;
+        line-height: 1.4;
     }
 
     &__destination,
@@ -365,16 +361,14 @@ async function handleDecision(approved: boolean) {
     }
 
     code {
-        font-family: monospace;
-        font-size: 14px;
-        color: var(--text-secondary);
+        font-size: var(--font-size-control);
+        color: var(--text-primary);
         overflow-wrap: anywhere;
         white-space: normal;
     }
 
     &__origin {
         display: block;
-        color: var(--text-primary);
     }
 
     &__exact-uri summary {
@@ -382,7 +376,7 @@ async function handleDecision(approved: boolean) {
         padding-block: var(--space-3);
         color: var(--accent);
         cursor: pointer;
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
@@ -401,8 +395,8 @@ async function handleDecision(approved: boolean) {
         display: grid;
         grid-template-columns: 18px minmax(0, 1fr);
         align-items: start;
-        gap: var(--space-3);
-        padding-block: var(--space-3);
+        gap: var(--space-2);
+        padding-block: var(--space-2);
         border-bottom: 1px solid var(--border-color);
         overflow-wrap: anywhere;
 
@@ -417,29 +411,36 @@ async function handleDecision(approved: boolean) {
         border-block: 1px solid var(--border-color);
     }
 
+    &__account-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
     &__account-name {
         display: flex;
         flex-wrap: wrap;
         align-items: baseline;
         gap: var(--space-2);
-        margin-bottom: var(--space-3);
+        min-width: 0;
         overflow-wrap: anywhere;
 
         span {
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: var(--font-size-control);
         }
     }
 
     &__account-hint {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
     &__notice {
         margin-bottom: var(--space-4);
-        padding: var(--space-4);
+        padding: var(--space-3);
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: var(--card-radius);
@@ -467,12 +468,8 @@ async function handleDecision(approved: boolean) {
         gap: var(--space-3);
     }
 
-    &__actions :deep(.el-button) {
+    &__actions > .el-button {
         margin: 0;
-        min-height: 44px;
-        height: auto;
-        padding-block: var(--space-3);
-        white-space: normal;
     }
 
     &__sponsor {
@@ -483,7 +480,7 @@ async function handleDecision(approved: boolean) {
         min-height: 44px;
         margin-top: var(--space-4);
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
         text-align: center;
         overflow-wrap: anywhere;
 
@@ -492,13 +489,17 @@ async function handleDecision(approved: boolean) {
         }
     }
 
-    @media (max-width: 480px) {
-        &__surface {
-            padding: var(--space-4);
+    @media (max-width: 479px) {
+        &__account-row {
+            grid-template-columns: minmax(0, 1fr);
         }
 
         &__actions {
             grid-template-columns: minmax(0, 1fr);
+        }
+
+        &__account-row > .el-button {
+            justify-self: start;
         }
     }
 }

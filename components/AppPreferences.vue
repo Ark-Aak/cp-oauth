@@ -1,5 +1,5 @@
 <template>
-    <div class="preferences" :aria-busy="pending">
+    <div class="preferences" :class="{ 'preferences--inline': inline }" :aria-busy="pending">
         <label class="preferences__field">
             <span>{{ $t('settings.theme.label') }}</span>
             <el-select
@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import type { MeResponse } from '~/types/api';
+defineProps<{ inline?: boolean }>();
 const themes = ['system', 'light', 'dark'] as const;
 const languages = ['en', 'zh', 'ja'] as const;
 const { locale, setLocale, t } = useI18n();
@@ -97,8 +98,8 @@ async function changeLanguage(value: string) {
 }
 .preferences__field {
     display: grid;
-    gap: 4px;
-    font-size: 14px;
+    gap: var(--space-1);
+    font-size: var(--font-size-control);
     color: var(--text-secondary);
     min-width: 132px;
 }
@@ -108,5 +109,14 @@ async function changeLanguage(value: string) {
 .preferences__error {
     flex-basis: 100%;
     color: var(--text-primary);
+}
+.preferences--inline .preferences__field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+.preferences--inline .preferences__field :deep(.el-select) {
+    width: 124px;
 }
 </style>

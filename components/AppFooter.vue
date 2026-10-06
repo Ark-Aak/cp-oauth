@@ -34,17 +34,20 @@
 
 <style scoped lang="scss">
 .app-footer {
-    margin-top: 20px;
-    padding: 16px 0 4px;
+    margin-top: var(--space-4);
+    padding: var(--space-2) 0 var(--space-1);
     border-top: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0 var(--space-3);
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: var(--font-size-meta);
     flex-wrap: wrap;
 
     &__link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
         color: var(--text-secondary);
         text-decoration: none;
 
@@ -60,6 +63,14 @@
 
     &__text {
         margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+    }
+}
+@media (max-width: 767px) {
+    .app-footer__separator {
+        display: none;
     }
 }
 </style>

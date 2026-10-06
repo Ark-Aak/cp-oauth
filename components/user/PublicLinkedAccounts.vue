@@ -7,7 +7,7 @@
         >
             <span class="public-accounts__platform">
                 <AppPlatformIcon :platform="account.platform" />
-                {{ $t(PLATFORMS[account.platform].translationKey) }}
+                <span>{{ $t(PLATFORMS[account.platform].translationKey) }}</span>
             </span>
             <a
                 v-if="profileUrls[index]"
@@ -16,11 +16,15 @@
                 rel="noopener noreferrer"
                 class="public-accounts__identity"
             >
-                {{ account.platformUsername || account.platformUid }}
+                <span class="public-accounts__identity-label">
+                    {{ account.platformUsername || account.platformUid }}
+                </span>
                 <ExternalLink :size="12" :stroke-width="1.5" aria-hidden="true" />
             </a>
             <span v-else class="public-accounts__identity">
-                {{ account.platformUsername || account.platformUid }}
+                <span class="public-accounts__identity-label">
+                    {{ account.platformUsername || account.platformUid }}
+                </span>
             </span>
         </li>
     </ul>
@@ -66,11 +70,12 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
 
     &__item {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, auto) minmax(0, 1fr);
         align-items: center;
         gap: var(--space-2) var(--space-4);
-        min-height: 60px;
-        padding: var(--space-2) 0;
+        min-width: 0;
+        min-height: 52px;
+        padding: var(--space-1) 0;
         border-bottom: 1px solid var(--card-border);
 
         &:last-child {
@@ -90,14 +95,21 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
 
     &__platform {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
+    }
+
+    &__platform span,
+    &__identity-label {
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 
     &__identity {
         justify-self: end;
         max-width: 100%;
+        min-width: 44px;
         min-height: 44px;
-        padding: var(--space-2) 0;
+        padding: var(--space-1) 0;
 
         svg {
             flex-shrink: 0;

@@ -1,7 +1,8 @@
 <template>
-    <el-card class="auth-card" shadow="never" :aria-busy="pending">
-        <p class="auth-card__brand">{{ siteTitle }}</p>
-        <h1 class="auth-card__title">{{ $t('auth.password.reset_title') }}</h1>
+    <section class="auth-card" aria-labelledby="reset-password-title" :aria-busy="pending">
+        <h1 id="reset-password-title" class="auth-card__title">
+            {{ $t('auth.password.reset_title') }}
+        </h1>
         <p v-if="visibleError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ visibleError }}
         </p>
@@ -25,6 +26,7 @@
         <el-form
             v-else
             ref="formRef"
+            class="auth-card__form"
             method="post"
             :disabled="!hydrationReady"
             :model="form"
@@ -45,7 +47,6 @@
                     name="new-password"
                     autocomplete="new-password"
                     :disabled="!hydrationReady || pending"
-                    size="large"
                 >
                     <template #suffix>
                         <el-button
@@ -77,7 +78,6 @@
                     :loading="pending"
                     :disabled="!hydrationReady || pending"
                     class="auth-card__button"
-                    size="large"
                 >
                     {{ $t('auth.password.reset_now') }}
                 </el-button>
@@ -86,7 +86,7 @@
         <p v-if="!success" class="auth-card__footer">
             <NuxtLink :to="loginPath">{{ $t('auth.password.back_login') }}</NuxtLink>
         </p>
-    </el-card>
+    </section>
 </template>
 
 <script setup lang="ts">

@@ -240,14 +240,14 @@ defineExpose({ setFieldErrors, focusFirstField });
     }
 
     legend {
-        font-size: 14px;
+        font-size: var(--font-size-control);
         font-weight: 600;
     }
 
     &__hint {
         margin: var(--space-2) 0 var(--space-4);
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         line-height: 1.5;
     }
 
@@ -287,7 +287,7 @@ defineExpose({ setFieldErrors, focusFirstField });
 
     :deep(.el-form-item__error) {
         position: static;
-        font-size: 14px;
+        font-size: var(--font-size-control);
         line-height: 1.5;
         width: 100%;
     }
@@ -312,7 +312,7 @@ defineExpose({ setFieldErrors, focusFirstField });
         width: 100%;
         padding-top: var(--space-1);
         color: var(--text-primary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         line-height: 1.5;
         overflow-wrap: anywhere;
     }

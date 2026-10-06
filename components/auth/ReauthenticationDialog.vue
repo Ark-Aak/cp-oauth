@@ -2,7 +2,7 @@
     <el-dialog
         :model-value="open"
         :title="t('reauth.title')"
-        width="min(440px, calc(100vw - 32px))"
+        width="min(420px, calc(100vw - 32px))"
         :close-on-click-modal="false"
         :show-close="false"
         destroy-on-close
@@ -13,7 +13,7 @@
         "
         @closed="clearSecrets"
     >
-        <div class="reauth">
+        <div class="reauth" :aria-busy="pending">
             <p>{{ t('reauth.description') }}</p>
             <p v-if="error" ref="errorElement" role="alert" tabindex="-1" class="reauth__error">
                 {{ error }}
@@ -129,53 +129,66 @@
                         >{{ t('reauth.with_password') }}</el-button
                     >
                 </form>
-                <p class="reauth__alternate">{{ t('reauth.alternatives') }}</p>
-                <p v-if="capabilitiesPending" role="status">{{ t('reauth.loading') }}</p>
-                <el-button v-if="capabilitiesError" :disabled="pending" @click="loadCapabilities">{{
-                    t('common.retry')
-                }}</el-button>
-                <template v-if="!capabilitiesPending && !capabilitiesError">
-                    <el-button v-if="hasPasskeys" :disabled="pending" @click="verifyPasskey">{{
-                        t('reauth.with_passkey')
-                    }}</el-button>
-                    <div v-if="verifiableBindings.length" class="reauth__platform">
-                        <label for="reauth-platform">{{ t('reauth.linked_platform') }}</label>
-                        <el-select
-                            id="reauth-platform"
-                            v-model="selectedPlatform"
-                            :disabled="pending"
-                        >
-                            <el-option
-                                v-for="account in verifiableBindings"
-                                :key="account.id"
-                                :value="account.platform"
-                                :label="`${t(PLATFORMS[account.platform].translationKey)} — ${account.platformUsername || account.platformUid}`"
-                            />
-                        </el-select>
-                        <el-button
-                            :disabled="pending || !selectedPlatform"
-                            @click="requestPlatform"
-                            >{{ t('reauth.with_platform') }}</el-button
-                        >
-                    </div>
+                <div class="reauth__alternatives">
+                    <p class="reauth__alternate">{{ t('reauth.alternatives') }}</p>
+                    <p v-if="capabilitiesPending" role="status">{{ t('reauth.loading') }}</p>
                     <el-button
-                        v-for="account in oauthBindings"
-                        :key="account.id"
+                        v-if="capabilitiesError"
                         :disabled="pending"
-                        @click="verifyOAuth(account.platform as OAuthProvider)"
+                        @click="loadCapabilities"
                     >
-                        {{
-                            t('reauth.with_provider', {
-                                provider: t(PLATFORMS[account.platform].translationKey)
-                            })
-                        }}
+                        {{ t('common.retry') }}
                     </el-button>
-                    <p v-if="!hasPasskeys && !verifiableBindings.length && !oauthBindings.length">
-                        {{ t('reauth.no_alternative') }}
-                    </p>
-                </template>
+                    <template v-if="!capabilitiesPending && !capabilitiesError">
+                        <el-button v-if="hasPasskeys" :disabled="pending" @click="verifyPasskey">
+                            {{ t('reauth.with_passkey') }}
+                        </el-button>
+                        <div v-if="verifiableBindings.length" class="reauth__platform">
+                            <label for="reauth-platform">{{ t('reauth.linked_platform') }}</label>
+                            <el-select
+                                id="reauth-platform"
+                                v-model="selectedPlatform"
+                                :disabled="pending"
+                            >
+                                <el-option
+                                    v-for="account in verifiableBindings"
+                                    :key="account.id"
+                                    :value="account.platform"
+                                    :label="`${t(PLATFORMS[account.platform].translationKey)} — ${account.platformUsername || account.platformUid}`"
+                                />
+                            </el-select>
+                            <el-button
+                                :disabled="pending || !selectedPlatform"
+                                @click="requestPlatform"
+                            >
+                                {{ t('reauth.with_platform') }}
+                            </el-button>
+                        </div>
+                        <el-button
+                            v-for="account in oauthBindings"
+                            :key="account.id"
+                            :disabled="pending"
+                            @click="verifyOAuth(account.platform as OAuthProvider)"
+                        >
+                            {{
+                                t('reauth.with_provider', {
+                                    provider: t(PLATFORMS[account.platform].translationKey)
+                                })
+                            }}
+                        </el-button>
+                        <p
+                            v-if="
+                                !hasPasskeys && !verifiableBindings.length && !oauthBindings.length
+                            "
+                        >
+                            {{ t('reauth.no_alternative') }}
+                        </p>
+                    </template>
+                </div>
             </template>
-            <el-button :disabled="pending" @click="cancel">{{ t('common.cancel') }}</el-button>
+            <div class="reauth__footer">
+                <el-button :disabled="pending" @click="cancel">{{ t('common.cancel') }}</el-button>
+            </div>
         </div>
     </el-dialog>
 </template>
@@ -490,51 +503,85 @@ onBeforeUnmount(cancel);
 <style scoped lang="scss">
 .reauth {
     display: grid;
-    gap: 16px;
+    gap: var(--space-4);
+    min-width: 0;
     color: var(--text-primary);
+    font-size: var(--font-size-control);
+
     p {
         margin: 0;
         color: var(--text-secondary);
+        overflow-wrap: anywhere;
     }
+
     form,
     &__platform {
         display: grid;
-        gap: 12px;
+        gap: var(--space-2);
+        min-width: 0;
     }
+
     label {
         font-weight: 600;
     }
-    &__error {
-        color: var(--el-color-danger);
+
+    p.reauth__error {
+        padding: var(--space-3);
+        border-left: 3px solid var(--el-color-danger);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
     }
+
     &__password-toggle {
         min-width: 44px;
         padding: 0;
     }
-    &__actions,
-    &__code {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+
+    &__actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-2);
+        margin-top: var(--space-2);
     }
+
+    &__code {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--space-2);
+    }
+
     &__code .el-input {
-        flex: 1;
         min-width: 0;
     }
-    &__alternate {
-        padding-top: 12px;
+
+    &__alternatives {
+        display: grid;
+        gap: var(--space-3);
+        padding-top: var(--space-4);
         border-top: 1px solid var(--card-border);
     }
-    :deep(.el-button),
-    :deep(.el-input__wrapper),
-    :deep(.el-select__wrapper) {
-        min-height: 44px;
+
+    &__alternate {
+        font-weight: 600;
     }
-    :deep(.el-button + .el-button) {
-        margin-left: 0;
+
+    &__actions > .el-button,
+    &__alternatives > .el-button,
+    form > .el-button {
+        margin: 0;
+    }
+
+    &__footer {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--card-border);
     }
 }
-:global(.reauth-confirm .el-button) {
-    min-height: 44px;
+
+@media (max-width: 479px) {
+    .reauth__actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 </style>

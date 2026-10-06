@@ -1,8 +1,7 @@
 <template>
     <div class="home">
-        <AppPageHeader :title="homeTitle" :description="$t('home.task_description')" />
-
-        <section class="home__tasks" :aria-label="$t('home.account_tasks')">
+        <section class="home__primary ui-card" :aria-label="$t('home.account_tasks')">
+            <AppPageHeader :title="homeTitle" :description="$t('home.task_description')" />
             <AppAsyncState
                 :pending="identityPending"
                 :error="authStatus === 'error' ? $t('identity.identity_unavailable') : null"
@@ -39,7 +38,7 @@
                     </div>
                 </template>
                 <template v-else-if="authStatus === 'anonymous'">
-                    <div class="home__actions">
+                    <div class="home__actions home__actions--guest">
                         <NuxtLink to="/login" class="el-button el-button--primary">
                             {{ $t('auth.login.title') }}
                         </NuxtLink>
@@ -69,7 +68,7 @@
         </section>
 
         <div class="home__layout">
-            <section class="home__announcements" aria-labelledby="home-announcements">
+            <section class="home__announcements ui-card" aria-labelledby="home-announcements">
                 <h2 id="home-announcements">{{ $t('home.announcements') }}</h2>
                 <AppAsyncState
                     :pending="noticePending"
@@ -98,7 +97,7 @@
             </section>
 
             <aside class="home__side">
-                <section class="home__section" aria-labelledby="home-stats">
+                <section class="home__section ui-card" aria-labelledby="home-stats">
                     <h2 id="home-stats">{{ $t('home.stats') }}</h2>
                     <AppAsyncState
                         :pending="statsPending"
@@ -114,7 +113,7 @@
                     </AppAsyncState>
                 </section>
 
-                <section class="home__section" aria-labelledby="home-recent-users">
+                <section class="home__section ui-card" aria-labelledby="home-recent-users">
                     <h2 id="home-recent-users">{{ $t('home.recent_users') }}</h2>
                     <AppAsyncState
                         :pending="usersPending"
@@ -299,10 +298,9 @@ function formatNumber(value: number): string {
 .home {
     min-width: 0;
 
-    &__tasks {
-        padding-bottom: var(--space-6);
-        margin-bottom: var(--space-6);
-        border-bottom: 1px solid var(--border-color);
+    &__primary {
+        padding: var(--panel-padding);
+        margin-bottom: var(--space-5);
     }
 
     &__identity {
@@ -317,10 +315,14 @@ function formatNumber(value: number): string {
         overflow-wrap: anywhere;
     }
 
-    &__handle,
-    &__hint {
+    &__handle {
         color: var(--text-muted);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
+    }
+
+    &__hint {
+        color: var(--text-secondary);
+        font-size: var(--font-size-control);
     }
 
     &__hint {
@@ -334,7 +336,7 @@ function formatNumber(value: number): string {
         gap: var(--space-2) var(--space-4);
         margin-top: var(--space-3);
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
 
         a {
             display: inline-flex;
@@ -353,6 +355,10 @@ function formatNumber(value: number): string {
         gap: var(--space-3);
         margin-top: var(--space-4);
 
+        &--guest {
+            margin-top: 0;
+        }
+
         .el-button {
             min-height: 44px;
             height: auto;
@@ -368,13 +374,13 @@ function formatNumber(value: number): string {
         gap: var(--space-2);
         min-height: 44px;
         color: var(--accent);
-        font-size: 14px;
+        font-size: var(--font-size-control);
     }
 
     &__layout {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
-        gap: var(--space-6);
+        gap: var(--space-5);
         align-items: start;
     }
 
@@ -384,9 +390,14 @@ function formatNumber(value: number): string {
         min-width: 0;
     }
 
+    &__announcements,
+    &__section {
+        padding: var(--panel-padding);
+    }
+
     &__side {
         display: grid;
-        gap: var(--space-6);
+        gap: var(--space-5);
     }
 
     h2 {
@@ -394,7 +405,7 @@ function formatNumber(value: number): string {
     }
 
     &__notice {
-        padding: var(--space-5) 0;
+        padding: var(--space-4) 0;
         border-bottom: 1px solid var(--border-color);
 
         &:first-child {
@@ -423,7 +434,7 @@ function formatNumber(value: number): string {
         align-items: center;
         gap: var(--space-1);
         color: var(--text-muted);
-        font-size: 14px;
+        font-size: var(--font-size-meta);
     }
 
     &__notice-content {
@@ -445,7 +456,7 @@ function formatNumber(value: number): string {
     }
 
     &__notice-time {
-        font-size: 14px;
+        font-size: var(--font-size-meta);
         color: var(--text-muted);
     }
 
@@ -463,12 +474,12 @@ function formatNumber(value: number): string {
 
         dt {
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: var(--font-size-control);
         }
 
         dd {
             margin: 0;
-            font-size: 20px;
+            font-size: var(--font-size-section);
             font-weight: 600;
             overflow-wrap: anywhere;
         }
@@ -498,12 +509,12 @@ function formatNumber(value: number): string {
 
     &__user-bio {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         margin-top: var(--space-1);
     }
 
     &__quote {
-        margin-top: var(--space-6);
+        margin-top: var(--space-5);
         padding-top: var(--space-5);
         border-top: 1px solid var(--border-color);
 
@@ -517,7 +528,7 @@ function formatNumber(value: number): string {
 
         footer {
             margin-top: var(--space-2);
-            font-size: 14px;
+            font-size: var(--font-size-meta);
             color: var(--text-muted);
         }
     }
@@ -530,7 +541,26 @@ function formatNumber(value: number): string {
 }
 
 @media (max-width: 479px) {
-    .home__actions > .el-button {
+    .home__actions--guest {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        > .el-button {
+            min-width: 0;
+            width: 100%;
+        }
+
+        > .el-button:first-child:nth-last-child(2) {
+            grid-column: 1 / -1;
+        }
+
+        > .home__text-action {
+            grid-column: 1 / -1;
+            justify-self: start;
+        }
+    }
+
+    .home__actions:not(.home__actions--guest) > .el-button {
         width: 100%;
     }
 }

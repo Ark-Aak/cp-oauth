@@ -526,10 +526,9 @@ onBeforeUnmount(() => {
     min-width: 0;
 
     &__header {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
         gap: var(--space-4);
         margin-bottom: var(--space-5);
     }
@@ -539,19 +538,23 @@ onBeforeUnmount(() => {
     }
 
     &__header > div {
-        max-width: 680px;
+        min-width: 0;
     }
 
     &__hint,
     &__status,
     &__uid {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
+    &__uid {
+        font-size: var(--font-size-meta);
+    }
+
     &__section + &__section {
-        margin-top: var(--space-6);
+        margin-top: var(--space-5);
     }
 
     &__section h3 {
@@ -575,7 +578,7 @@ onBeforeUnmount(() => {
 
     &__table th {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         font-weight: 600;
     }
 
@@ -620,6 +623,13 @@ onBeforeUnmount(() => {
         gap: var(--space-2);
     }
 
+    &__actions .el-button {
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
+    }
+
     &__actions .el-button + .el-button {
         margin-left: 0;
     }
@@ -659,7 +669,7 @@ onBeforeUnmount(() => {
     &__error {
         margin-top: var(--space-2);
         color: var(--el-color-danger);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
@@ -669,9 +679,8 @@ onBeforeUnmount(() => {
         justify-items: start;
         gap: var(--space-3);
         margin-bottom: var(--space-4);
-        padding: var(--space-4);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
+        padding: var(--space-3) var(--space-4);
+        border-left: 2px solid var(--el-color-danger);
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
     }
@@ -693,11 +702,8 @@ onBeforeUnmount(() => {
         &__table tr {
             display: grid;
             gap: var(--space-3);
-            padding: var(--space-4);
-            margin-bottom: var(--space-3);
-            border: 1px solid var(--border-color);
-            border-radius: var(--card-radius);
-            background: var(--card-bg);
+            padding: var(--space-4) 0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         &__table td,
@@ -712,6 +718,16 @@ onBeforeUnmount(() => {
         &__available li {
             align-items: flex-start;
             flex-wrap: wrap;
+        }
+    }
+
+    @media (max-width: 479px) {
+        &__header {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        &__header > .el-button {
+            justify-self: start;
         }
     }
 }

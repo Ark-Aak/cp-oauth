@@ -15,7 +15,7 @@
             <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
         </p>
 
-        <section aria-labelledby="showcase-list-title">
+        <section class="admin-showcase__results ui-card" aria-labelledby="showcase-list-title">
             <h2 id="showcase-list-title">{{ $t('admin.showcase.list_title') }}</h2>
             <AppAsyncState
                 :pending="loading"
@@ -478,6 +478,14 @@ await loadItems();
 .admin-showcase {
     min-width: 0;
 
+    &__results {
+        padding: var(--panel-padding);
+
+        > h2 {
+            margin-bottom: var(--space-4);
+        }
+    }
+
     &__list {
         border-top: 1px solid var(--border-color);
     }
@@ -487,8 +495,13 @@ await loadItems();
         align-items: flex-start;
         justify-content: space-between;
         gap: var(--space-4);
-        padding: var(--space-5) 0;
+        padding: var(--space-4) 0;
         border-bottom: 1px solid var(--border-color);
+
+        &:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
     }
 
     &__item-info {
@@ -505,12 +518,13 @@ await loadItems();
     &__help,
     &__icon-url {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
     &__category {
         margin-bottom: var(--space-1);
+        font-size: var(--font-size-meta);
     }
 
     &__url {
@@ -549,6 +563,10 @@ await loadItems();
         justify-content: flex-end;
         flex-wrap: wrap;
         gap: var(--space-2);
+    }
+
+    &__form-actions :deep(.el-button) {
+        margin: 0;
     }
 }
 

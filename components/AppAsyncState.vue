@@ -4,7 +4,11 @@
             <el-skeleton :rows="3" animated />
             <span class="sr-only">{{ $t('user.loading') }}</span>
         </div>
-        <div v-else-if="error" class="async-state__message" role="alert">
+        <div
+            v-else-if="error"
+            class="async-state__message async-state__message--error"
+            role="alert"
+        >
             <p>{{ error }}</p>
             <el-button native-type="button" @click="$emit('retry')">{{
                 $t('common.retry')
@@ -29,14 +33,21 @@ defineEmits<{ retry: [] }>();
     min-width: 0;
 }
 .async-state__message {
-    padding: var(--space-5);
+    padding: var(--space-4);
     border: 1px solid var(--border-color);
     border-radius: var(--card-radius);
     background: var(--bg-primary);
     color: var(--text-secondary);
 }
+.async-state__message--error {
+    border-left: 3px solid var(--el-color-danger);
+    color: var(--text-primary);
+}
 .async-state__message p {
     margin-bottom: var(--space-3);
+}
+.async-state__message > p:last-child {
+    margin-bottom: 0;
 }
 .async-state__loading {
     padding: var(--space-4);

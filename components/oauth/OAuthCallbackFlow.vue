@@ -1,6 +1,6 @@
 <template>
-    <el-card class="auth-card" shadow="never" :aria-busy="pending">
-        <h1 class="auth-card__title">{{ $t(titleKey) }}</h1>
+    <section class="auth-card" aria-labelledby="oauth-callback-title" :aria-busy="pending">
+        <h1 id="oauth-callback-title" class="auth-card__title">{{ $t(titleKey) }}</h1>
         <p v-if="pending" class="auth-card__status" role="status">
             {{ $t(`auth.login.${provider}_callback_loading`) }}
         </p>
@@ -19,7 +19,7 @@
         <NuxtLink v-if="errorMessage" :to="loginPath" class="auth-card__link">
             {{ $t('auth.password.back_login') }}
         </NuxtLink>
-    </el-card>
+    </section>
 </template>
 
 <script setup lang="ts">

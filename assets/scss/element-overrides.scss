@@ -184,28 +184,64 @@
 }
 .el-button {
     min-height: 44px;
-    font-size: 14px;
+    height: auto;
+    padding: 10px var(--space-4);
+    font-size: var(--font-size-control);
+    line-height: 1.5;
+    white-space: normal;
+    text-align: center;
+}
+.el-button > span {
+    gap: var(--space-2);
+    white-space: normal;
+    line-height: 1.5;
 }
 .el-select__wrapper,
 .el-input__wrapper {
     min-height: 44px;
+}
+.el-input__inner,
+.el-select__input {
+    min-height: 0;
+    font-size: var(--font-size-control);
+}
+.el-input__inner {
+    height: 42px;
 }
 .el-checkbox,
 .el-radio,
 .el-dropdown-menu__item {
     min-height: 44px;
 }
+.el-select-dropdown__item {
+    display: flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    height: auto;
+    line-height: 1.5;
+}
 .el-form-item__label {
     color: var(--text-primary);
+    font-size: var(--font-size-control);
+    font-weight: 500;
+}
+.el-form-item {
+    margin-bottom: var(--space-4);
+}
+.task-actions > .el-button + .el-button {
+    margin-left: 0;
 }
 .el-dialog {
     max-width: calc(100vw - 32px);
+    border-radius: var(--card-radius);
+    padding: var(--panel-padding);
 }
 .el-form-item__error {
     position: static;
     width: 100%;
     line-height: 1.5;
-    font-size: 14px;
+    font-size: var(--font-size-control);
     white-space: normal;
     overflow-wrap: anywhere;
 }
@@ -229,6 +265,27 @@
     &.is-focus,
     &:focus {
         box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
+    }
+}
+.el-form-item.is-error .el-input__wrapper,
+.el-form-item.is-error .el-select__wrapper,
+.el-form-item.is-error .el-textarea__inner {
+    box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
+}
+.el-input__wrapper:focus-within,
+.el-select__wrapper:focus-within,
+.el-textarea__inner:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+@media (max-width: 767px) {
+    .el-input__inner,
+    .el-select__input,
+    .el-textarea__inner {
+        font-size: var(--font-size-subheading);
+    }
+    .el-dialog {
+        --el-dialog-margin-top: var(--space-5);
     }
 }
 
@@ -258,6 +315,18 @@
 .el-pagination {
     --el-pagination-bg-color: transparent;
     --el-pagination-hover-color: var(--el-color-primary);
+    --el-pagination-button-width: 44px;
+    --el-pagination-button-height: 44px;
+}
+.el-pagination .el-pager li,
+.el-pagination .btn-prev,
+.el-pagination .btn-next {
+    min-width: 44px;
+    min-height: 44px;
+}
+.el-pagination .el-pager li:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 /* Divider — lighter */

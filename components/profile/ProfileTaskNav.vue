@@ -1,6 +1,7 @@
 <template>
     <div class="profile-task-nav">
         <nav class="profile-task-nav__desktop" :aria-label="t('profile.workbench.tasks')">
+            <p class="profile-task-nav__label">{{ t('profile.workbench.tasks') }}</p>
             <a
                 v-for="task in PROFILE_TASKS"
                 :key="task"
@@ -65,9 +66,16 @@ function selectLink(task: ProfileTask, event: MouseEvent) {
         display: grid;
         gap: var(--space-2);
     }
+    &__label {
+        margin: 0 0 var(--space-2);
+        padding-inline: var(--space-4);
+        color: var(--text-secondary);
+        font-size: var(--font-size-control);
+        font-weight: 600;
+    }
     &__mobile label {
         color: var(--text-secondary);
-        font-size: 14px;
+        font-size: var(--font-size-control);
         font-weight: 600;
     }
     &__mobile :deep(.el-select) {
@@ -87,9 +95,9 @@ function selectLink(task: ProfileTask, event: MouseEvent) {
             display: flex;
             align-items: center;
             min-height: 44px;
-            padding: var(--space-3) var(--space-4);
+            padding: var(--space-2) var(--space-4);
             border-radius: var(--card-radius);
-            font-size: 14px;
+            font-size: var(--font-size-control);
             color: var(--text-secondary);
             overflow-wrap: anywhere;
             border-left: 2px solid transparent;
