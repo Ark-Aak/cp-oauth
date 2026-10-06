@@ -33,6 +33,7 @@
                 :error="loadError"
                 :empty="clients.length === 0"
                 :empty-text="$t('developer.no_apps')"
+                :empty-icon="AppWindow"
                 @retry="refresh()"
             >
                 <template #empty>
@@ -58,12 +59,23 @@
                                 :aria-busy="rowPending(client.id)"
                             >
                                 <td>
-                                    <p
-                                        :id="`developer-table-name-${client.id}`"
-                                        class="developer__client-name"
-                                    >
-                                        {{ client.name }}
-                                    </p>
+                                    <div class="developer__client-heading">
+                                        <p
+                                            :id="`developer-table-name-${client.id}`"
+                                            class="developer__client-name"
+                                        >
+                                            {{ client.name }}
+                                        </p>
+                                        <span class="developer__email-policy">
+                                            {{
+                                                $t(
+                                                    client.requireEmailVerified
+                                                        ? 'developer.email_verified_required'
+                                                        : 'developer.email_not_required'
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
                                     <div class="developer__client-id">
                                         <span class="sr-only"
                                             >{{ $t('developer.client_id') }}:
@@ -82,15 +94,6 @@
                                             <Copy :size="18" aria-hidden="true" />
                                         </el-button>
                                     </div>
-                                    <p class="developer__email-policy">
-                                        {{
-                                            $t(
-                                                client.requireEmailVerified
-                                                    ? 'developer.email_verified_required'
-                                                    : 'developer.email_not_required'
-                                            )
-                                        }}
-                                    </p>
                                 </td>
                                 <td>
                                     <ul class="developer__uris">
@@ -142,7 +145,18 @@
                         class="developer__mobile-client"
                         :aria-busy="rowPending(client.id)"
                     >
-                        <h3 class="developer__client-name">{{ client.name }}</h3>
+                        <div class="developer__client-heading">
+                            <h3 class="developer__client-name">{{ client.name }}</h3>
+                            <span class="developer__email-policy">
+                                {{
+                                    $t(
+                                        client.requireEmailVerified
+                                            ? 'developer.email_verified_required'
+                                            : 'developer.email_not_required'
+                                    )
+                                }}
+                            </span>
+                        </div>
                         <div class="developer__client-id">
                             <span class="sr-only">{{ $t('developer.client_id') }}: </span>
                             <code>{{ client.clientId }}</code>
@@ -157,15 +171,6 @@
                                 <Copy :size="18" aria-hidden="true" />
                             </el-button>
                         </div>
-                        <p class="developer__email-policy">
-                            {{
-                                $t(
-                                    client.requireEmailVerified
-                                        ? 'developer.email_verified_required'
-                                        : 'developer.email_not_required'
-                                )
-                            }}
-                        </p>
                         <p class="developer__meta-label">{{ $t('developer.redirect_uris') }}</p>
                         <ul class="developer__uris">
                             <li v-for="uri in client.redirectUris" :key="uri">
@@ -206,7 +211,6 @@
             <p>{{ $t('developer.integration_hint') }}</p>
             <NuxtLink to="/about" class="developer__help-link">
                 {{ $t('developer.open_guide') }}
-                <ArrowUpRight :size="18" aria-hidden="true" />
             </NuxtLink>
         </section>
 
@@ -294,7 +298,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowUpRight, Copy, Plus } from 'lucide-vue-next';
+import { AppWindow, Copy, Plus } from 'lucide-vue-next';
 import OAuthClientForm from '~/components/developer/OAuthClientForm.vue';
 import OAuthClientSecretDialog from '~/components/developer/OAuthClientSecretDialog.vue';
 import type { OAuthClient, OAuthClientDraft } from '~/types/api';
@@ -577,17 +581,35 @@ async function copyClientId(client: OAuthClient) {
     }
 
     th {
+        background: var(--bg-secondary);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
         font-weight: 600;
     }
 
     th:first-child {
-        width: 31%;
+        width: 38%;
     }
 
     th:last-child {
-        width: 164px;
+        width: 184px;
+    }
+
+    th:last-child,
+    td:last-child {
+        text-align: right;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    &__client-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2) var(--space-3);
+        min-width: 0;
     }
 
     &__client-name {
@@ -595,6 +617,7 @@ async function copyClientId(client: OAuthClient) {
         color: var(--text-primary);
         font-size: var(--font-size-subheading);
         font-weight: 600;
+        line-height: 1.4;
         overflow-wrap: anywhere;
     }
 
@@ -602,12 +625,13 @@ async function copyClientId(client: OAuthClient) {
         display: flex;
         align-items: center;
         gap: var(--space-2);
-        margin-top: var(--space-2);
+        width: fit-content;
+        max-width: 100%;
+        margin-top: var(--space-3);
         min-width: 0;
 
         code {
             min-width: 0;
-            flex: 1;
         }
 
         :deep(.el-button) {
@@ -626,18 +650,27 @@ async function copyClientId(client: OAuthClient) {
     }
 
     &__email-policy {
-        margin-top: var(--space-2);
         font-size: var(--font-size-control);
         color: var(--text-secondary);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
     }
 
     &__uris {
         display: grid;
-        gap: var(--space-3);
+        gap: var(--space-2);
         min-width: 0;
         padding: 0;
         margin: 0;
         list-style: none;
+    }
+
+    &__uris code {
+        display: block;
+        padding: var(--space-2) var(--space-3);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
     }
 
     &__unsafe {
@@ -652,6 +685,7 @@ async function copyClientId(client: OAuthClient) {
     &__row-actions {
         display: flex;
         flex-wrap: wrap;
+        justify-content: flex-end;
         gap: var(--space-2);
     }
 
@@ -708,8 +742,6 @@ async function copyClientId(client: OAuthClient) {
         gap: var(--space-2);
         min-height: 44px;
         margin-top: var(--space-2);
-        color: var(--accent);
-        text-decoration: underline;
         overflow-wrap: anywhere;
     }
 
@@ -742,6 +774,7 @@ async function copyClientId(client: OAuthClient) {
         }
 
         &__row-actions {
+            justify-content: stretch;
             margin-top: var(--space-4);
         }
 

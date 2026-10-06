@@ -14,17 +14,25 @@
                 $t('common.retry')
             }}</el-button>
         </div>
-        <div v-else-if="empty" class="async-state__message">
-            <slot name="empty"
-                ><p>{{ emptyText }}</p></slot
-            >
+        <div v-else-if="empty" class="async-state__empty">
+            <AppEmptyState :text="emptyText" :icon="emptyIcon">
+                <template v-if="$slots.empty" #default><slot name="empty" /></template>
+            </AppEmptyState>
         </div>
         <slot v-else />
     </section>
 </template>
 
 <script setup lang="ts">
-defineProps<{ pending: boolean; error?: string | null; empty?: boolean; emptyText?: string }>();
+import type { Component } from 'vue';
+
+defineProps<{
+    pending: boolean;
+    error?: string | null;
+    empty?: boolean;
+    emptyText?: string;
+    emptyIcon?: Component;
+}>();
 defineEmits<{ retry: [] }>();
 </script>
 
@@ -32,12 +40,15 @@ defineEmits<{ retry: [] }>();
 .async-state {
     min-width: 0;
 }
-.async-state__message {
-    padding: var(--space-4);
+.async-state__message,
+.async-state__empty {
     border: 1px solid var(--border-color);
     border-radius: var(--card-radius);
     background: var(--bg-primary);
     color: var(--text-secondary);
+}
+.async-state__message {
+    padding: var(--space-4);
 }
 .async-state__message--error {
     border-left: 3px solid var(--el-color-danger);

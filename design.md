@@ -29,7 +29,7 @@ version: 2026-10-06
 ## 3. 页面结构与构图
 
 - [建议，决策] 工作台桌面侧栏使用 `--sidebar-width` 的 220px。来源：本次 240px 侧栏基线与轻度缩小要求。
-- [建议，决策] 工作台桌面顶栏使用 64px 最小高度。来源：本次 103px 顶栏基线；偏好字段改为同行显示。
+- [建议，决策] 工作台桌面顶栏使用 64px 最小高度。来源：本次 103px 顶栏基线与轻度缩小要求；保留上游统一偏好弹出层。
 - [建议] 工作台内容保留最大 1200px 可用宽度。
 - [建议] 任务表单保留最大 680px 宽度。
 - [建议，决策] 文档正文保留最大 880px 宽度。来源：已有 `pages/about.vue` 的阅读布局与轻度缩小要求。
@@ -42,6 +42,8 @@ version: 2026-10-06
 - [建议，决策] 小于 480px 时将首页登录与注册入口并排等宽显示。来源：本次 390px 基线中纵向按钮占据过多首屏；保持入口与顺序不变。
 - [建议，决策] 认证与授权采用最大 420px 的单任务表面。来源：已有 440px 表面与轻度缩小要求。
 - [建议] 短屏认证页保持正常文档流。
+- [建议] 登录和授权使用关闭侧栏的共用工作台导航。
+- [建议] 其他认证页使用独立认证顶栏与页脚。
 - [建议] 个人页只显示一个活动任务。
 - [必须] 个人页保留资料、绑定、安全、授权应用、公开展示、偏好的既有任务顺序。
 - [建议] 管理与开发者页面按标题和主要操作、当前结果、次要帮助的顺序排布。
@@ -151,15 +153,18 @@ version: 2026-10-06
 | 字体           | --font-body                                                                                                                                       | assets/scss/main.scss；加载入口为 nuxt.config.ts                   | 正文和继承该字体的控件；中文与日文保留本机回退         | 已实现 |
 | 导航宽度       | --sidebar-width                                                                                                                                   | assets/scss/main.scss                                              | 桌面工作台                                             | 已实现 |
 | 页面标题       | AppPageHeader(title,description?)、actions slot                                                                                                   | components/AppPageHeader.vue                                       | 每页唯一标题                                           | 已实现 |
-| 异步结果       | AppAsyncState(pending,error?,empty?,emptyText?)、retry event                                                                                      | components/AppAsyncState.vue                                       | 区块结果/错误/空                                       | 已实现 |
-| 偏好           | AppPreferences(inline?)                                                                                                                           | components/AppPreferences.vue                                      | 顶栏同行显示；弹出层与任务保持字段布局                 | 已实现 |
+| 异步结果       | `AppAsyncState(pending,error?,empty?,emptyText?,emptyIcon?)`、retry event                                                                         | components/AppAsyncState.vue                                       | 区块结果/错误/空；保留失败重试与空状态图标             | 已实现 |
+| 偏好           | `AppPreferences`                                                                                                                                  | components/AppPreferences.vue                                      | 共用顶栏弹出层与个人偏好任务；账号保存行为不变         | 已实现 |
 | 用户/平台身份  | AppUserAvatar/AppPlatformIcon(platform)                                                                                                           | components/AppUserAvatar.vue、components/AppPlatformIcon.vue       | 头像、平台标识；未知或失败图标使用 Code                | 已实现 |
 | 表单/弹窗/分页 | el-form/el-input/el-select/el-option/el-button/el-dialog/el-drawer/el-pagination                                                                  | Element Plus；assets/scss/element-overrides.scss                   | 复用键盘能力；展开选项、分页按钮和页码目标至少 44×44px | 已实现 |
-| 任务布局       | task-panel、task-section、task-section\_\_hint、task-actions                                                                                      | assets/scss/main.scss                                              | 680px 白色任务表面与分区；不嵌套普通卡片               | 已实现 |
+| 任务布局       | `task-panel`、`task-section`、`task-section__hint`、`task-actions`                                                                                | assets/scss/main.scss                                              | 680px 白色任务表面与分区；不嵌套普通卡片               | 已实现 |
 | 内容分区       | ui-card、ui-quote-block、ui-stat-grid                                                                                                             | assets/scss/main.scss                                              | 有边界的结果、引用与两列统计；不嵌套普通卡片           | 已实现 |
-| 页面布局       | default、auth                                                                                                                                     | layouts/default.vue、layouts/auth.vue                              | 工作台侧栏/手机抽屉、认证单任务页                      | 已实现 |
-| 认证表面       | auth-card、auth-card**title、auth-card**desc、auth-card\_\_actions                                                                                | layouts/auth.vue                                                   | 认证、授权与回调；使用语义 section 而非嵌套卡片        | 已实现 |
+| 页面布局       | `default(showSidebar?)`、`auth`                                                                                                                   | layouts/default.vue、layouts/auth.vue                              | 工作台侧栏/手机抽屉；登录和授权复用无侧栏导航          | 已实现 |
+| 认证表面       | `auth-card`、`auth-card__title`、`auth-card__desc`、`auth-card__actions`                                                                          | layouts/auth.vue                                                   | 认证、授权与回调；使用语义 section 而非嵌套卡片        | 已实现 |
 | 评级历史       | UserRatingHistoryChart(history)                                                                                                                   | components/user/RatingHistoryChart.client.vue                      | 公开许可的历史数据；保留可展开数据表                   | 已实现 |
+| 文字导航       | `ui-menu-link`、`ui-navigation-link`                                                                                                              | assets/scss/main.scss                                              | 菜单、导航及非普通阅读链接；保留可见选中状态           | 已实现 |
+| 空状态         | `AppEmptyState(text?,icon?)`、default slot                                                                                                        | components/AppEmptyState.vue                                       | 真实空结果；不能替代加载或错误                         | 已实现 |
+| 输入格式提示   | `AppInputFormatHint(format)`，format 为 `markdown` 或 `html`                                                                                      | components/AppInputFormatHint.vue                                  | 对应内容编辑字段；保留真实格式说明                     | 已实现 |
 
 以上名称为公开原语。页面自有样式采用自身BEM命名空间，可调整业务排布，不覆盖原语的字体、颜色、焦点或表面；需要变化应修改共用token而不是添加平行实现。
 
@@ -177,7 +182,7 @@ version: 2026-10-06
 
 最小调用：`<AppPageHeader :title="t('profile.title')" />`；操作插槽为 `#actions`。
 
-顶栏偏好调用：`<AppPreferences inline />`；任务内偏好调用：`<AppPreferences />`。
+偏好调用：`<AppPreferences />`；共用顶栏放入可访问的偏好弹出层。
 
 ## 6. 文案与数据
 
@@ -199,4 +204,4 @@ version: 2026-10-06
 
 ## 8. 实现与接入
 
-Nuxt4 SSR/Element Plus/lucide不换框架。CSS入口加载Fontsource本地资源及唯一token层；主题由color-mode .dark切换，Shiki双主题CSS不重新渲染。状态由请求隔离useAuth/useApi/usePublicConfig共用，不新增Pinia。页面按任务composable取数，只有活动面板请求；图表客户端接近视口后lazy import。登录用户的主题和语言以账号保存值为准，SSR水合后覆盖浏览器旧偏好；游客使用本地偏好。浏览器检查证据保存在任务记录，不以原语已实现代替页面检查。
+Nuxt4 SSR/Element Plus/lucide不换框架。CSS按 `assets/css/vendor.css`、`assets/scss/main.scss`、`assets/scss/element-overrides.scss` 顺序加载；vendor.css导入既有Element Plus及Fontsource本地字体，main.scss保留唯一token层。主题由color-mode .dark切换，Shiki双主题CSS不重新渲染。状态由请求隔离useAuth/useApi/usePublicConfig共用，不新增Pinia。页面按任务composable取数，只有活动面板请求；图表客户端接近视口后lazy import。登录用户的主题和语言以账号保存值为准，SSR水合后覆盖浏览器旧偏好；游客使用本地偏好。浏览器检查证据保存在任务记录，不以原语已实现代替页面检查。

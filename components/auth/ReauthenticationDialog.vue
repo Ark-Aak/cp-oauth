@@ -176,13 +176,13 @@
                                 })
                             }}
                         </el-button>
-                        <p
+                        <AppEmptyState
                             v-if="
                                 !hasPasskeys && !verifiableBindings.length && !oauthBindings.length
                             "
-                        >
-                            {{ t('reauth.no_alternative') }}
-                        </p>
+                            :text="t('reauth.no_alternative')"
+                            :icon="KeyRound"
+                        />
                     </template>
                 </div>
             </template>
@@ -196,7 +196,7 @@
 <script setup lang="ts">
 import { ElMessageBox } from 'element-plus';
 import { getCurrentInstance } from 'vue';
-import { Eye, EyeOff } from 'lucide-vue-next';
+import { Eye, EyeOff, KeyRound } from 'lucide-vue-next';
 import type { AuthResult } from '~/types/auth';
 import type { LinkedAccount, PasskeySummary } from '~/types/api';
 import {

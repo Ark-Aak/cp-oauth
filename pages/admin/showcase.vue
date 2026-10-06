@@ -22,6 +22,7 @@
                 :error="loadError"
                 :empty="items.length === 0"
                 :empty-text="$t('admin.showcase.empty')"
+                :empty-icon="Globe"
                 @retry="loadItems"
             >
                 <div class="admin-showcase__list">
@@ -224,6 +225,7 @@
 </template>
 
 <script setup lang="ts">
+import { Globe } from 'lucide-vue-next';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import AdminSectionNav from '~/components/admin/AdminSectionNav.vue';
 import { adminRequestError } from '~/utils/admin-feedback';
@@ -529,7 +531,6 @@ await loadItems();
 
     &__url {
         display: block;
-        color: var(--accent);
         overflow-wrap: anywhere;
     }
 

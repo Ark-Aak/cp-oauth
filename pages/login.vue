@@ -240,7 +240,7 @@
                 <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
             </div>
             <p v-if="publicConfig?.registrationEnabled" class="auth-card__footer">
-                {{ $t('auth.login.footer') }}
+                <span>{{ $t('auth.login.footer') }}</span>
                 <NuxtLink :to="registerPath">{{ $t('auth.login.register_link') }}</NuxtLink>
             </p>
         </template>

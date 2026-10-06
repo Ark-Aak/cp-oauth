@@ -22,6 +22,7 @@
                 :error="loadError"
                 :empty="notices.length === 0"
                 :empty-text="$t('admin.notices.empty')"
+                :empty-icon="Bell"
                 @retry="loadNotices"
             >
                 <div class="admin-notices__list">
@@ -111,6 +112,7 @@
                     :label="$t('admin.notices.notice_content')"
                     :error="fieldErrors.content"
                 >
+                    <AppInputFormatHint id="notice-content-format" format="html" />
                     <el-input
                         id="notice-content"
                         v-model="form.content"
@@ -119,8 +121,8 @@
                         :aria-invalid="!!fieldErrors.content"
                         :aria-describedby="
                             fieldErrors.content
-                                ? 'notice-content-error notice-content-help'
-                                : 'notice-content-help'
+                                ? 'notice-content-format notice-content-error notice-content-help'
+                                : 'notice-content-format notice-content-help'
                         "
                         @input="touch('content')"
                         @blur="touch('content')"
@@ -165,6 +167,7 @@
 </template>
 
 <script setup lang="ts">
+import { Bell } from 'lucide-vue-next';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import AdminSectionNav from '~/components/admin/AdminSectionNav.vue';
 import { formatCSTTime } from '~/utils/time';

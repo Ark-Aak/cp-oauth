@@ -90,7 +90,6 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
         gap: var(--space-2);
         min-width: 0;
         overflow-wrap: anywhere;
-        color: var(--text-primary);
     }
 
     &__platform {

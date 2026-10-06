@@ -682,8 +682,6 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
         display: inline-block;
         min-height: 44px;
         padding: var(--space-2) 0;
-        color: var(--accent);
-        text-decoration: underline;
         overflow-wrap: anywhere;
     }
 

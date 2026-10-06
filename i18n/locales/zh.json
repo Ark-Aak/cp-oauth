@@ -14,6 +14,16 @@
         "error": "操作失败",
         "success": "操作成功"
     },
+    "input_format": {
+        "markdown": {
+            "label": "支持 Markdown",
+            "description": "可使用标题、列表、链接和代码块。"
+        },
+        "html": {
+            "label": "支持 HTML",
+            "description": "可使用段落、加粗、链接和列表等 HTML 标签。"
+        }
+    },
     "markdown": {
         "render_error": "Markdown 渲染失败，原文保留如下。"
     },
@@ -74,6 +84,7 @@
         "about": "文档",
         "login": "登录",
         "logout": "退出登录",
+        "logout_confirm": "确定退出当前账号吗？",
         "admin": "管理",
         "signed_in_as": "已登录用户"
     },
@@ -395,7 +406,7 @@
         "joined": "加入时间",
         "linked_accounts": "关联的竞赛账号",
         "other_accounts": "其他平台账号",
-        "no_linked": "尚未关联任何竞赛编程账号。",
+        "no_linked": "该用户暂无公开的竞赛平台账号。",
         "no_other_accounts": "尚未关联其他平台账号。",
         "cp_stats": "竞赛数据",
         "rating": "Rating",
@@ -521,6 +532,7 @@
             "exact_callback": "查看完整回调地址",
             "current_account": "当前账号",
             "switch_account": "退出并切换账号",
+            "switch_account_confirm": "确定退出当前账号并切换账号吗？登录其他账号后将返回此授权请求。",
             "signed_out_hint": "当前未登录。授权需先登录；拒绝此请求无需登录。",
             "verification_return_hint": "验证邮件会将你带回当前授权请求。",
             "sign_in_authorize": "登录后授权"
