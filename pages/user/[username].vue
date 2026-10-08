@@ -6,6 +6,7 @@
                     :size="56"
                     :src="user.avatarUrl || undefined"
                     :name="user.displayName || user.username"
+                    :seed="user.id"
                 />
                 <div class="user-profile__identity-text">
                     <AppPageHeader

@@ -7,6 +7,7 @@
                 :size="64"
                 :src="draft.avatarUrl || undefined"
                 :name="draft.displayName || draft.username"
+                :seed="profile?.id"
             />
             <div>
                 <strong>{{ draft.displayName || draft.username }}</strong>

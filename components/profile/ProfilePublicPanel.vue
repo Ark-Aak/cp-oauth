@@ -341,7 +341,7 @@ onBeforeUnmount(() => {
     }
     &__editor {
         :deep(textarea) {
-            font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+            font-family: var(--font-code);
             line-height: 1.65;
         }
     }

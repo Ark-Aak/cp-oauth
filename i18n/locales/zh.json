@@ -374,7 +374,7 @@
         },
         "workbench": {
             "description": "管理你的身份、绑定账号与对外共享的访问权限。",
-            "tasks": "账号任务",
+            "tasks": "账号设置",
             "wait_for_action": "请等待当前操作完成后再离开此任务。",
             "unsaved_title": "尚未保存的修改",
             "discard_prompt": "离开此任务并丢弃尚未保存的输入？这些修改不会被保存。",
@@ -508,18 +508,20 @@
             "label": "主题",
             "system": "跟随系统",
             "light": "浅色",
-            "dark": "深色"
+            "dark": "深色",
+            "switch_to": "切换为{theme}主题"
         },
         "language": {
             "label": "语言",
             "en": "English",
             "zh": "中文",
-            "ja": "日本語"
+            "ja": "日本語",
+            "switch_to": "将语言切换为{language}"
         }
     },
     "oauth": {
         "consent": {
-            "title": "授权请求",
+            "title": "CP OAuth 授权请求",
             "wants_access": "正在请求访问您的账号。",
             "permissions": "该应用正在请求以下权限：",
             "authorize": "授权",
@@ -528,8 +530,6 @@
             "error": "授权请求失败",
             "email_verification_required": "此应用的创建者要求您必须验证邮箱才能授权。",
             "go_verify_email": "前往验证邮箱",
-            "callback_destination": "已校验的回调目标",
-            "exact_callback": "查看完整回调地址",
             "current_account": "当前账号",
             "switch_account": "退出并切换账号",
             "switch_account_confirm": "确定退出当前账号并切换账号吗？登录其他账号后将返回此授权请求。",

@@ -55,7 +55,6 @@ export default defineNuxtConfig({
                 'remark-rehype',
                 'rehype-stringify',
                 '@shikijs/rehype',
-                '@element-plus/icons-vue',
                 'chart.js'
             ]
         },

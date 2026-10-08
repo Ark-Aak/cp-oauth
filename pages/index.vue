@@ -1,78 +1,105 @@
 <template>
     <div class="home">
-        <section class="home__primary ui-card" :aria-label="$t('home.account_tasks')">
-            <AppPageHeader :title="homeTitle" :description="$t('home.task_description')" />
-            <AppAsyncState
-                :pending="identityPending"
-                :error="authStatus === 'error' ? $t('identity.identity_unavailable') : null"
-                @retry="retryIdentity"
-            >
-                <template v-if="me">
-                    <div class="home__account">
-                        <div class="home__identity">
-                            <AppUserAvatar
-                                :size="48"
-                                :src="me.avatarUrl || undefined"
-                                :name="me.displayName || me.username"
-                            />
-                            <div class="home__identity-text">
-                                <p>
-                                    <strong>{{ me.displayName || me.username }}</strong>
-                                </p>
-                                <p class="home__handle">@{{ me.username }}</p>
+        <div class="home__intro">
+            <section class="home__primary ui-card" :aria-label="$t('home.account_tasks')">
+                <AppPageHeader
+                    :title="homeTitle"
+                    :description="$t('home.task_description')"
+                    :icon="House"
+                />
+                <AppAsyncState
+                    :pending="identityPending"
+                    :error="authStatus === 'error' ? $t('identity.identity_unavailable') : null"
+                    @retry="retryIdentity"
+                >
+                    <template v-if="me">
+                        <div class="home__account">
+                            <div class="home__identity">
+                                <AppUserAvatar
+                                    :size="48"
+                                    :src="me.avatarUrl || undefined"
+                                    :name="me.displayName || me.username"
+                                    :seed="me.id"
+                                />
+                                <div class="home__identity-text">
+                                    <p>
+                                        <strong>{{ me.displayName || me.username }}</strong>
+                                    </p>
+                                    <p class="home__handle">@{{ me.username }}</p>
+                                </div>
+                            </div>
+                            <div v-if="!me.emailVerified" class="home__verification" role="status">
+                                <p>{{ $t('profile.email_unverified') }}</p>
+                                <NuxtLink to="/profile?tab=basic">{{
+                                    $t('profile.send_verify_email')
+                                }}</NuxtLink>
+                            </div>
+                            <div class="home__actions home__actions--account">
+                                <NuxtLink
+                                    to="/profile?tab=bindings"
+                                    class="el-button el-button--primary"
+                                >
+                                    {{ $t('binding.link_account') }}
+                                </NuxtLink>
+                                <NuxtLink to="/profile?tab=authorized_apps" class="el-button">
+                                    {{ $t('home.manage_authorizations') }}
+                                </NuxtLink>
                             </div>
                         </div>
-                        <div v-if="!me.emailVerified" class="home__verification" role="status">
-                            <p>{{ $t('profile.email_unverified') }}</p>
-                            <NuxtLink to="/profile?tab=basic">{{
-                                $t('profile.send_verify_email')
-                            }}</NuxtLink>
-                        </div>
-                        <div class="home__actions home__actions--account">
+                    </template>
+                    <template v-else-if="authStatus === 'anonymous'">
+                        <div class="home__actions home__actions--guest">
+                            <NuxtLink to="/login" class="el-button el-button--primary">
+                                {{ $t('auth.login.title') }}
+                            </NuxtLink>
                             <NuxtLink
-                                to="/profile?tab=bindings"
-                                class="el-button el-button--primary"
+                                v-if="publicConfig?.registrationEnabled"
+                                to="/register"
+                                class="el-button"
                             >
-                                {{ $t('binding.link_account') }}
+                                {{ $t('auth.register.title') }}
                             </NuxtLink>
-                            <NuxtLink to="/profile?tab=authorized_apps" class="el-button">
-                                {{ $t('home.manage_authorizations') }}
+                            <NuxtLink to="/developer" class="home__text-action">
+                                {{ $t('home.developer_path') }}
                             </NuxtLink>
                         </div>
-                    </div>
-                </template>
-                <template v-else-if="authStatus === 'anonymous'">
-                    <div class="home__actions home__actions--guest">
-                        <NuxtLink to="/login" class="el-button el-button--primary">
-                            {{ $t('auth.login.title') }}
-                        </NuxtLink>
-                        <NuxtLink
-                            v-if="publicConfig?.registrationEnabled"
-                            to="/register"
-                            class="el-button"
-                        >
-                            {{ $t('auth.register.title') }}
-                        </NuxtLink>
-                        <NuxtLink to="/developer" class="home__text-action">
-                            {{ $t('home.developer_path') }}
-                        </NuxtLink>
-                    </div>
-                    <p v-if="publicConfig?.registrationEnabled === false" class="home__hint">
-                        {{ $t('auth.flow.registration_closed') }}
-                    </p>
-                </template>
-            </AppAsyncState>
-            <AppAsyncState
-                v-if="publicConfigError"
-                :pending="false"
-                :error="$t('identity.network_error')"
-                @retry="refreshConfig()"
-            />
-        </section>
+                        <p v-if="publicConfig?.registrationEnabled === false" class="home__hint">
+                            {{ $t('auth.flow.registration_closed') }}
+                        </p>
+                    </template>
+                </AppAsyncState>
+                <AppAsyncState
+                    v-if="publicConfigError"
+                    :pending="false"
+                    :error="$t('identity.network_error')"
+                    @retry="refreshConfig()"
+                />
+            </section>
+
+            <section class="home__quote ui-card" aria-labelledby="home-quote">
+                <h2 id="home-quote" class="home__heading">
+                    <Quote :size="18" aria-hidden="true" />
+                    <span>{{ $t('home.quote') }}</span>
+                </h2>
+                <AppAsyncState
+                    :pending="quotePending || (!quote && !quoteError)"
+                    :error="quoteError ? $t('identity.network_error') : null"
+                    @retry="refreshQuote()"
+                >
+                    <blockquote>
+                        <p>{{ quote?.text || $t('home.quote_fallback') }}</p>
+                        <footer>{{ $t('home.quote_source') }}: {{ quoteSource }}</footer>
+                    </blockquote>
+                </AppAsyncState>
+            </section>
+        </div>
 
         <div class="home__layout">
             <section class="home__announcements ui-card" aria-labelledby="home-announcements">
-                <h2 id="home-announcements">{{ $t('home.announcements') }}</h2>
+                <h2 id="home-announcements" class="home__heading">
+                    <Bell :size="18" aria-hidden="true" />
+                    <span>{{ $t('home.announcements') }}</span>
+                </h2>
                 <AppAsyncState
                     :pending="noticePending"
                     :error="noticeError ? $t('identity.network_error') : null"
@@ -102,7 +129,10 @@
 
             <aside class="home__side">
                 <section class="home__section ui-card" aria-labelledby="home-stats">
-                    <h2 id="home-stats">{{ $t('home.stats') }}</h2>
+                    <h2 id="home-stats" class="home__heading">
+                        <ChartNoAxesCombined :size="18" aria-hidden="true" />
+                        <span>{{ $t('home.stats') }}</span>
+                    </h2>
                     <AppAsyncState
                         :pending="statsPending"
                         :error="statsError || !stats ? $t('identity.network_error') : null"
@@ -118,7 +148,10 @@
                 </section>
 
                 <section class="home__section ui-card" aria-labelledby="home-recent-users">
-                    <h2 id="home-recent-users">{{ $t('home.recent_users') }}</h2>
+                    <h2 id="home-recent-users" class="home__heading">
+                        <UsersRound :size="18" aria-hidden="true" />
+                        <span>{{ $t('home.recent_users') }}</span>
+                    </h2>
                     <AppAsyncState
                         :pending="usersPending"
                         :error="usersError ? $t('identity.network_error') : null"
@@ -137,6 +170,7 @@
                                         :size="40"
                                         :src="u.avatarUrl || undefined"
                                         :name="u.displayName || u.username"
+                                        :seed="u.id"
                                     />
                                     <div class="home__user-info">
                                         <p class="home__user-name">
@@ -152,25 +186,11 @@
                 </section>
             </aside>
         </div>
-
-        <section class="home__quote" aria-labelledby="home-quote">
-            <h2 id="home-quote">{{ $t('home.quote') }}</h2>
-            <AppAsyncState
-                :pending="quotePending || (!quote && !quoteError)"
-                :error="quoteError ? $t('identity.network_error') : null"
-                @retry="refreshQuote()"
-            >
-                <blockquote>
-                    <p>{{ quote?.text || $t('home.quote_fallback') }}</p>
-                    <footer>{{ $t('home.quote_source') }}: {{ quoteSource }}</footer>
-                </blockquote>
-            </AppAsyncState>
-        </section>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Bell, Pin, UsersRound } from 'lucide-vue-next';
+import { Bell, ChartNoAxesCombined, House, Pin, Quote, UsersRound } from 'lucide-vue-next';
 import { formatCSTTime } from '~/utils/time';
 import type { NoticeSummary, QuoteSummary, SiteStatsResponse, UserSummary } from '~/types/api';
 
@@ -306,22 +326,21 @@ function formatNumber(value: number): string {
 .home {
     min-width: 0;
 
-    &__primary {
-        padding: var(--panel-padding);
+    &__intro {
         margin-bottom: var(--space-5);
     }
 
     &__account {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        column-gap: var(--space-5);
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-3);
     }
 
     &__identity {
         display: flex;
         align-items: center;
         gap: var(--space-3);
+        min-width: 0;
     }
 
     &__identity-text,
@@ -336,22 +355,16 @@ function formatNumber(value: number): string {
     }
 
     &__hint {
+        margin-top: var(--space-3);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
     }
 
-    &__hint {
-        margin-top: var(--space-3);
-    }
-
     &__verification {
-        grid-column: 1;
-        grid-row: 2;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: var(--space-2) var(--space-4);
-        margin-top: var(--space-3);
         justify-self: start;
         max-width: 100%;
         min-width: 0;
@@ -378,26 +391,18 @@ function formatNumber(value: number): string {
         flex-wrap: wrap;
         align-items: center;
         gap: var(--space-3);
-        margin-top: var(--space-4);
-
-        &--guest {
-            margin-top: 0;
-        }
+        min-width: 0;
 
         .el-button {
+            min-width: 44px;
             min-height: 44px;
+            max-width: 100%;
             height: auto;
             margin: 0;
             white-space: normal;
             text-align: center;
+            overflow-wrap: anywhere;
         }
-    }
-
-    &__actions--account {
-        grid-column: 2;
-        grid-row: 1;
-        justify-content: flex-end;
-        margin-top: 0;
     }
 
     &__text-action {
@@ -410,19 +415,27 @@ function formatNumber(value: number): string {
         font-size: var(--font-size-control);
     }
 
+    &__intro,
     &__layout {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
         gap: var(--space-5);
+    }
+
+    &__layout {
         align-items: start;
     }
 
+    &__primary,
+    &__quote,
     &__announcements,
     &__side,
     &__section {
         min-width: 0;
     }
 
+    &__primary,
+    &__quote,
     &__announcements,
     &__section {
         padding: var(--panel-padding);
@@ -433,18 +446,21 @@ function formatNumber(value: number): string {
         gap: var(--space-5);
     }
 
-    h2 {
+    &__heading {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
         margin-bottom: var(--space-4);
-    }
 
-    &__notices {
-        display: grid;
-        gap: var(--space-4);
+        svg {
+            flex-shrink: 0;
+            color: var(--text-secondary);
+        }
     }
 
     &__notice {
         min-width: 0;
-        padding: var(--space-4) 0;
+        padding: var(--space-5) 0;
         border-bottom: 1px solid var(--border-color);
 
         &:first-child {
@@ -464,6 +480,7 @@ function formatNumber(value: number): string {
         gap: var(--space-2) var(--space-3);
 
         h3 {
+            line-height: 1.5;
             overflow-wrap: anywhere;
         }
     }
@@ -479,19 +496,92 @@ function formatNumber(value: number): string {
     }
 
     &__notice-content {
-        margin: var(--space-3) 0;
+        margin: var(--space-3) 0 var(--space-4);
         color: var(--text-secondary);
-        white-space: pre-wrap;
+        font-size: var(--font-size-control);
+        line-height: 1.85;
+        white-space: normal;
         overflow-wrap: anywhere;
 
+        :deep(p),
+        :deep(ul),
+        :deep(ol),
+        :deep(blockquote),
+        :deep(pre),
+        :deep(h4),
+        :deep(h5),
+        :deep(h6) {
+            margin: 0;
+        }
+
+        :deep(:where(p, ul, ol, blockquote, pre, h4, h5, h6) + *) {
+            margin-top: var(--space-3);
+        }
+
+        :deep(ul),
+        :deep(ol) {
+            padding-inline-start: var(--space-5);
+        }
+
+        :deep(li + li),
+        :deep(li > ul),
+        :deep(li > ol) {
+            margin-top: var(--space-1);
+        }
+
+        :deep(h4),
+        :deep(h5),
+        :deep(h6) {
+            color: var(--text-primary);
+            font-size: var(--font-size-subheading);
+            line-height: 1.5;
+        }
+
+        :deep(a) {
+            text-decoration: underline;
+        }
+
         :deep(img) {
+            display: block;
             max-width: 100%;
             height: auto;
+        }
+
+        :deep(blockquote) {
+            padding-inline-start: var(--space-4);
+            border-inline-start: 2px solid var(--border-color);
+        }
+
+        :deep(code) {
+            padding: 0 var(--space-1);
+            border-radius: var(--el-border-radius-base);
+            background: var(--bg-tertiary);
+            font-size: inherit;
+        }
+
+        :deep(pre) {
+            max-width: 100%;
+            padding: var(--space-3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--el-border-radius-base);
+            background: var(--bg-secondary);
+            line-height: 1.65;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+
+        :deep(pre code) {
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            white-space: inherit;
         }
     }
 
     &__notice-time {
         font-size: var(--font-size-meta);
+        line-height: 1.5;
         color: var(--text-muted);
     }
 
@@ -549,15 +639,13 @@ function formatNumber(value: number): string {
     }
 
     &__quote {
-        margin-top: var(--space-5);
-        padding-top: var(--space-5);
-        border-top: 1px solid var(--border-color);
-
         blockquote {
             margin: 0;
             padding-left: var(--space-4);
             border-left: 2px solid var(--border-color);
             color: var(--text-secondary);
+            font-size: var(--font-size-control);
+            line-height: 1.85;
             overflow-wrap: anywhere;
         }
 
@@ -570,24 +658,9 @@ function formatNumber(value: number): string {
 }
 
 @media (max-width: 767px) {
+    .home__intro,
     .home__layout {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .home__account {
-        grid-template-columns: minmax(0, 1fr);
-        row-gap: var(--space-3);
-    }
-
-    .home__actions--account {
-        grid-column: 1;
-        grid-row: auto;
-        justify-content: flex-start;
-    }
-
-    .home__verification {
-        grid-row: auto;
-        margin-top: 0;
     }
 }
 
@@ -615,10 +688,6 @@ function formatNumber(value: number): string {
         flex-direction: column;
         align-items: stretch;
         gap: var(--space-2);
-    }
-
-    .home__verification {
-        grid-column: 1 / -1;
     }
 
     .home__actions:not(.home__actions--guest) > .el-button {

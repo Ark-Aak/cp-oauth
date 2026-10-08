@@ -250,7 +250,7 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
         font-weight: 400;
     }
     &__id {
-        font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+        font-family: var(--font-code);
         color: var(--text-secondary);
         font-size: var(--font-size-meta);
         overflow-wrap: anywhere;

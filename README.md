@@ -8,7 +8,7 @@ CP OAuth is an OAuth 2.0 provider built for competitive programming platforms. U
 - **Framework**: Nuxt 4 (SSR) with Nitro server engine
 - **Database**: PostgreSQL 16 (via Prisma ORM)
 - **Cache**: Redis 7 (via ioredis)
-- **UI**: Element Plus, Lucide icons, SCSS
+- **UI**: Element Plus, Lucide icons, SCSS; locally bundled Lato and Fira Code fonts
 - **Auth**: HttpOnly Redis-backed sessions, bcryptjs, TOTP 2FA, WebAuthn; JWT for external OAuth access tokens
 - **i18n**: English, Chinese, Japanese
 

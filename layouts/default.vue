@@ -313,7 +313,7 @@ async function handleLogout() {
         cursor: pointer;
     }
     .app-layout__main {
-        padding: var(--space-5) var(--space-4);
+        padding: var(--space-4);
     }
     .app-layout__footer {
         padding: 0 var(--space-4) var(--space-4);

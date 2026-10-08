@@ -1,8 +1,9 @@
 <template>
     <div class="consent">
         <section class="auth-card" aria-labelledby="oauth-authorize-title">
-            <h1 id="oauth-authorize-title" class="auth-card__title">
-                {{ $t('oauth.consent.title') }}
+            <h1 id="oauth-authorize-title" class="auth-card__title consent__title">
+                <ShieldCheck :size="24" :stroke-width="1.5" aria-hidden="true" />
+                <span>{{ $t('oauth.consent.title') }}</span>
             </h1>
             <AppAsyncState
                 :pending="authorizationPending"
@@ -14,20 +15,6 @@
                         <strong>{{ clientData.client.name }}</strong>
                         {{ $t('oauth.consent.wants_access') }}
                     </p>
-
-                    <section
-                        class="consent__destination"
-                        aria-labelledby="consent-destination-title"
-                    >
-                        <h2 id="consent-destination-title">
-                            {{ $t('oauth.consent.callback_destination') }}
-                        </h2>
-                        <code class="consent__origin">{{ callbackOrigin }}</code>
-                        <details class="consent__exact-uri">
-                            <summary>{{ $t('oauth.consent.exact_callback') }}</summary>
-                            <code>{{ clientData.redirectUri }}</code>
-                        </details>
-                    </section>
 
                     <section
                         class="consent__permissions"
@@ -43,10 +30,7 @@
                                 class="consent__scope"
                             >
                                 <Shield :size="18" :stroke-width="1.5" aria-hidden="true" />
-                                <div>
-                                    <p>{{ $t(`oauth.scopes.${scope.replace(':', '_')}`) }}</p>
-                                    <code>{{ scope }}</code>
-                                </div>
+                                <span>{{ $t(`oauth.scopes.${scope.replace(':', '_')}`) }}</span>
                             </li>
                         </ul>
                     </section>
@@ -145,16 +129,12 @@
                 </template>
             </AppAsyncState>
         </section>
-
-        <a class="consent__sponsor" href="https://www.rainyun.com/federico_?s=oauth">
-            {{ $t('app.footer.compute_service') }}
-        </a>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Shield } from 'lucide-vue-next';
-import { getCurrentInstance } from 'vue';
+import { LogOut, Shield, ShieldCheck } from 'lucide-vue-next';
+import { getCurrentInstance, markRaw } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import type { OAuthAuthorizationResponse } from '~/types/api';
 import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
@@ -165,7 +145,7 @@ const messageBoxContext = getCurrentInstance()?.appContext;
 const route = useRoute();
 const api = useApi();
 const { user, status, error: authError, load, logout } = useAuth();
-useHead({ title: () => `${t('oauth.consent.title')} - CP OAuth` });
+useHead({ title: () => t('oauth.consent.title') });
 const identityPending = ref(false);
 const switchConfirming = ref(false);
 const switchPending = ref(false);
@@ -244,9 +224,6 @@ const loadError = computed(() =>
         ? errorMessage(authorizationError.value, t('oauth.consent.error'))
         : null
 );
-const callbackOrigin = computed(() =>
-    clientData.value ? new URL(clientData.value.redirectUri).origin : ''
-);
 const needsEmailVerification = computed(
     () =>
         emailVerificationRequired.value ||
@@ -279,6 +256,7 @@ async function switchAccount() {
             t('oauth.consent.switch_account'),
             {
                 type: 'warning',
+                icon: markRaw(LogOut),
                 confirmButtonText: t('oauth.consent.switch_account'),
                 cancelButtonText: t('common.cancel')
             },
@@ -369,8 +347,22 @@ async function handleDecision(approved: boolean) {
     min-width: 0;
     font-size: var(--font-size-control);
 
+    &__title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-bottom: var(--space-3);
+        font-size: var(--font-size-section);
+        line-height: 1.4;
+
+        svg {
+            flex-shrink: 0;
+            color: var(--accent);
+        }
+    }
+
     &__request {
-        margin-bottom: var(--space-4);
+        margin-bottom: var(--space-3);
         color: var(--text-secondary);
         font-size: var(--font-size-body);
         overflow-wrap: anywhere;
@@ -387,38 +379,8 @@ async function handleDecision(approved: boolean) {
         line-height: 1.4;
     }
 
-    &__destination,
     &__permissions {
-        margin-bottom: var(--space-4);
-    }
-
-    code {
-        font-size: var(--font-size-control);
-        line-height: 1.5;
-        color: var(--text-primary);
-        overflow-wrap: anywhere;
-        white-space: normal;
-    }
-
-    &__origin {
-        display: block;
-    }
-
-    &__exact-uri summary {
-        display: inline-flex;
-        align-items: center;
-        min-width: 44px;
-        min-height: 44px;
-        padding-block: var(--space-2);
-        color: var(--accent);
-        cursor: pointer;
-        font-size: var(--font-size-control);
-        overflow-wrap: anywhere;
-    }
-
-    &__exact-uri code {
-        display: block;
-        padding-block: var(--space-2);
+        margin-bottom: var(--space-3);
     }
 
     &__scope-list {
@@ -432,7 +394,7 @@ async function handleDecision(approved: boolean) {
         grid-template-columns: 18px minmax(0, 1fr);
         align-items: start;
         gap: var(--space-2);
-        padding-block: var(--space-2);
+        padding-block: var(--space-1);
         border-bottom: 1px solid var(--border-color);
         font-size: var(--font-size-control);
         line-height: 1.45;
@@ -442,11 +404,6 @@ async function handleDecision(approved: boolean) {
             margin-top: 2px;
             color: var(--accent);
         }
-
-        code {
-            display: block;
-            margin-top: 2px;
-        }
     }
 
     &__scope:last-child {
@@ -454,8 +411,8 @@ async function handleDecision(approved: boolean) {
     }
 
     &__account {
-        margin-bottom: var(--space-4);
-        padding-top: var(--space-4);
+        margin-bottom: var(--space-3);
+        padding-top: var(--space-3);
         border-top: 1px solid var(--border-color);
     }
 
@@ -489,7 +446,7 @@ async function handleDecision(approved: boolean) {
     }
 
     &__notice {
-        margin-bottom: var(--space-4);
+        margin-bottom: var(--space-3);
         padding: var(--space-3);
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
@@ -538,22 +495,6 @@ async function handleDecision(approved: boolean) {
         white-space: normal;
     }
 
-    &__sponsor {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: var(--space-2);
-        min-height: 44px;
-        margin-top: var(--space-4);
-        font-size: var(--font-size-meta);
-        text-align: center;
-        overflow-wrap: anywhere;
-
-        svg {
-            flex-shrink: 0;
-        }
-    }
-
     @media (max-width: 479px) {
         &__account-row {
             grid-template-columns: minmax(0, 1fr);
@@ -562,10 +503,6 @@ async function handleDecision(approved: boolean) {
 
         &__account-row :deep(.el-button) {
             width: 100%;
-        }
-
-        &__actions {
-            grid-template-columns: minmax(0, 1fr);
         }
     }
 }

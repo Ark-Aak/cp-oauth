@@ -162,7 +162,7 @@ function closed() {
 
     :deep(input),
     :deep(textarea) {
-        font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+        font-family: var(--font-code);
         overflow-wrap: anywhere;
     }
 }

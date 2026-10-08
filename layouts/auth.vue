@@ -1,6 +1,34 @@
 <template>
     <NuxtLayout :name="sharedNavigation ? 'default' : false" :show-sidebar="false">
-        <el-container class="auth-layout" :class="{ 'auth-layout--workspace': sharedNavigation }">
+        <div v-if="authorizationPage" class="auth-layout auth-layout--consent">
+            <AppPreferences mode="icons" class="auth-layout__quick-preferences" />
+            <main
+                id="main-content"
+                class="auth-layout__consent-main"
+                tabindex="0"
+                aria-labelledby="oauth-authorize-title"
+            >
+                <div class="auth-layout__consent-content">
+                    <aside
+                        v-if="verificationEmailFailed"
+                        class="auth-layout__verification"
+                        role="status"
+                    >
+                        <p>{{ $t('identity.verification_delivery_failed') }}</p>
+                        <NuxtLink :to="verificationPath">
+                            {{ $t('identity.verification_resend') }}
+                        </NuxtLink>
+                    </aside>
+                    <slot />
+                </div>
+            </main>
+            <AppFooter promotion-source="oauth" class="auth-layout__consent-footer" />
+        </div>
+        <el-container
+            v-else
+            class="auth-layout"
+            :class="{ 'auth-layout--workspace': sharedNavigation }"
+        >
             <component :is="sharedNavigation ? 'div' : 'main'" class="auth-layout__main">
                 <header v-if="!sharedNavigation" class="auth-layout__topbar">
                     <NuxtLink to="/" class="auth-layout__home ui-navigation-link"
@@ -43,9 +71,8 @@ import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 import { SlidersHorizontal } from 'lucide-vue-next';
 
 const route = useRoute();
-const sharedNavigation = computed(() =>
-    ['/login', '/oauth/authorize'].includes(route.path.replace(/\/$/, ''))
-);
+const authorizationPage = computed(() => route.path.replace(/\/$/, '') === '/oauth/authorize');
+const sharedNavigation = computed(() => route.path.replace(/\/$/, '') === '/login');
 const { verificationEmailFailed } = useAuth();
 const verificationPath = computed(() => ({
     path: '/profile',
@@ -58,6 +85,50 @@ const verificationPath = computed(() => ({
 
 <style scoped lang="scss">
 .auth-layout {
+    &--consent {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        width: 100%;
+        min-width: 0;
+        height: 100dvh;
+        min-height: 0;
+        overflow-y: auto;
+        background: var(--bg-secondary);
+    }
+
+    &__quick-preferences {
+        justify-self: end;
+        padding: var(--space-2) var(--space-4) 0;
+    }
+
+    &__consent-main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 0;
+        min-height: 0;
+        margin: var(--space-1);
+        padding: var(--space-1) var(--space-3) var(--space-3);
+        overflow-y: auto;
+    }
+
+    &__consent-content {
+        flex: 0 0 auto;
+        width: 100%;
+        min-width: 0;
+        min-height: 0;
+        max-width: 420px;
+        margin-block: auto;
+    }
+
+    &--consent &__consent-footer {
+        --footer-content-width: 1100px;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        padding: var(--space-2) var(--space-4) var(--space-1);
+    }
+
     &__main {
         display: flex;
         flex-direction: column;

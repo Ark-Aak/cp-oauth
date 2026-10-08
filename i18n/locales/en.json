@@ -374,7 +374,7 @@
         },
         "workbench": {
             "description": "Manage your identity, linked accounts and the access you share.",
-            "tasks": "Account task",
+            "tasks": "Account settings",
             "wait_for_action": "Wait for the current action to finish before leaving this task.",
             "unsaved_title": "Unsaved changes",
             "discard_prompt": "Leave this task and discard its unsaved inputs? No changes will be saved.",
@@ -508,18 +508,20 @@
             "label": "Theme",
             "system": "System Default",
             "light": "Light",
-            "dark": "Dark"
+            "dark": "Dark",
+            "switch_to": "Switch to {theme} theme"
         },
         "language": {
             "label": "Language",
             "en": "English",
             "zh": "中文",
-            "ja": "日本語"
+            "ja": "日本語",
+            "switch_to": "Switch language to {language}"
         }
     },
     "oauth": {
         "consent": {
-            "title": "Authorization Request",
+            "title": "CP OAuth authorization request",
             "wants_access": "is requesting access to your account.",
             "permissions": "This application is requesting the following permissions:",
             "authorize": "Authorize",
@@ -528,8 +530,6 @@
             "error": "Authorization request failed",
             "email_verification_required": "The creator of this application requires you to verify your email before authorizing.",
             "go_verify_email": "Verify Email",
-            "callback_destination": "Verified callback destination",
-            "exact_callback": "Show the exact callback URI",
             "current_account": "Current account",
             "switch_account": "Sign out and switch account",
             "switch_account_confirm": "Sign out of the current account and switch accounts? You will return to this authorization request after signing in.",

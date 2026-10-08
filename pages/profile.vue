@@ -197,6 +197,8 @@ onBeforeUnmount(() => {
     }
     &__panel {
         min-width: 0;
+        width: 100%;
+        max-width: none;
     }
     &__error {
         display: flex;
@@ -213,6 +215,11 @@ onBeforeUnmount(() => {
     &__preferences p {
         margin: var(--space-2) 0 var(--space-4);
         color: var(--text-secondary);
+    }
+    @media (max-width: 767px) {
+        &__layout {
+            gap: var(--space-4);
+        }
     }
     @media (min-width: 1024px) {
         &__layout {

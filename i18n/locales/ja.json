@@ -374,7 +374,7 @@
         },
         "workbench": {
             "description": "プロフィール、連携アカウント、共有するアクセス権を管理します。",
-            "tasks": "アカウントの操作",
+            "tasks": "アカウント設定",
             "wait_for_action": "現在の操作が完了してから、この項目を離れてください。",
             "unsaved_title": "未保存の変更",
             "discard_prompt": "未保存の入力を破棄して、この項目を離れますか？変更は保存されません。",
@@ -508,18 +508,20 @@
             "label": "テーマ",
             "system": "システム設定",
             "light": "ライト",
-            "dark": "ダーク"
+            "dark": "ダーク",
+            "switch_to": "{theme}テーマに切り替える"
         },
         "language": {
             "label": "言語",
             "en": "English",
             "zh": "中文",
-            "ja": "日本語"
+            "ja": "日本語",
+            "switch_to": "言語を{language}に切り替える"
         }
     },
     "oauth": {
         "consent": {
-            "title": "認可リクエスト",
+            "title": "CP OAuth 認可リクエスト",
             "wants_access": "があなたのアカウントへのアクセスを求めています。",
             "permissions": "このアプリケーションは次の権限を要求しています：",
             "authorize": "許可",
@@ -528,8 +530,6 @@
             "error": "認可リクエストに失敗しました",
             "email_verification_required": "このアプリケーションの作成者は、認可する前にメールアドレスの確認を必須としています。",
             "go_verify_email": "メールアドレスを確認する",
-            "callback_destination": "検証済みのコールバック先",
-            "exact_callback": "完全なコールバック URI を表示",
             "current_account": "現在のアカウント",
             "switch_account": "ログアウトしてアカウントを切り替える",
             "switch_account_confirm": "現在のアカウントからログアウトして切り替えますか？別のアカウントでログインした後、この認可リクエストに戻ります。",

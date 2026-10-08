@@ -29,6 +29,7 @@
                         :size="38"
                         :src="user.avatarUrl"
                         :name="user.displayName || user.username"
+                        :seed="user.id"
                     />
                     <span class="app-sidebar__identity-text"
                         ><strong>{{ user.displayName || user.username }}</strong
@@ -110,11 +111,11 @@ function active(path: string) {
 
 .app-sidebar__account {
     margin-top: auto;
-    padding-top: var(--space-5);
+    padding-top: var(--space-2);
     border-top: 1px solid var(--divider-subtle);
 }
 .app-sidebar__identity {
-    padding: var(--space-3);
+    padding: var(--space-1) var(--space-3);
     min-height: 44px;
 }
 .app-sidebar__identity-text {

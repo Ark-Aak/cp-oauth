@@ -668,7 +668,7 @@ async function copyClientId(client: OAuthClient) {
     &__uris code {
         display: block;
         padding: var(--space-2) var(--space-3);
-        border-radius: 6px;
+        border-radius: var(--card-radius);
         background: var(--bg-secondary);
         color: var(--text-primary);
     }

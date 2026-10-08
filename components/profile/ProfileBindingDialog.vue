@@ -665,7 +665,7 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
     }
 
     &__copy-row :deep(input) {
-        font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+        font-family: var(--font-code);
     }
 
     &__actions {

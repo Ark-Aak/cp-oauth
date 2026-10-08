@@ -10,7 +10,7 @@
     --accent: var(--el-color-primary);
     --card-bg: var(--el-bg-color);
     --card-border: var(--el-border-color);
-    --card-radius: 10px;
+    --card-radius: 4px;
     --card-shadow: none;
     --divider-subtle: var(--el-border-color-light);
     --accent-subtle: var(--el-color-primary-light-9);
@@ -30,17 +30,18 @@
     --font-size-section: 18px;
     --font-size-subheading: 16px;
     --font-body:
-        'Source Sans 3 Variable', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'Microsoft YaHei',
-        sans-serif;
+        'Lato', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'Microsoft YaHei', sans-serif;
+    --font-code: 'Fira Code', 'SFMono-Regular', Consolas, monospace;
     --el-font-family: var(--font-body);
     --el-font-size-base: var(--font-size-control);
     --el-component-size: 44px;
     --el-component-size-large: 44px;
     --el-component-size-small: 44px;
-    --el-border-radius-base: 6px;
+    --el-border-radius-base: 4px;
+    --el-border-radius-small: 2px;
 }
 html:lang(ja) {
-    --font-body: 'Source Sans 3 Variable', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif;
+    --font-body: 'Lato', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif;
 }
 *,
 *::before,
@@ -145,8 +146,10 @@ svg {
     max-width: 100%;
 }
 pre,
-code {
-    font-family: 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+code,
+kbd,
+samp {
+    font-family: var(--font-code);
 }
 pre {
     max-width: 100%;
