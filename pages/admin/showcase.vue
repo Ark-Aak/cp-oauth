@@ -33,6 +33,7 @@
                         :aria-busy="!!deleting[item.id]"
                     >
                         <div class="admin-showcase__item-info">
+                            <h3>{{ item.name }}</h3>
                             <p class="admin-showcase__category">
                                 {{
                                     $t(
@@ -43,7 +44,6 @@
                                 }}
                                 · {{ $t('admin.showcase.sort_order') }}: {{ item.sortOrder }}
                             </p>
-                            <h3>{{ item.name }}</h3>
                             <a
                                 v-if="item.url"
                                 :href="item.url"
@@ -86,7 +86,7 @@
                         </div>
                         <el-button
                             type="danger"
-                            plain
+                            text
                             native-type="button"
                             :loading="!!deleting[item.id]"
                             :disabled="!!deleting[item.id]"
@@ -452,10 +452,11 @@ async function handleDelete(item: ShowcaseItem) {
     try {
         try {
             await ElMessageBox.confirm(
-                `${item.name}: ${t('admin.showcase.delete_confirm')}`,
-                t('common.confirm'),
+                t('admin.showcase.delete_confirm', { name: item.name }),
+                t('admin.showcase.delete'),
                 {
                     confirmButtonText: t('admin.showcase.delete'),
+                    confirmButtonClass: 'el-button--danger',
                     cancelButtonText: t('common.cancel'),
                     type: 'warning'
                 }
@@ -525,12 +526,16 @@ await loadItems();
     }
 
     &__category {
-        margin-bottom: var(--space-1);
+        margin-bottom: var(--space-2);
         font-size: var(--font-size-meta);
     }
 
     &__url {
         display: block;
+        min-height: 44px;
+        align-content: center;
+        font-family: var(--font-code);
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 
@@ -538,6 +543,10 @@ await loadItems();
     &__help,
     &__warning {
         margin-top: var(--space-2);
+    }
+
+    &__icon-url {
+        font-family: var(--font-code);
     }
 
     &__warning {
@@ -575,6 +584,10 @@ await loadItems();
     .admin-showcase__item {
         flex-direction: column;
         gap: var(--space-3);
+
+        > .el-button {
+            align-self: flex-end;
+        }
     }
 }
 </style>

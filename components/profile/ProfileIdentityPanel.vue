@@ -71,7 +71,7 @@
                     {{ fieldErrors.username }}
                 </p>
             </div>
-            <div class="profile-identity__field">
+            <div class="profile-identity__field profile-identity__field--wide">
                 <label for="profile-identity-avatarUrl">{{ t('profile.avatar_url') }}</label>
                 <el-input
                     id="profile-identity-avatarUrl"
@@ -94,7 +94,7 @@
                     {{ fieldErrors.avatarUrl }}
                 </p>
             </div>
-            <div class="profile-identity__field">
+            <div class="profile-identity__field profile-identity__field--wide">
                 <label for="profile-identity-bio">{{ t('profile.bio') }}</label>
                 <el-input
                     id="profile-identity-bio"
@@ -131,7 +131,7 @@
                 <dt>{{ t('reauth.current_email') }}</dt>
                 <dd>{{ profile?.email }}</dd>
                 <dt>{{ t('profile.workbench.email_status') }}</dt>
-                <dd>
+                <dd class="profile-identity__email-status">
                     {{
                         t(
                             profile?.emailVerified
@@ -372,11 +372,12 @@ onBeforeUnmount(() => {
     }
     &__form {
         display: grid;
-        gap: var(--space-5);
+        gap: var(--space-4);
     }
     &__field {
         display: grid;
         gap: var(--space-2);
+        min-width: 0;
     }
     &__field label {
         font-size: var(--font-size-control);
@@ -389,6 +390,10 @@ onBeforeUnmount(() => {
     }
     &__notice {
         margin: 0 0 var(--space-4);
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
+        overflow-wrap: anywhere;
     }
     &__email {
         border-top: 1px solid var(--border-color);
@@ -409,6 +414,9 @@ onBeforeUnmount(() => {
         margin: 0;
         overflow-wrap: anywhere;
     }
+    &__email-status {
+        font-weight: 600;
+    }
     &__pending-email {
         padding: var(--space-3) 0;
     }
@@ -426,6 +434,16 @@ onBeforeUnmount(() => {
     }
     &__new-email .profile-identity__field {
         width: 100%;
+    }
+    @media (min-width: 768px) {
+        &__form:not(.profile-identity__new-email) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: start;
+        }
+        &__field--wide,
+        &__actions {
+            grid-column: 1 / -1;
+        }
     }
     @media (max-width: 479px) {
         &__email-details {

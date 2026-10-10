@@ -1,7 +1,7 @@
 ---
 name: cp-oauth-design
 description: CP OAuth 登录、绑定、授权、公开内容、开发者及管理工作台；为竞技编程用户提供尺寸克制、层级清楚、反馈明确的蓝灰身份界面。
-version: 2026-10-09
+version: 2026-10-11
 ---
 
 ## 1. 范围与优先级
@@ -38,16 +38,16 @@ version: 2026-10-09
 - [必须] 关闭 drawer 后不允许抽屉内容聚焦。
 - [建议] 首页将标题和账号操作放在同一个主任务表面。
 - [必须] 桌面欢迎表面与引用表面以 2:1 并排；小于 768px 时引用紧随欢迎表面向下重排。来源：用户要求调整一言位置。
-- [建议] 首页将公告置于主列。
-- [建议] 首页将统计与近期用户置于次列。
+- [建议，决策] 首页公告横跨主内容宽度；统计与近期成员作为次级行并排在公告之后。来源：本次 1440px 基线中公告列约 206px 高、旁侧次列约 835px，留下大片空白。
+- [建议] 首页欢迎表面不重复侧栏已显示的头像、昵称与账号标识。
 - [建议] 小于 768px 时将首页内容重排为单列。
 - [建议，决策] 小于 480px 时将首页登录与注册入口并排等宽显示。来源：本次 390px 基线中纵向按钮占据过多首屏；保持入口与顺序不变。
 - [建议，决策] 认证与授权采用最大 420px 的单任务表面。来源：已有 440px 表面与轻度缩小要求。
 - [建议] 普通短屏认证页保持正常文档流。
-- [建议] 登录使用关闭侧栏的共用工作台导航。
-- [必须] 授权布局移除顶栏，只在右上角提供两个无背景的语言与主题图标按钮。来源：用户明确要求。
-- [必须] 授权布局使用 100dvh 可见容器与全视宽底栏分割线；短屏或长内容只在可键盘访问的主区域内滚动，不产生页面滚动或裁剪操作。来源：用户视高限制与无障碍要求。
-- [建议] 其他认证页使用独立认证顶栏与页脚。
+- [必须] 所有认证页（登录、注册、找回与重置密码、邮箱验证结果、第三方回调、洛谷登录、授权）共用 `auth` 布局：无顶栏与侧栏，右上角只放无背景语言与主题图标，底部使用与授权页一致的全视宽分割线页脚。来源：用户要求移除登录顶栏、页脚模仿授权页。
+- [建议，决策] 授权以外的认证页在表面上方居中显示一次站点名并链接首页；授权页不显示站点名。来源：移除顶栏后保留返回首页入口。
+- [必须] 授权布局使用 100dvh 可见容器；短屏或长内容只在可键盘访问的主区域内滚动，不产生页面滚动或裁剪操作。其他认证页使用至少 100dvh 的正常文档流。来源：用户视高限制与无障碍要求。
+- [建议] 认证表面按标题、一句说明、主表单与主按钮、其他方式、底部切换链接的顺序排布；每个状态只保留一个主按钮。
 - [建议] 个人页只显示一个活动任务。
 - [必须] 个人页保留资料、绑定、安全、授权应用、公开展示、偏好的既有任务顺序。
 - [建议] 管理与开发者页面按标题和主要操作、当前结果、次要帮助的顺序排布。
@@ -72,7 +72,7 @@ version: 2026-10-09
 
 [必须] 长公告正文使用 14px 和 1.85 行高，按段落与列表分组；保留标题、正文、发布时间的清晰间距。来源：用户要求改善文本密度。
 
-[必须] 授权表面标题使用 `--font-size-section` 的 18px，并附一个无底板图标。来源：用户要求缩小标题并添加图标。
+[必须] 认证与授权表面标题使用 `--font-size-section` 的 18px；授权标题附一个无底板图标。标题下一句说明使用 `auth-card__lead`，字段规则使用紧贴字段的 `auth-card__field-hint` 并以 `aria-describedby` 关联。来源：用户要求缩小标题并添加图标；本次注册页规则文字与输入框脱节。
 
 [建议，决策] 非关键元数据使用 `--font-size-meta` 的 13px。来源：仅收紧时间、账号标识和品牌辅助文字，不缩小错误及帮助。
 
@@ -141,6 +141,7 @@ version: 2026-10-09
 - [建议] 当前导航同时使用主色、字重和明确的选中标记。
 - [建议] 次要操作使用中性边框或文字链接。
 - [建议] 同一操作组内相邻 Element Plus 按钮只使用容器 gap。
+- [必须] 深色主题中文字型和链接型按钮保留各自语义色，不套用实底按钮的深色文字。来源：本次深色开发者与管理页的删除按钮测得 rgb(10,10,10) 文字，几乎不可见。
 - [必须] 表单用持久label、autocomplete和对应字段错误，不以placeholder代替名称；OTP支持numeric键盘、one-time-code与粘贴。
 - [必须] 初载、真实空、错误、保存中区分；失败保留输入并可重试，未知数据不显示0。
 - [必须] dialog/drawer有可访问标题、Escape、焦点圈定与归还；导航是链接，动作是button，禁止嵌套交互元素。
@@ -158,27 +159,27 @@ version: 2026-10-09
 
 ## 5. 可用原语
 
-| 角色           | 实现名称或值                                                                                                                                      | 来源                                                               | 使用条件                                               | 状态   |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------ | ------ |
-| 页面/文字/强调 | --bg-primary、--bg-secondary、--bg-tertiary、--text-primary、--text-secondary、--text-muted、--accent、--accent-subtle                            | assets/scss/main.scss；色值来自 assets/scss/element-overrides.scss | 所有页面                                               | 已实现 |
-| 表面与边线     | --card-bg、--card-border、--card-radius、--card-shadow、--border-color、--divider-subtle                                                          | assets/scss/main.scss                                              | 分区与浮层                                             | 已实现 |
-| 间距           | --space-1、--space-2、--space-3、--space-4、--space-5、--space-6、--panel-padding                                                                 | assets/scss/main.scss                                              | 分组间距与表面内边距                                   | 已实现 |
-| 排版           | --font-size-body、--font-size-control、--font-size-meta、--font-size-title、--font-size-title-mobile、--font-size-section、--font-size-subheading | assets/scss/main.scss                                              | 对应文字角色；不得新增平行字号                         | 已实现 |
-| 字体           | --font-body、--font-code                                                                                                                          | assets/scss/main.scss；本地字体加载入口为 assets/css/vendor.css    | Lato 正文；Fira Code 代码；中文与日文保留本机回退      | 已实现 |
-| 导航宽度       | --sidebar-width                                                                                                                                   | assets/scss/main.scss                                              | 桌面工作台                                             | 已实现 |
-| 页面标题       | AppPageHeader(title,description?,icon?)、actions slot                                                                                             | components/AppPageHeader.vue                                       | 每页唯一标题；可选 24px Lucide 图标                     | 已实现 |
-| 异步结果       | `AppAsyncState(pending,error?,empty?,emptyText?,emptyIcon?)`、retry event                                                                         | components/AppAsyncState.vue                                       | 区块结果/错误/空；保留失败重试与空状态图标             | 已实现 |
-| 偏好           | `AppPreferences(mode?: fields/icons)`                                                                                                              | components/AppPreferences.vue                                      | 常规字段与无背景图标按钮两种展示；共享保存反馈         | 已实现 |
-| 用户/平台身份  | AppUserAvatar(size?,src?,name?,seed?)/AppPlatformIcon(platform)                                                                                     | components/AppUserAvatar.vue、components/AppPlatformIcon.vue       | 用户图片与几何回退；平台标识及 Code 回退                | 已实现 |
-| 表单/弹窗/分页 | el-form/el-input/el-select/el-option/el-button/el-dialog/el-drawer/el-pagination                                                                  | Element Plus；assets/scss/element-overrides.scss                   | 复用键盘能力；展开选项、分页按钮和页码目标至少 44×44px | 已实现 |
-| 任务布局       | `task-panel`、`task-section`、`task-section__hint`、`task-actions`                                                                                | assets/scss/main.scss；pages/profile.vue                            | 普通表单上限 680px；主从设置面板填满剩余宽度           | 已实现 |
-| 内容分区       | ui-card、ui-quote-block、ui-stat-grid                                                                                                             | assets/scss/main.scss                                              | 有边界的结果、引用与两列统计；不嵌套普通卡片           | 已实现 |
-| 页面布局       | `default(showSidebar?)`、`auth`                                                                                                                   | layouts/default.vue、layouts/auth.vue                              | 工作台侧栏/手机抽屉；登录无侧栏导航；授权独立视高布局   | 已实现 |
-| 认证表面       | `auth-card`、`auth-card__title`、`auth-card__desc`、`auth-card__actions`                                                                          | layouts/auth.vue                                                   | 认证、授权与回调；使用语义 section 而非嵌套卡片        | 已实现 |
-| 评级历史       | UserRatingHistoryChart(history)                                                                                                                   | components/user/RatingHistoryChart.client.vue                      | 公开许可的历史数据；保留可展开数据表                   | 已实现 |
-| 文字导航       | `ui-menu-link`、`ui-navigation-link`                                                                                                              | assets/scss/main.scss                                              | 菜单、导航及非普通阅读链接；保留可见选中状态           | 已实现 |
-| 空状态         | `AppEmptyState(text?,icon?)`、default slot                                                                                                        | components/AppEmptyState.vue                                       | 真实空结果；不能替代加载或错误                         | 已实现 |
-| 输入格式提示   | `AppInputFormatHint(format)`，format 为 `markdown` 或 `html`                                                                                      | components/AppInputFormatHint.vue                                  | 对应内容编辑字段；保留真实格式说明                     | 已实现 |
+| 角色           | 实现名称或值                                                                                                                                                    | 来源                                                               | 使用条件                                                  | 状态   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- | ------ |
+| 页面/文字/强调 | --bg-primary、--bg-secondary、--bg-tertiary、--text-primary、--text-secondary、--text-muted、--accent、--accent-subtle                                          | assets/scss/main.scss；色值来自 assets/scss/element-overrides.scss | 所有页面                                                  | 已实现 |
+| 表面与边线     | --card-bg、--card-border、--card-radius、--card-shadow、--border-color、--divider-subtle                                                                        | assets/scss/main.scss                                              | 分区与浮层                                                | 已实现 |
+| 间距           | --space-1、--space-2、--space-3、--space-4、--space-5、--space-6、--panel-padding                                                                               | assets/scss/main.scss                                              | 分组间距与表面内边距                                      | 已实现 |
+| 排版           | --font-size-body、--font-size-control、--font-size-meta、--font-size-title、--font-size-title-mobile、--font-size-section、--font-size-subheading               | assets/scss/main.scss                                              | 对应文字角色；不得新增平行字号                            | 已实现 |
+| 字体           | --font-body、--font-code                                                                                                                                        | assets/scss/main.scss；本地字体加载入口为 assets/css/vendor.css    | Lato 正文；Fira Code 代码；中文与日文保留本机回退         | 已实现 |
+| 导航宽度       | --sidebar-width                                                                                                                                                 | assets/scss/main.scss                                              | 桌面工作台                                                | 已实现 |
+| 页面标题       | AppPageHeader(title,description?,icon?)、actions slot                                                                                                           | components/AppPageHeader.vue                                       | 每页唯一标题；可选 24px Lucide 图标                       | 已实现 |
+| 异步结果       | `AppAsyncState(pending,error?,empty?,emptyText?,emptyIcon?)`、retry event                                                                                       | components/AppAsyncState.vue                                       | 区块结果/错误/空；保留失败重试与空状态图标                | 已实现 |
+| 偏好           | `AppPreferences(mode?: fields/icons)`                                                                                                                           | components/AppPreferences.vue                                      | 常规字段与无背景图标按钮两种展示；共享保存反馈            | 已实现 |
+| 用户/平台身份  | AppUserAvatar(size?,src?,name?,seed?)/AppPlatformIcon(platform)                                                                                                 | components/AppUserAvatar.vue、components/AppPlatformIcon.vue       | 用户图片与几何回退；平台标识及 Code 回退                  | 已实现 |
+| 表单/弹窗/分页 | el-form/el-input/el-select/el-option/el-button/el-dialog/el-drawer/el-pagination                                                                                | Element Plus；assets/scss/element-overrides.scss                   | 复用键盘能力；展开选项、分页按钮和页码目标至少 44×44px    | 已实现 |
+| 任务布局       | `task-panel`、`task-section`、`task-section__hint`、`task-actions`                                                                                              | assets/scss/main.scss；pages/profile.vue                           | 普通表单上限 680px；主从设置面板填满剩余宽度              | 已实现 |
+| 内容分区       | ui-card、ui-quote-block、ui-stat-grid                                                                                                                           | assets/scss/main.scss                                              | 有边界的结果、引用与两列统计；不嵌套普通卡片              | 已实现 |
+| 页面布局       | `default`、`auth`                                                                                                                                               | layouts/default.vue、layouts/auth.vue                              | 工作台侧栏/手机抽屉；全部认证页无顶栏、图标偏好与全宽页脚 | 已实现 |
+| 认证表面       | `auth-card`、`auth-card__title`、`auth-card__lead`、`auth-card__desc`、`auth-card__field-hint`、`auth-card__divider`、`auth-card__actions`、`auth-card__footer` | layouts/auth.vue                                                   | 认证、授权与回调；使用语义 section 而非嵌套卡片           | 已实现 |
+| 评级历史       | UserRatingHistoryChart(history)                                                                                                                                 | components/user/RatingHistoryChart.client.vue                      | 公开许可的历史数据；保留可展开数据表                      | 已实现 |
+| 文字导航       | `ui-menu-link`、`ui-navigation-link`                                                                                                                            | assets/scss/main.scss                                              | 菜单、导航及非普通阅读链接；保留可见选中状态              | 已实现 |
+| 空状态         | `AppEmptyState(text?,icon?)`、default slot                                                                                                                      | components/AppEmptyState.vue                                       | 真实空结果；不能替代加载或错误                            | 已实现 |
+| 输入格式提示   | `AppInputFormatHint(format)`，format 为 `markdown` 或 `html`                                                                                                    | components/AppInputFormatHint.vue                                  | 对应内容编辑字段；保留真实格式说明                        | 已实现 |
 
 以上名称为公开原语。页面自有样式采用自身BEM命名空间，可调整业务排布，不覆盖原语的字体、颜色、焦点或表面；需要变化应修改共用token而不是添加平行实现。
 
@@ -196,11 +197,13 @@ version: 2026-10-09
 
 最小调用：`<AppPageHeader :title="t('profile.title')" />`；操作插槽为 `#actions`。
 
-偏好调用：`<AppPreferences />`；共用顶栏放入可访问的偏好弹出层。无背景图标模式使用 `<AppPreferences mode="icons" />`。
+偏好调用：`<AppPreferences />`；工作台顶栏放入可访问的偏好弹出层，字段在 480px 以下纵向拉伸。认证布局使用无背景图标模式 `<AppPreferences mode="icons" />`。
 
 ## 6. 文案与数据
 
 动作使用具体动词，避免泛用“确定”。错误说明原因及下一步，不输出内部路径、堆栈、上游正文或秘密。时间显示明确的时区标签。面向用户的权限列表只显示可读描述，不附内部标识符；不编造能力或安全结论。
+
+术语与语气在三种语言中一致：英文按钮与标题用句首大写，使用 Sign in/Sign out；中文统一用“你”“账号”“绑定”“通行密钥”“算法竞赛”；日文用です・ます体、“パスキー”“連携”。进度文字用单字符省略号“…”，成功反馈只陈述结果，不用感叹号。第三方登录按钮只显示平台名，完整动作放在可访问名称中。
 
 ## 7. 反模式
 
@@ -212,7 +215,7 @@ version: 2026-10-09
 - [建议] 不添加装饰性图标块或彩色图标底板。
 - [建议] 不使用原语之外的字号、字重或颜色字面值。
 - [建议] 不使用整体缩放来缩小界面。
-- [建议] 不在认证表面重复顶栏已有的品牌文字。
+- [建议] 不在认证表面内重复站点名；站点名只在表面上方出现一次。
 - [必须] 不用小号低对比文字承载错误、帮助或权限事实。
 - [建议] 不直接复制参考站的纯图标轨道、品牌资产或广告。
 

@@ -7,8 +7,7 @@
         <h1 id="luogu-auth-title" class="auth-card__title">
             {{ $t('auth.login.luogu_guide_title') }}
         </h1>
-        <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
-        <p class="auth-card__desc">{{ $t('auth.flow.luogu_setup_hint') }}</p>
+        <p class="auth-card__lead">{{ $t('auth.flow.luogu_existing_only') }}</p>
         <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ errorMessage }}
         </p>
@@ -30,12 +29,18 @@
             </el-button>
         </template>
         <template v-else-if="challenge">
+            <h2 class="luogu-auth__step">{{ $t('auth.flow.luogu_step_publish') }}</h2>
             <p class="auth-card__desc">
-                {{ $t('binding.step2_desc', { platform: 'Luogu' }) }}
+                {{ $t('binding.step2_desc', { platform: $t('binding.platforms.luogu') }) }}
             </p>
-            <p class="luogu-auth__code-label">{{ $t('binding.code_label') }}</p>
-            <pre class="luogu-auth__code"><code>{{ challenge.code }}</code></pre>
-            <div class="auth-card__actions">
+            <p id="luogu-code-label" class="luogu-auth__code-label">
+                {{ $t('binding.code_label') }}
+            </p>
+            <div class="luogu-auth__code-row">
+                <pre
+                    class="luogu-auth__code"
+                    aria-labelledby="luogu-code-label"
+                ><code>{{ challenge.code }}</code></pre>
                 <el-button
                     :loading="copyPending"
                     :disabled="operation !== null || copyPending"
@@ -44,7 +49,9 @@
                     {{ $t('auth.flow.copy_code') }}
                 </el-button>
             </div>
-            <p class="auth-card__desc">{{ $t('binding.code_expires', { minutes: 10 }) }}</p>
+            <p class="auth-card__field-hint luogu-auth__expiry">
+                {{ $t('binding.code_expires', { minutes: 10 }) }}
+            </p>
             <el-form
                 ref="verifyFormRef"
                 class="auth-card__form"
@@ -80,7 +87,12 @@
                     </el-button>
                 </el-form-item>
             </el-form>
-            <el-button :disabled="operation !== null" @click="restartChallenge">
+            <el-button
+                class="auth-card__button"
+                text
+                :disabled="operation !== null"
+                @click="restartChallenge"
+            >
                 {{ $t('auth.flow.restart_login') }}
             </el-button>
         </template>
@@ -95,6 +107,7 @@
                     {{ $t('common.retry') }}
                 </el-button>
             </div>
+            <h2 class="luogu-auth__step">{{ $t('auth.flow.luogu_step_uid') }}</h2>
             <p class="auth-card__desc">{{ $t('auth.login.luogu_challenge_tip') }}</p>
             <el-form
                 ref="requestFormRef"
@@ -146,6 +159,7 @@
         <p class="auth-card__footer">
             <NuxtLink :to="loginPath">{{ $t('auth.login.with_account_password') }}</NuxtLink>
         </p>
+        <p class="luogu-auth__setup">{{ $t('auth.flow.luogu_setup_hint') }}</p>
     </section>
 </template>
 
@@ -228,7 +242,7 @@ const verifyRules = computed<FormRules>(() => ({
         {
             required: true,
             whitespace: true,
-            message: t('auth.login.luogu_paste_id'),
+            message: t('auth.flow.luogu_paste_required'),
             trigger: 'blur'
         }
     ]
@@ -362,22 +376,65 @@ async function copyChallengeCode() {
 
 <style scoped lang="scss">
 .luogu-auth {
+    &__step {
+        margin-bottom: var(--space-2);
+        color: var(--text-primary);
+        font-size: var(--font-size-subheading);
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
     &__code-label {
         margin-bottom: var(--space-2);
         color: var(--text-primary);
         font-size: var(--font-size-control);
+        font-weight: 500;
+    }
+
+    &__code-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        gap: var(--space-2);
+        margin-bottom: var(--space-3);
+
+        > .el-button {
+            margin: 0;
+        }
     }
 
     &__code {
-        margin: 0 0 var(--space-3);
-        padding: var(--space-3);
+        display: flex;
+        align-items: center;
+        margin: 0;
+        padding: var(--space-2) var(--space-3);
         border: 1px solid var(--border-color);
         border-radius: var(--card-radius);
         background: var(--bg-secondary);
         color: var(--text-primary);
+        font-family: var(--font-code);
         font-size: var(--font-size-control);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+    }
+
+    &__expiry {
+        margin-top: 0;
+    }
+
+    &__setup {
+        margin: var(--space-2) 0 0;
+        color: var(--text-secondary);
+        font-size: var(--font-size-meta);
+        line-height: 1.5;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 359px) {
+    .luogu-auth__code-row {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

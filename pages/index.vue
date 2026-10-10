@@ -4,7 +4,7 @@
             <section class="home__primary ui-card" :aria-label="$t('home.account_tasks')">
                 <AppPageHeader
                     :title="homeTitle"
-                    :description="$t('home.task_description')"
+                    :description="$t(me ? 'home.task_description' : 'home.guest_description')"
                     :icon="House"
                 />
                 <AppAsyncState
@@ -14,20 +14,6 @@
                 >
                     <template v-if="me">
                         <div class="home__account">
-                            <div class="home__identity">
-                                <AppUserAvatar
-                                    :size="48"
-                                    :src="me.avatarUrl || undefined"
-                                    :name="me.displayName || me.username"
-                                    :seed="me.id"
-                                />
-                                <div class="home__identity-text">
-                                    <p>
-                                        <strong>{{ me.displayName || me.username }}</strong>
-                                    </p>
-                                    <p class="home__handle">@{{ me.username }}</p>
-                                </div>
-                            </div>
                             <div v-if="!me.emailVerified" class="home__verification" role="status">
                                 <p>{{ $t('profile.email_unverified') }}</p>
                                 <NuxtLink to="/profile?tab=basic">{{
@@ -88,7 +74,7 @@
                 >
                     <blockquote>
                         <p>{{ quote?.text || $t('home.quote_fallback') }}</p>
-                        <footer>{{ $t('home.quote_source') }}: {{ quoteSource }}</footer>
+                        <footer>{{ $t('home.quote_source') }} {{ quoteSource }}</footer>
                     </blockquote>
                 </AppAsyncState>
             </section>
@@ -191,6 +177,7 @@
 
 <script setup lang="ts">
 import { Bell, ChartNoAxesCombined, House, Pin, Quote, UsersRound } from 'lucide-vue-next';
+import { renderMarkdown } from '~/utils/markdown';
 import { formatCSTTime } from '~/utils/time';
 import type { NoticeSummary, QuoteSummary, SiteStatsResponse, UserSummary } from '~/types/api';
 
@@ -209,14 +196,22 @@ const statsRequest = useAsyncData('public:stats', () =>
 );
 const noticesRequest = useAsyncData('public:notices', async () => {
     const entries = await api<NoticeSummary[]>('/api/public/notices');
-    for (const notice of entries) {
-        notice.content = notice.content.replace(
-            /<(\/?)h([1-6])>/g,
-            (_tag, closing: string, level: string) =>
-                `<${closing}h${Math.min(6, Number(level) + 3)}>`
-        );
-    }
-    return entries;
+    return Promise.all(
+        entries.map(async notice => {
+            // HTML is sanitized by the public API. Plain-text notices need block formatting.
+            const content = /<[a-z][a-z0-9]*(?:\s|>)/i.test(notice.content)
+                ? notice.content
+                : await renderMarkdown(notice.content.replace(/([^\n])\n(?=[^\n])/g, '$1  \n'));
+            return {
+                ...notice,
+                content: content.replace(
+                    /<(\/?)h([1-6])>/g,
+                    (_tag, closing: string, level: string) =>
+                        `<${closing}h${Math.min(6, Number(level) + 3)}>`
+                )
+            };
+        })
+    );
 });
 const identityRequest = retryIdentity();
 const {
@@ -297,7 +292,7 @@ const quoteSource = computed(() => {
         return 'CP OAuth';
     }
 
-    return quote.value.fromWho
+    return quote.value.fromWho && quote.value.fromWho !== quote.value.source
         ? `${quote.value.source} / ${quote.value.fromWho}`
         : quote.value.source;
 });
@@ -336,14 +331,6 @@ function formatNumber(value: number): string {
         gap: var(--space-3);
     }
 
-    &__identity {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        min-width: 0;
-    }
-
-    &__identity-text,
     &__user-info {
         min-width: 0;
         overflow-wrap: anywhere;
@@ -351,6 +338,7 @@ function formatNumber(value: number): string {
 
     &__handle {
         color: var(--text-muted);
+        font-family: var(--font-code);
         font-size: var(--font-size-meta);
     }
 
@@ -415,15 +403,15 @@ function formatNumber(value: number): string {
         font-size: var(--font-size-control);
     }
 
-    &__intro,
-    &__layout {
+    &__intro {
         display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
         gap: var(--space-5);
     }
 
     &__layout {
-        align-items: start;
+        display: grid;
+        gap: var(--space-5);
     }
 
     &__primary,
@@ -443,7 +431,9 @@ function formatNumber(value: number): string {
 
     &__side {
         display: grid;
+        grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
         gap: var(--space-5);
+        align-items: start;
     }
 
     &__heading {
@@ -496,6 +486,7 @@ function formatNumber(value: number): string {
     }
 
     &__notice-content {
+        max-width: 88ch;
         margin: var(--space-3) 0 var(--space-4);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
@@ -611,12 +602,20 @@ function formatNumber(value: number): string {
     }
 
     &__users {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 var(--space-5);
         list-style: none;
         margin: 0;
         padding: 0;
 
-        li + li {
-            border-top: 1px solid var(--border-color);
+        li {
+            min-width: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        li:nth-last-child(-n + 2) {
+            border-bottom: 0;
         }
     }
 
@@ -659,8 +658,13 @@ function formatNumber(value: number): string {
 
 @media (max-width: 767px) {
     .home__intro,
-    .home__layout {
+    .home__side,
+    .home__users {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .home__users li:nth-last-child(2) {
+        border-bottom: 1px solid var(--border-color);
     }
 }
 

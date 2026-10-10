@@ -1,23 +1,34 @@
 <template>
     <section class="auth-card" aria-labelledby="email-verification-title">
         <h1 id="email-verification-title" class="auth-card__title">{{ $t(titleKey) }}</h1>
-        <p class="auth-card__desc" :role="outcome === 'success' ? 'status' : 'alert'">
+        <p class="auth-card__lead" :role="outcome === 'success' ? 'status' : 'alert'">
             {{ $t(descriptionKey) }}
         </p>
         <p v-if="identityError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ identityError }}
         </p>
         <div class="auth-card__actions">
-            <NuxtLink :to="redirectTarget" class="auth-card__link">
-                {{ $t('auth.flow.return_task') }}
-            </NuxtLink>
-            <NuxtLink :to="loginPath" class="auth-card__link">
+            <NuxtLink
+                v-if="outcome === 'success'"
+                :to="loginPath"
+                class="el-button el-button--primary auth-card__button"
+            >
                 {{ $t('auth.verify_result.go_login') }}
             </NuxtLink>
-            <NuxtLink v-if="outcome !== 'success'" :to="verificationPath" class="auth-card__link">
+            <NuxtLink
+                v-else
+                :to="verificationPath"
+                class="el-button el-button--primary auth-card__button"
+            >
                 {{ $t('auth.flow.verification_request_again') }}
             </NuxtLink>
         </div>
+        <p class="auth-card__footer">
+            <NuxtLink v-if="outcome !== 'success'" :to="loginPath">
+                {{ $t('auth.verify_result.go_login') }}
+            </NuxtLink>
+            <NuxtLink :to="redirectTarget">{{ $t('auth.flow.return_task') }}</NuxtLink>
+        </p>
     </section>
 </template>
 

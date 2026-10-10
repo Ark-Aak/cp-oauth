@@ -2,7 +2,6 @@
     <section class="profile-public" aria-labelledby="profile-public-title">
         <h2 id="profile-public-title">{{ t('profile.tabs.public') }}</h2>
         <p class="profile-public__intro">{{ t('profile.workbench.public_audience') }}</p>
-        <p class="profile-public__hint">{{ t('profile.workbench.oauth_visibility') }}</p>
         <p
             v-if="mutationError"
             ref="errorElement"
@@ -12,7 +11,9 @@
         >
             {{ mutationError }}
         </p>
-        <p v-if="notice" role="status" aria-live="polite">{{ notice }}</p>
+        <p v-if="notice" class="profile-public__notice" role="status" aria-live="polite">
+            {{ notice }}
+        </p>
         <form class="profile-public__form" method="post" novalidate @submit.prevent="save">
             <section class="profile-public__section">
                 <div class="profile-public__heading">
@@ -39,7 +40,7 @@
                     v-model="draft.homepage"
                     :aria-label="t('profile.homepage')"
                     type="textarea"
-                    :rows="12"
+                    :rows="8"
                     :disabled="!ready || pending"
                     :aria-invalid="!!fieldErrors.homepage"
                     aria-describedby="profile-public-homepage-format profile-public-homepage-hint profile-public-homepage-error"
@@ -78,12 +79,24 @@
                 <AppAsyncState
                     :pending="bindingsStatus === 'idle' || bindingsStatus === 'pending'"
                     :error="bindingsError"
-                    :empty="bindingsStatus === 'success' && !bindings.length"
-                    :empty-text="t('profile.no_accounts_to_show')"
-                    :empty-icon="Link2"
                     @retry="loadBindings(true)"
                 >
+                    <div
+                        v-if="bindingsStatus === 'success' && !bindings.length"
+                        class="profile-public__empty"
+                    >
+                        <p>
+                            <Link2 :size="18" aria-hidden="true" />
+                            {{ t('profile.no_accounts_to_show') }}
+                        </p>
+                        <NuxtLink
+                            :to="{ path: '/profile', query: { ...route.query, tab: 'bindings' } }"
+                            class="el-button"
+                            >{{ t('binding.link_account') }}</NuxtLink
+                        >
+                    </div>
                     <el-checkbox-group
+                        v-else
                         v-model="draft.publicLinkedPlatforms"
                         class="profile-public__account-list"
                         :disabled="!ready || pending"
@@ -152,14 +165,17 @@
                 >
                     {{ fieldErrors.publicCpStats || fieldErrors.publicRatingHistory }}
                 </p>
+                <p class="profile-public__hint">{{ t('profile.workbench.oauth_visibility') }}</p>
             </section>
-            <el-button
-                type="primary"
-                native-type="submit"
-                :loading="saving"
-                :disabled="!ready || pending || !dirty"
-                >{{ t(saving ? 'profile.saving' : 'profile.save') }}</el-button
-            >
+            <div class="profile-public__actions">
+                <el-button
+                    type="primary"
+                    native-type="submit"
+                    :loading="saving"
+                    :disabled="!ready || pending || !dirty"
+                    >{{ t(saving ? 'profile.saving' : 'profile.save') }}</el-button
+                >
+            </div>
         </form>
     </section>
 </template>
@@ -306,7 +322,8 @@ onBeforeUnmount(() => {
 .profile-public {
     min-width: 0;
     &__intro {
-        margin: var(--space-2) 0;
+        margin: var(--space-2) 0 var(--space-4);
+        color: var(--text-secondary);
     }
     &__hint {
         color: var(--text-secondary);
@@ -317,7 +334,7 @@ onBeforeUnmount(() => {
         display: grid;
         gap: var(--space-5);
         justify-items: start;
-        margin-top: var(--space-5);
+        margin-top: var(--space-4);
     }
     &__section {
         width: 100%;
@@ -337,7 +354,7 @@ onBeforeUnmount(() => {
     &__heading label,
     &__accounts legend {
         font-weight: 600;
-        font-size: var(--font-size-control);
+        font-size: var(--font-size-subheading);
     }
     &__editor {
         :deep(textarea) {
@@ -349,6 +366,28 @@ onBeforeUnmount(() => {
         margin: 0;
         padding: 0;
         border: 0;
+    }
+    &__empty {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        margin-top: var(--space-3);
+    }
+    &__empty p {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        color: var(--text-secondary);
+    }
+    &__empty svg {
+        flex-shrink: 0;
+    }
+    &__empty .el-button {
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
     }
     &__account-list {
         display: grid;
@@ -390,6 +429,18 @@ onBeforeUnmount(() => {
         overflow-wrap: anywhere;
         margin: var(--space-2) 0;
     }
+    &__notice {
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
+        overflow-wrap: anywhere;
+    }
+    &__actions {
+        width: 100%;
+        padding: var(--space-3) 0;
+        border-top: 1px solid var(--border-color);
+        background: var(--card-bg);
+    }
     &__preview-region {
         margin-top: var(--space-4);
         padding-top: var(--space-4);
@@ -429,7 +480,7 @@ onBeforeUnmount(() => {
         }
     }
     @media (max-width: 479px) {
-        &__form > :deep(.el-button) {
+        &__actions > :deep(.el-button) {
             width: 100%;
         }
     }

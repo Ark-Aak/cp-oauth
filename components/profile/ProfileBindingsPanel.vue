@@ -1,10 +1,7 @@
 <template>
     <section ref="root" class="profile-bindings" aria-labelledby="profile-bindings-title">
         <header class="profile-bindings__header">
-            <div>
-                <h2 id="profile-bindings-title">{{ t('binding.title') }}</h2>
-                <p class="profile-bindings__hint">{{ t('binding.workbench.description') }}</p>
-            </div>
+            <h2 id="profile-bindings-title">{{ t('binding.title') }}</h2>
             <el-button
                 native-type="button"
                 data-bind-reload
@@ -14,6 +11,7 @@
                 <RefreshCw :size="16" aria-hidden="true" />
                 {{ t('binding.workbench.reload') }}
             </el-button>
+            <p class="profile-bindings__hint">{{ t('binding.workbench.description') }}</p>
         </header>
 
         <p v-if="success || notice" class="profile-bindings__notice" role="status">
@@ -41,11 +39,10 @@
         >
             <div class="profile-bindings__section">
                 <h3>{{ t('binding.workbench.bound_accounts') }}</h3>
-                <AppEmptyState
-                    v-if="bindings.length === 0"
-                    :text="t('binding.no_accounts')"
-                    :icon="Link2"
-                />
+                <p v-if="bindings.length === 0" class="profile-bindings__empty" role="status">
+                    <Link2 :size="18" aria-hidden="true" />
+                    {{ t('binding.no_accounts') }}
+                </p>
                 <table v-else class="profile-bindings__table" role="table">
                     <caption class="sr-only">
                         {{
@@ -84,7 +81,8 @@
                                     {{ account.platformUsername || account.platformUid }}
                                 </span>
                                 <span v-if="account.platformUsername" class="profile-bindings__uid">
-                                    {{ t('binding.platform_uid') }}: {{ account.platformUid }}
+                                    <span>{{ t('binding.platform_uid') }}</span>
+                                    <span>{{ account.platformUid }}</span>
                                 </span>
                                 <p
                                     v-if="mutationErrors[account.platform]"
@@ -222,6 +220,7 @@
                         <el-button
                             v-if="canBind(platform)"
                             native-type="button"
+                            type="primary"
                             :data-bind-platform="platform"
                             :aria-label="
                                 t('binding.workbench.link_named', {
@@ -530,17 +529,25 @@ onBeforeUnmount(() => {
     &__header {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        align-items: start;
-        gap: var(--space-4);
+        align-items: center;
+        gap: var(--space-2) var(--space-3);
         margin-bottom: var(--space-5);
     }
 
     &__header h2 {
-        margin-bottom: var(--space-2);
+        min-width: 0;
     }
 
-    &__header > div {
-        min-width: 0;
+    &__header > p {
+        grid-column: 1 / -1;
+    }
+
+    &__header > .el-button {
+        gap: var(--space-2);
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
     }
 
     &__hint,
@@ -552,7 +559,26 @@ onBeforeUnmount(() => {
     }
 
     &__uid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
         font-size: var(--font-size-meta);
+    }
+
+    &__status {
+        font-weight: 600;
+    }
+
+    &__empty {
+        display: flex;
+        gap: var(--space-2);
+        align-items: center;
+        color: var(--text-secondary);
+        margin: var(--space-3) 0;
+    }
+
+    &__empty svg {
+        flex-shrink: 0;
     }
 
     &__section + &__section {
@@ -609,7 +635,6 @@ onBeforeUnmount(() => {
     }
 
     &__status,
-    &__uid,
     &__account {
         display: block;
     }
@@ -661,11 +686,19 @@ onBeforeUnmount(() => {
 
     &__available .el-button {
         flex-shrink: 0;
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
     }
 
     &__notice {
         margin-bottom: var(--space-4);
         color: var(--text-primary);
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
+        overflow-wrap: anywhere;
     }
 
     &__error {
@@ -720,16 +753,6 @@ onBeforeUnmount(() => {
         &__available li {
             align-items: flex-start;
             flex-wrap: wrap;
-        }
-    }
-
-    @media (max-width: 479px) {
-        &__header {
-            grid-template-columns: minmax(0, 1fr);
-        }
-
-        &__header > .el-button {
-            justify-self: start;
         }
     }
 }

@@ -10,24 +10,30 @@
         </p>
 
         <section class="admin-users__results ui-card" :aria-label="$t('admin.users.tab')">
-            <div class="admin-users__search">
-                <label for="admin-user-search">{{ $t('admin.users.search') }}</label>
-                <el-input
-                    id="admin-user-search"
-                    v-model="search"
-                    clearable
-                    :aria-invalid="!!fieldErrors.search"
-                    :aria-describedby="fieldErrors.search ? 'admin-user-search-error' : undefined"
-                    @input="debouncedLoad"
-                />
-                <p
-                    v-if="fieldErrors.search"
-                    id="admin-user-search-error"
-                    class="admin-users__error"
-                    role="alert"
-                >
-                    {{ fieldErrors.search }}
-                </p>
+            <div class="admin-users__toolbar">
+                <h2>{{ $t('admin.users.list_title') }}</h2>
+                <div class="admin-users__search">
+                    <label for="admin-user-search">{{ $t('admin.users.search') }}</label>
+                    <el-input
+                        id="admin-user-search"
+                        v-model="search"
+                        clearable
+                        :aria-label="$t('admin.users.search')"
+                        :aria-invalid="!!fieldErrors.search"
+                        :aria-describedby="
+                            fieldErrors.search ? 'admin-user-search-error' : undefined
+                        "
+                        @input="debouncedLoad"
+                    />
+                    <p
+                        v-if="fieldErrors.search"
+                        id="admin-user-search-error"
+                        class="admin-users__error"
+                        role="alert"
+                    >
+                        {{ fieldErrors.search }}
+                    </p>
+                </div>
             </div>
             <div v-if="fieldErrors.page" class="admin-users__query-error" role="alert">
                 <p>{{ fieldErrors.page }}</p>
@@ -109,7 +115,7 @@
                                         </el-button>
                                         <el-button
                                             type="danger"
-                                            plain
+                                            text
                                             native-type="button"
                                             :loading="!!deletionPending[row.id]"
                                             :disabled="isRowPending(row.id)"
@@ -159,16 +165,24 @@
                                 </dd>
                             </div>
                         </dl>
-                        <label :for="`admin-role-${row.id}`">{{ $t('admin.users.role') }}</label>
-                        <el-select
-                            :id="`admin-role-${row.id}`"
-                            :model-value="row.role"
-                            :disabled="isRowPending(row.id)"
-                            @change="(value: string) => updateRole(row, value)"
-                        >
-                            <el-option value="user" :label="$t('admin.workbench.role_user')" />
-                            <el-option value="admin" :label="$t('admin.workbench.role_admin')" />
-                        </el-select>
+                        <div class="admin-users__role-field">
+                            <label :for="`admin-role-${row.id}`">{{
+                                $t('admin.users.role')
+                            }}</label>
+                            <el-select
+                                :id="`admin-role-${row.id}`"
+                                :model-value="row.role"
+                                :disabled="isRowPending(row.id)"
+                                :aria-label="`${$t('admin.users.role')}: ${row.username}`"
+                                @change="(value: string) => updateRole(row, value)"
+                            >
+                                <el-option value="user" :label="$t('admin.workbench.role_user')" />
+                                <el-option
+                                    value="admin"
+                                    :label="$t('admin.workbench.role_admin')"
+                                />
+                            </el-select>
+                        </div>
                         <div class="admin-users__actions">
                             <el-button
                                 v-if="!row.emailVerified"
@@ -182,7 +196,7 @@
                             </el-button>
                             <el-button
                                 type="danger"
-                                plain
+                                text
                                 native-type="button"
                                 :loading="!!deletionPending[row.id]"
                                 :disabled="isRowPending(row.id)"
@@ -376,10 +390,11 @@ async function loadUsers() {
     }
 }
 
-async function confirmAction(message: string): Promise<boolean> {
+async function confirmAction(message: string, action: string, danger = false): Promise<boolean> {
     try {
-        await ElMessageBox.confirm(message, t('common.confirm'), {
-            confirmButtonText: t('common.confirm'),
+        await ElMessageBox.confirm(message, action, {
+            confirmButtonText: action,
+            confirmButtonClass: danger ? 'el-button--danger' : undefined,
             cancelButtonText: t('common.cancel'),
             type: 'warning'
         });
@@ -403,12 +418,13 @@ async function updateRole(row: AdminUser, role: string) {
                             ? 'admin.workbench.role_admin'
                             : 'admin.workbench.role_user'
                     )
-                })
+                }),
+                t('admin.users.change_role')
             ))
         )
             return;
         await api(`/api/admin/users/${row.id}`, { method: 'PATCH', body: { role } });
-        ElMessage.success(t('common.success'));
+        ElMessage.success(t('admin.users.role_updated'));
         await loadUsers();
     } catch (error) {
         rowErrors[row.id] = requestError(error).message;
@@ -424,12 +440,13 @@ async function verifyUser(row: AdminUser) {
     try {
         if (
             !(await confirmAction(
-                t('admin.users.verify_confirm', { user: `${row.username} (${row.email})` })
+                t('admin.users.verify_confirm', { user: `${row.username} (${row.email})` }),
+                t('admin.users.verify')
             ))
         )
             return;
         await api(`/api/admin/users/${row.id}`, { method: 'PATCH', body: { emailVerified: true } });
-        ElMessage.success(t('common.success'));
+        ElMessage.success(t('admin.users.email_verified'));
         await loadUsers();
     } catch (error) {
         rowErrors[row.id] = requestError(error).message;
@@ -446,7 +463,9 @@ async function deleteUser(row: AdminUser) {
     try {
         if (
             !(await confirmAction(
-                `${row.username} (${row.email}): ${t('admin.users.delete_confirm')}`
+                t('admin.users.delete_confirm', { user: `${row.username} (${row.email})` }),
+                t('admin.users.delete'),
+                true
             ))
         )
             return;
@@ -472,11 +491,24 @@ await loadUsers();
         padding: var(--panel-padding);
     }
 
+    &__toolbar {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+
+        h2 {
+            margin: 0;
+        }
+    }
+
     &__search {
         display: grid;
         gap: var(--space-2);
-        max-width: 480px;
-        margin-bottom: var(--space-5);
+        flex: 0 1 360px;
+        min-width: 0;
     }
 
     &__search label {
@@ -522,10 +554,10 @@ await loadUsers();
         }
 
         th:nth-child(3) {
-            width: 136px;
+            width: 164px;
         }
         th:nth-child(4) {
-            width: 100px;
+            width: 128px;
         }
         th:nth-child(5) {
             width: 172px;
@@ -573,6 +605,11 @@ await loadUsers();
 
 @media (max-width: 767px) {
     .admin-users {
+        &__toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
         &__table-wrap {
             display: none;
         }
@@ -615,9 +652,17 @@ await loadUsers();
             dd {
                 margin: 0 0 var(--space-2);
             }
+        }
+
+        &__role-field {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 164px);
+            align-items: center;
+            gap: var(--space-3);
+
             label {
-                display: block;
-                margin-bottom: var(--space-2);
+                color: var(--text-secondary);
+                font-size: var(--font-size-control);
             }
         }
 

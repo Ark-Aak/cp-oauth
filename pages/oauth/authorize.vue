@@ -12,8 +12,11 @@
             >
                 <template v-if="clientData">
                     <p class="consent__request">
-                        <strong>{{ clientData.client.name }}</strong>
-                        {{ $t('oauth.consent.wants_access') }}
+                        <i18n-t keypath="oauth.consent.wants_access" scope="global">
+                            <template #app>
+                                <strong>{{ clientData.client.name }}</strong>
+                            </template>
+                        </i18n-t>
                     </p>
 
                     <section
@@ -40,12 +43,19 @@
                             {{ $t('oauth.consent.current_account') }}
                         </h2>
                         <div v-if="user && status === 'authenticated'" class="consent__account-row">
+                            <AppUserAvatar
+                                :size="36"
+                                :src="user.avatarUrl || undefined"
+                                :name="user.displayName || user.username"
+                                :seed="user.id"
+                            />
                             <p class="consent__account-name">
                                 <strong>{{ user.displayName || user.username }}</strong>
                                 <span>{{ '@' + user.username }}</span>
                             </p>
                             <el-button
                                 native-type="button"
+                                text
                                 :disabled="controlsPending || identityPending"
                                 :loading="switchPending"
                                 @click="switchAccount"
@@ -418,24 +428,26 @@ async function handleDecision(approved: boolean) {
 
     &__account-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;
         gap: var(--space-3);
         min-width: 0;
     }
 
     &__account-name {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: var(--space-2);
+        display: grid;
         min-width: 0;
-        font-size: var(--font-size-body);
+        line-height: 1.4;
         overflow-wrap: anywhere;
+
+        strong {
+            color: var(--text-primary);
+            font-size: var(--font-size-control);
+        }
 
         span {
             color: var(--text-secondary);
-            font-size: var(--font-size-control);
+            font-size: var(--font-size-meta);
         }
     }
 
@@ -495,14 +507,14 @@ async function handleDecision(approved: boolean) {
         white-space: normal;
     }
 
-    @media (max-width: 479px) {
+    @media (max-width: 359px) {
         &__account-row {
-            grid-template-columns: minmax(0, 1fr);
-            align-items: stretch;
+            grid-template-columns: auto minmax(0, 1fr);
         }
 
         &__account-row :deep(.el-button) {
-            width: 100%;
+            grid-column: 1 / -1;
+            justify-self: start;
         }
     }
 }

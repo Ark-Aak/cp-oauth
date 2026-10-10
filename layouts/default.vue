@@ -1,9 +1,9 @@
 <template>
-    <div class="app-layout" :class="{ 'app-layout--without-sidebar': !showSidebar }">
+    <div class="app-layout">
         <a class="app-layout__skip ui-navigation-link" href="#main-content">{{
             $t('nav.skip_content')
         }}</a>
-        <aside v-if="showSidebar" class="app-layout__desktop-nav">
+        <aside class="app-layout__desktop-nav">
             <AppSidebar
                 :user="user"
                 :anonymous="status === 'anonymous'"
@@ -12,7 +12,6 @@
             />
         </aside>
         <el-drawer
-            v-if="showSidebar"
             id="mobile-navigation"
             v-model="sidebarOpen"
             direction="ltr"
@@ -32,7 +31,6 @@
         <div class="app-layout__workspace">
             <header class="app-layout__topbar">
                 <button
-                    v-if="showSidebar"
                     ref="menuButton"
                     type="button"
                     class="app-layout__menu"
@@ -43,10 +41,7 @@
                 >
                     <Menu :size="21" aria-hidden="true" />
                 </button>
-                <span v-if="showSidebar" class="app-layout__context">{{ $t(contextLabel) }}</span>
-                <NuxtLink v-else to="/" class="app-layout__context ui-navigation-link">{{
-                    $t('app.name')
-                }}</NuxtLink>
+                <span class="app-layout__context">{{ $t(contextLabel) }}</span>
                 <el-popover
                     trigger="click"
                     placement="bottom-end"
@@ -103,7 +98,6 @@
 import { Menu, SlidersHorizontal } from 'lucide-vue-next';
 import { getCurrentInstance } from 'vue';
 import { ElMessageBox } from 'element-plus';
-withDefaults(defineProps<{ showSidebar?: boolean }>(), { showSidebar: true });
 const { t } = useI18n();
 const messageBoxContext = getCurrentInstance()?.appContext;
 const { user, status, error: authError, load, logout, verificationEmailFailed } = useAuth();
@@ -181,9 +175,6 @@ async function handleLogout() {
 <style scoped lang="scss">
 .app-layout {
     min-height: 100dvh;
-}
-.app-layout--without-sidebar {
-    --sidebar-width: 0px;
 }
 .app-layout__desktop-nav {
     position: fixed;

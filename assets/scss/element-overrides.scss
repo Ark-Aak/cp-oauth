@@ -146,11 +146,11 @@
     --el-button-active-border-color: var(--el-color-primary-dark-2);
 }
 
-.dark .el-button--primary:not(.is-plain),
-.dark .el-button--danger:not(.is-plain),
-.dark .el-button--success:not(.is-plain),
-.dark .el-button--warning:not(.is-plain),
-.dark .el-button--info:not(.is-plain) {
+.dark .el-button--primary:not(.is-plain, .is-text, .is-link),
+.dark .el-button--danger:not(.is-plain, .is-text, .is-link),
+.dark .el-button--success:not(.is-plain, .is-text, .is-link),
+.dark .el-button--warning:not(.is-plain, .is-text, .is-link),
+.dark .el-button--info:not(.is-plain, .is-text, .is-link) {
     --el-button-text-color: var(--el-bg-color-page);
     --el-button-hover-text-color: var(--el-bg-color-page);
     --el-button-active-text-color: var(--el-bg-color-page);

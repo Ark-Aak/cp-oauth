@@ -2,15 +2,27 @@
     <div class="profile-workbench">
         <AppPageHeader
             :title="t('profile.title')"
-            :description="t('profile.workbench.description')"
+            :description="
+                t(returnTask ? 'profile.workbench.return_hint' : 'profile.workbench.description')
+            "
         >
             <template #actions>
-                <NuxtLink v-if="returnTask" :to="returnTask" class="el-button">{{
-                    t('profile.workbench.return_task')
-                }}</NuxtLink>
-                <NuxtLink v-if="user?.username" :to="`/user/${user.username}`" class="el-button">{{
-                    t('profile.view_public')
-                }}</NuxtLink>
+                <NuxtLink
+                    v-if="returnTask"
+                    :to="returnTask"
+                    class="el-button el-button--primary profile-workbench__header-action"
+                >
+                    <ArrowLeft :size="16" aria-hidden="true" />
+                    {{ t('profile.workbench.return_task') }}
+                </NuxtLink>
+                <NuxtLink
+                    v-if="user?.username"
+                    :to="`/user/${user.username}`"
+                    class="el-button profile-workbench__header-action"
+                >
+                    <ExternalLink :size="16" aria-hidden="true" />
+                    {{ t('profile.view_public') }}
+                </NuxtLink>
             </template>
         </AppPageHeader>
         <p v-if="status === 'anonymous'" class="profile-workbench__session" role="alert">
@@ -62,6 +74,7 @@
 <script setup lang="ts">
 import { getCurrentInstance } from 'vue';
 import { ElMessageBox } from 'element-plus';
+import { ArrowLeft, ExternalLink } from 'lucide-vue-next';
 import ProfileTaskNav from '~/components/profile/ProfileTaskNav.vue';
 import ProfileIdentityPanel from '~/components/profile/ProfileIdentityPanel.vue';
 import ProfileBindingsPanel from '~/components/profile/ProfileBindingsPanel.vue';
@@ -190,6 +203,13 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .profile-workbench {
     min-width: 0;
+    &__header-action {
+        gap: var(--space-2);
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
+    }
     &__layout {
         display: grid;
         gap: var(--space-5);

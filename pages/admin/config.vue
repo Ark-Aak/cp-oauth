@@ -52,9 +52,6 @@
                         <p v-if="group.id === 'providers'" class="admin-config__help">
                             {{ $t('admin.config.provider_hint') }}
                         </p>
-                        <p v-if="group.id === 'site'" class="admin-config__help">
-                            {{ $t('admin.config.registration_hint') }}
-                        </p>
                         <div
                             v-for="(block, index) in group.blocks"
                             :key="index"
@@ -73,6 +70,16 @@
                             <el-form-item
                                 v-for="field in block.fields"
                                 :key="field.key"
+                                class="admin-config__field"
+                                :class="{
+                                    'admin-config__field--wide':
+                                        block.fields.length === 1 ||
+                                        [
+                                            'site_title',
+                                            'smtp_from',
+                                            'turnstile_secret_key'
+                                        ].includes(field.key)
+                                }"
                                 :for="`config-${field.key}`"
                                 :label="$t(field.label)"
                                 :error="fieldErrors[field.key]"
@@ -165,6 +172,13 @@
                                         }}
                                     </p>
                                 </template>
+                                <p
+                                    v-if="field.key === 'registration_enabled'"
+                                    id="config-registration_enabled-help"
+                                    class="admin-config__help"
+                                >
+                                    {{ $t('admin.config.registration_hint') }}
+                                </p>
                                 <template #error="{ error }"
                                     ><span :id="`config-${field.key}-error`">{{
                                         error
@@ -532,7 +546,9 @@ function describedBy(key: ConfigKey) {
     const field = fields.find(item => item.key === key);
     return (
         [
-            field?.kind === 'secret' || (field?.kind === 'value' && field.input === 'integer')
+            field?.kind === 'secret' ||
+            (field?.kind === 'value' && field.input === 'integer') ||
+            key === 'registration_enabled'
                 ? `config-${key}-help`
                 : '',
             fieldErrors.value[key] ? `config-${key}-error` : ''
@@ -762,7 +778,7 @@ await loadConfig();
     min-width: 0;
 
     &__group {
-        padding: var(--space-5) 0 var(--space-2);
+        padding: var(--space-5) 0;
         border-bottom: 1px solid var(--border-color);
 
         &:first-child {
@@ -774,10 +790,41 @@ await loadConfig();
     }
 
     &__block {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
         min-width: 0;
 
         h3 {
-            margin: var(--space-5) 0 var(--space-3);
+            margin: 0;
+        }
+
+        > h3,
+        > p {
+            grid-column: 1 / -1;
+        }
+
+        > p {
+            margin: 0;
+        }
+
+        + .admin-config__block {
+            margin-top: var(--space-5);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--divider-subtle);
+        }
+    }
+
+    &__group > &__help {
+        margin-bottom: var(--space-4);
+    }
+
+    &__field {
+        min-width: 0;
+        margin-bottom: 0;
+
+        &--wide {
+            grid-column: 1 / -1;
         }
     }
 
@@ -788,10 +835,6 @@ await loadConfig();
         color: var(--text-secondary);
         font-size: var(--font-size-control);
         overflow-wrap: anywhere;
-    }
-
-    &__secret-clear:not(.is-disabled) :deep(.el-checkbox__label) {
-        color: var(--el-color-danger);
     }
 
     &__summary {
@@ -824,6 +867,12 @@ await loadConfig();
 
     &__actions :deep(.el-button) {
         margin: 0;
+    }
+
+    @media (max-width: 767px) {
+        &__block {
+            grid-template-columns: minmax(0, 1fr);
+        }
     }
 }
 </style>

@@ -115,6 +115,11 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
         }
     }
 
+    &__identity-label {
+        font-family: var(--font-code);
+        font-size: var(--font-size-control);
+    }
+
     a {
         color: var(--accent);
 

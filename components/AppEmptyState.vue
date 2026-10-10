@@ -32,7 +32,7 @@ defineProps<{ text?: string; icon?: Component }>();
     padding: var(--space-5);
     color: var(--text-secondary);
     text-align: center;
-    font-size: 14px;
+    font-size: var(--font-size-control);
     line-height: 1.6;
     overflow-wrap: anywhere;
 

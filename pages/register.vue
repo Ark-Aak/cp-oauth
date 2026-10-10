@@ -1,6 +1,7 @@
 <template>
     <section class="auth-card" aria-labelledby="register-title" :aria-busy="pending">
         <h1 id="register-title" class="auth-card__title">{{ $t('auth.register.title') }}</h1>
+        <p class="auth-card__lead">{{ $t('auth.register.lead') }}</p>
         <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ errorMessage }}
         </p>
@@ -28,6 +29,7 @@
             @submit.prevent="register"
         >
             <el-form-item
+                class="auth-card__field--with-help"
                 prop="username"
                 :label="$t('auth.register.username')"
                 for="register-username"
@@ -36,11 +38,15 @@
                     id="register-username"
                     v-model="form.username"
                     :aria-label="$t('auth.register.username')"
+                    aria-describedby="register-username-hint"
                     name="username"
                     autocomplete="username"
                     :disabled="!hydrationReady || pending"
                 />
             </el-form-item>
+            <p id="register-username-hint" class="auth-card__field-hint">
+                {{ $t('auth.register.username_hint') }}
+            </p>
             <el-form-item prop="email" :label="$t('auth.register.email')" for="register-email">
                 <el-input
                     id="register-email"
@@ -53,6 +59,7 @@
                 />
             </el-form-item>
             <el-form-item
+                class="auth-card__field--with-help"
                 prop="password"
                 :label="$t('auth.register.password')"
                 for="register-password"
@@ -61,6 +68,7 @@
                     id="register-password"
                     v-model="form.password"
                     :aria-label="$t('auth.register.password')"
+                    aria-describedby="register-password-hint"
                     :type="passwordVisible ? 'text' : 'password'"
                     name="password"
                     autocomplete="new-password"
@@ -88,7 +96,9 @@
                     </template>
                 </el-input>
             </el-form-item>
-            <p class="auth-card__desc">{{ $t('auth.flow.password_rule') }}</p>
+            <p id="register-password-hint" class="auth-card__field-hint">
+                {{ $t('auth.flow.password_rule') }}
+            </p>
             <div v-if="turnstileEnabled" class="auth-card__captcha">
                 <div ref="turnstileEl" class="auth-card__captcha-widget" />
                 <p class="auth-card__status" role="status">{{ captchaMessage }}</p>
@@ -113,7 +123,7 @@
             </el-form-item>
         </el-form>
         <p class="auth-card__footer">
-            {{ $t('auth.register.footer') }}
+            <span>{{ $t('auth.register.footer') }}</span>
             <NuxtLink :to="loginPath">{{ $t('auth.register.login_link') }}</NuxtLink>
         </p>
     </section>
@@ -177,7 +187,7 @@ const captchaMessage = computed(() => {
 });
 const rules = computed<FormRules>(() => ({
     username: [
-        { required: true, message: t('auth.register.username'), trigger: 'blur' },
+        { required: true, message: t('profile.username_invalid'), trigger: 'blur' },
         {
             validator: (_rule, value: string, callback) => {
                 callback(
@@ -194,6 +204,7 @@ const rules = computed<FormRules>(() => ({
         { type: 'email', message: t('auth.flow.email_invalid'), trigger: 'blur' }
     ],
     password: [
+        { required: true, message: t('auth.flow.password_rule'), trigger: 'blur' },
         {
             validator: (_rule, value: string, callback) => {
                 callback(

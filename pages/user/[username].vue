@@ -9,10 +9,8 @@
                     :seed="user.id"
                 />
                 <div class="user-profile__identity-text">
-                    <AppPageHeader
-                        :title="user.displayName || user.username"
-                        :description="`@${user.username}`"
-                    />
+                    <AppPageHeader :title="user.displayName || user.username" />
+                    <p class="user-profile__handle">@{{ user.username }}</p>
                     <p v-if="user.bio" class="user-profile__bio">{{ user.bio }}</p>
                     <p class="user-profile__joined">
                         {{ $t('user.joined') }}
@@ -29,6 +27,30 @@
             </header>
 
             <div class="user-profile__content">
+                <section class="user-profile__section" aria-labelledby="public-accounts">
+                    <h2 id="public-accounts">{{ $t('user.public_accounts') }}</h2>
+                    <AppAsyncState
+                        :pending="false"
+                        :empty="!user.linkedAccounts.length"
+                        :empty-text="$t('user.no_public_accounts')"
+                        :empty-icon="Link2"
+                    >
+                        <div class="user-profile__accounts">
+                            <div v-if="cpLinkedAccounts.length" class="user-profile__account-group">
+                                <h3>{{ $t('user.linked_accounts') }}</h3>
+                                <UserPublicLinkedAccounts :accounts="cpLinkedAccounts" />
+                            </div>
+                            <div
+                                v-if="otherLinkedAccounts.length"
+                                class="user-profile__account-group"
+                            >
+                                <h3>{{ $t('user.other_accounts') }}</h3>
+                                <UserPublicLinkedAccounts :accounts="otherLinkedAccounts" />
+                            </div>
+                        </div>
+                    </AppAsyncState>
+                </section>
+
                 <section
                     v-if="user.homepage"
                     class="user-profile__section"
@@ -45,34 +67,6 @@
                     <pre v-if="markdownError" class="user-profile__markdown-source">{{
                         homepageSource
                     }}</pre>
-                </section>
-
-                <section class="user-profile__section" aria-labelledby="public-accounts">
-                    <h2 id="public-accounts">{{ $t('profile.public_accounts') }}</h2>
-                    <div class="user-profile__accounts">
-                        <div class="user-profile__account-group">
-                            <h3>{{ $t('user.linked_accounts') }}</h3>
-                            <AppAsyncState
-                                :pending="false"
-                                :empty="!cpLinkedAccounts.length"
-                                :empty-text="$t('user.no_linked')"
-                                :empty-icon="Link2"
-                            >
-                                <UserPublicLinkedAccounts :accounts="cpLinkedAccounts" />
-                            </AppAsyncState>
-                        </div>
-                        <div class="user-profile__account-group">
-                            <h3>{{ $t('user.other_accounts') }}</h3>
-                            <AppAsyncState
-                                :pending="false"
-                                :empty="!otherLinkedAccounts.length"
-                                :empty-text="$t('user.no_other_accounts')"
-                                :empty-icon="Link2"
-                            >
-                                <UserPublicLinkedAccounts :accounts="otherLinkedAccounts" />
-                            </AppAsyncState>
-                        </div>
-                    </div>
                 </section>
 
                 <section
@@ -368,8 +362,15 @@ const renderedHtml = computed(() =>
     }
 
     &__bio {
+        margin-top: var(--space-3);
         color: var(--text-secondary);
         white-space: pre-wrap;
+    }
+
+    &__handle {
+        color: var(--text-secondary);
+        font-family: var(--font-code);
+        font-size: var(--font-size-meta);
     }
 
     &__joined {
@@ -400,6 +401,10 @@ const renderedHtml = computed(() =>
 
     &__account-group {
         min-width: 0;
+
+        &:only-child {
+            grid-column: 1 / -1;
+        }
 
         h3 {
             margin-bottom: var(--space-3);
@@ -440,6 +445,7 @@ const renderedHtml = computed(() =>
     }
 
     &__stat-handle {
+        font-family: var(--font-code);
         font-size: var(--font-size-control);
         color: var(--text-secondary);
     }

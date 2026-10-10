@@ -41,7 +41,6 @@
                     <tr v-for="app in apps" :key="app.clientId">
                         <th scope="row">
                             <strong>{{ app.name }}</strong>
-                            <p class="profile-apps__id">{{ app.clientId }}</p>
                             <p class="profile-apps__meta">
                                 {{ t('oauth.authorized_apps.authorized_at') }}:
                                 {{ formatCSTTime(app.latestAuthorizedAt, { withTimezone: true }) }}
@@ -98,8 +97,18 @@
                     class="profile-apps__card"
                     :aria-label="app.name"
                 >
-                    <h3>{{ app.name }}</h3>
-                    <p class="profile-apps__id">{{ app.clientId }}</p>
+                    <header class="profile-apps__card-header">
+                        <h3>{{ app.name }}</h3>
+                        <el-button
+                            type="danger"
+                            plain
+                            :loading="pendingClientId === app.clientId"
+                            :disabled="busy"
+                            :aria-label="t('profile.workbench.revoke_named', { name: app.name })"
+                            @click="confirmRevoke(app, $event)"
+                            >{{ t('oauth.authorized_apps.revoke') }}</el-button
+                        >
+                    </header>
                     <dl>
                         <dt>{{ t('oauth.authorized_apps.scopes') }}</dt>
                         <dd>
@@ -133,15 +142,6 @@
                             })
                         }}
                     </p>
-                    <el-button
-                        type="danger"
-                        plain
-                        :loading="pendingClientId === app.clientId"
-                        :disabled="busy"
-                        :aria-label="t('profile.workbench.revoke_named', { name: app.name })"
-                        @click="confirmRevoke(app, $event)"
-                        >{{ t('oauth.authorized_apps.revoke') }}</el-button
-                    >
                 </article>
             </div>
         </AppAsyncState>
@@ -220,6 +220,10 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
     }
     &__notice {
         margin-bottom: var(--space-4);
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
+        overflow-wrap: anywhere;
     }
     &__table {
         width: 100%;
@@ -240,21 +244,14 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
         font-weight: 600;
     }
     &__table th:first-child {
-        width: 36%;
+        width: 32%;
         padding-left: 0;
     }
     &__table th:last-child {
-        width: 28%;
+        width: 24%;
     }
     &__table tbody th {
         font-weight: 400;
-    }
-    &__id {
-        font-family: var(--font-code);
-        color: var(--text-secondary);
-        font-size: var(--font-size-meta);
-        overflow-wrap: anywhere;
-        margin: var(--space-1) 0 var(--space-3);
     }
     &__meta {
         color: var(--text-secondary);
@@ -294,6 +291,16 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
             padding-top: 0;
             border-top: 0;
         }
+        &__card-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-3);
+        }
+        &__card-header h3 {
+            min-width: 0;
+        }
         &__card dl {
             margin: var(--space-4) 0;
         }
@@ -306,7 +313,10 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
             margin: var(--space-1) 0 0;
         }
         &__card :deep(.el-button) {
-            margin-top: var(--space-4);
+            max-width: 100%;
+            height: auto;
+            min-height: 44px;
+            white-space: normal;
         }
     }
 }

@@ -124,7 +124,7 @@
                         type="email"
                         name="email"
                         :aria-label="$t('auth.login.email')"
-                        autocomplete="email"
+                        autocomplete="username email"
                         :disabled="!hydrationReady || operation !== null"
                     />
                 </el-form-item>
@@ -200,45 +200,62 @@
                 </el-form-item>
             </el-form>
 
-            <div class="login__alternatives">
-                <div class="auth-card__actions">
-                    <el-button
-                        :loading="operation === 'passkey'"
-                        :disabled="!hydrationReady || operation !== null || !configReady"
-                        @click="loginWithPasskey"
-                    >
-                        <Fingerprint :size="18" :stroke-width="1.5" class="login__icon" />
-                        {{ $t('auth.login.with_passkey') }}
-                    </el-button>
-                </div>
-                <p class="login__divider">{{ $t('auth.login.oauth_divider') }}</p>
-                <p v-if="providers.length" class="auth-card__desc">
-                    {{ $t('auth.flow.oauth_registration_hint') }}
-                </p>
-                <div class="auth-card__actions login__providers">
+            <section class="login__alternatives" aria-labelledby="login-alternatives-title">
+                <h2 id="login-alternatives-title" class="auth-card__divider">
+                    {{ $t('auth.login.oauth_divider') }}
+                </h2>
+                <el-button
+                    class="auth-card__button login__method"
+                    :loading="operation === 'passkey'"
+                    :disabled="!hydrationReady || operation !== null || !configReady"
+                    @click="loginWithPasskey"
+                >
+                    <Fingerprint :size="18" :stroke-width="1.5" class="login__icon" />
+                    {{ $t('auth.login.with_passkey') }}
+                </el-button>
+                <div class="login__providers">
                     <el-button
                         v-for="provider in providers"
                         :key="provider.name"
+                        class="login__method"
                         :loading="operation === provider.name"
                         :disabled="
                             !hydrationReady || operation !== null || !configReady || !captchaReady
                         "
+                        :aria-label="
+                            $t('auth.login.with_provider', {
+                                provider: $t(`binding.platforms.${provider.name}`)
+                            })
+                        "
                         @click="loginWithProvider(provider.name)"
                     >
                         <AppPlatformIcon :platform="provider.name" class="login__icon" />
-                        {{ $t(provider.label) }}
+                        {{ $t(`binding.platforms.${provider.name}`) }}
                     </el-button>
                     <el-button
+                        class="login__method"
                         :loading="operation === 'luogu'"
                         :disabled="!hydrationReady || operation !== null"
+                        :aria-label="
+                            $t('auth.login.with_provider', {
+                                provider: $t('binding.platforms.luogu')
+                            })
+                        "
+                        aria-describedby="login-provider-hint"
                         @click="loginWithLuogu"
                     >
                         <AppPlatformIcon platform="luogu" class="login__icon" />
-                        {{ $t('auth.login.with_luogu') }}
+                        {{ $t('binding.platforms.luogu') }}
                     </el-button>
                 </div>
-                <p class="auth-card__desc">{{ $t('auth.flow.luogu_existing_only') }}</p>
-            </div>
+                <p id="login-provider-hint" class="login__hint">
+                    {{
+                        providers.length && publicConfig?.registrationEnabled
+                            ? $t('auth.flow.oauth_registration_hint')
+                            : $t('auth.flow.luogu_existing_only')
+                    }}
+                </p>
+            </section>
             <p v-if="publicConfig?.registrationEnabled" class="auth-card__footer">
                 <span>{{ $t('auth.login.footer') }}</span>
                 <NuxtLink :to="registerPath">{{ $t('auth.login.register_link') }}</NuxtLink>
@@ -330,26 +347,10 @@ const captchaMessage = computed(() => {
 });
 const providers = computed(() =>
     [
-        {
-            name: 'github' as const,
-            enabled: publicConfig.value?.githubLoginEnabled,
-            label: 'auth.login.with_github'
-        },
-        {
-            name: 'google' as const,
-            enabled: publicConfig.value?.googleLoginEnabled,
-            label: 'auth.login.with_google'
-        },
-        {
-            name: 'codeforces' as const,
-            enabled: publicConfig.value?.codeforcesLoginEnabled,
-            label: 'auth.login.with_codeforces'
-        },
-        {
-            name: 'clist' as const,
-            enabled: publicConfig.value?.clistLoginEnabled,
-            label: 'auth.login.with_clist'
-        }
+        { name: 'github' as const, enabled: publicConfig.value?.githubLoginEnabled },
+        { name: 'google' as const, enabled: publicConfig.value?.googleLoginEnabled },
+        { name: 'codeforces' as const, enabled: publicConfig.value?.codeforcesLoginEnabled },
+        { name: 'clist' as const, enabled: publicConfig.value?.clistLoginEnabled }
     ].filter(provider => provider.enabled)
 );
 const rules = computed<FormRules>(() => ({
@@ -357,7 +358,7 @@ const rules = computed<FormRules>(() => ({
         { required: true, message: t('auth.flow.email_invalid'), trigger: 'blur' },
         { type: 'email', message: t('auth.flow.email_invalid'), trigger: 'blur' }
     ],
-    password: [{ required: true, message: t('auth.login.password'), trigger: 'blur' }]
+    password: [{ required: true, message: t('auth.flow.password_required'), trigger: 'blur' }]
 }));
 
 useHead({
@@ -554,32 +555,36 @@ async function loginWithLuogu() {
 
 <style scoped lang="scss">
 .login {
-    &__alternatives {
-        padding-top: var(--space-4);
-        border-top: 1px solid var(--border-color);
-
-        > :last-child {
-            margin-bottom: 0;
-        }
-    }
-
-    &__divider {
-        margin-bottom: var(--space-3);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-    }
-
     &__providers {
+        display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+    }
+
+    &__method {
+        margin: 0;
+    }
+
+    &__providers > &__method:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
     }
 
     &__icon {
         margin-right: var(--space-2);
         flex-shrink: 0;
     }
+
+    &__hint {
+        margin: var(--space-2) 0 0;
+        color: var(--text-secondary);
+        font-size: var(--font-size-meta);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
 }
 
-@media (max-width: 479px) {
+@media (max-width: 359px) {
     .login__providers {
         grid-template-columns: minmax(0, 1fr);
     }

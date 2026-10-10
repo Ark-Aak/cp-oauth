@@ -64,7 +64,9 @@ function selectLink(task: ProfileTask, event: MouseEvent) {
     }
     &__mobile {
         display: grid;
-        gap: var(--space-2);
+        grid-template-columns: max-content minmax(0, 1fr);
+        gap: var(--space-3);
+        align-items: center;
     }
     &__label {
         margin: 0 0 var(--space-2);

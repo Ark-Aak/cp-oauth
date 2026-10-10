@@ -122,7 +122,7 @@
                         {{ t(stepTwoDescription, { platform: platformName }) }}
                     </p>
                     <p class="profile-binding-dialog__identity">
-                        <span>{{ uidLabel }}:</span>
+                        <span>{{ uidLabel }}</span>
                         <strong>{{ requestedUid }}</strong>
                     </p>
                     <p v-if="platform === 'atcoder'" class="profile-binding-dialog__hint">
@@ -639,6 +639,9 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
 
     &__success {
         color: var(--text-primary);
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
     }
 
     &__identity {
@@ -676,6 +679,13 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
 
     &__actions .el-button + .el-button {
         margin-left: 0;
+    }
+
+    &__actions .el-button {
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
     }
 
     &__link {

@@ -18,7 +18,7 @@
             <p v-if="error" ref="errorElement" role="alert" tabindex="-1" class="reauth__error">
                 {{ error }}
             </p>
-            <p v-if="notice" role="status">{{ notice }}</p>
+            <p v-if="notice" class="reauth__notice" role="status">{{ notice }}</p>
             <form v-if="challenge" method="post" @submit.prevent="verifyMfa">
                 <p>
                     {{
@@ -176,13 +176,16 @@
                                 })
                             }}
                         </el-button>
-                        <AppEmptyState
+                        <p
                             v-if="
                                 !hasPasskeys && !verifiableBindings.length && !oauthBindings.length
                             "
-                            :text="t('reauth.no_alternative')"
-                            :icon="KeyRound"
-                        />
+                            class="reauth__empty"
+                            role="status"
+                        >
+                            <KeyRound :size="18" aria-hidden="true" />
+                            {{ t('reauth.no_alternative') }}
+                        </p>
                     </template>
                 </div>
             </template>
@@ -532,6 +535,24 @@ onBeforeUnmount(cancel);
         color: var(--text-primary);
     }
 
+    p.reauth__notice {
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
+        color: var(--text-primary);
+    }
+
+    p.reauth__empty {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    &__empty svg {
+        flex-shrink: 0;
+        margin-top: var(--space-1);
+    }
+
     &__password-toggle {
         min-width: 44px;
         padding: 0;
@@ -569,6 +590,10 @@ onBeforeUnmount(cancel);
     &__alternatives > .el-button,
     form > .el-button {
         margin: 0;
+        max-width: 100%;
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
     }
 
     &__footer {

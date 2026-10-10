@@ -16,7 +16,7 @@
             <h3 id="profile-password-title">{{ t('profile.security.change_password') }}</h3>
             <form
                 method="post"
-                class="profile-security__form"
+                class="profile-security__form profile-security__password-form"
                 novalidate
                 @submit.prevent="submitPassword"
             >
@@ -137,7 +137,9 @@
                 >
                     {{ passwordError }}
                 </p>
-                <p v-if="passwordNotice" role="status">{{ passwordNotice }}</p>
+                <p v-if="passwordNotice" class="profile-security__status" role="status">
+                    {{ passwordNotice }}
+                </p>
                 <div class="profile-security__actions">
                     <el-button
                         type="primary"
@@ -167,7 +169,7 @@
                 @retry="loadTwoFactor(true)"
             >
                 <template v-if="twoFactor">
-                    <p>
+                    <p class="profile-security__factor-status" role="status">
                         {{
                             twoFactor.twoFactorEnabled
                                 ? t('profile.security.enabled_with', {
@@ -241,7 +243,9 @@
             >
                 {{ setupError }}
             </p>
-            <p v-if="setupNotice" role="status">{{ setupNotice }}</p>
+            <p v-if="setupNotice" class="profile-security__status" role="status">
+                {{ setupNotice }}
+            </p>
             <p
                 v-if="disableError"
                 id="profile-disable-error"
@@ -250,7 +254,9 @@
             >
                 {{ disableError }}
             </p>
-            <p v-if="disableNotice" role="status">{{ disableNotice }}</p>
+            <p v-if="disableNotice" class="profile-security__status" role="status">
+                {{ disableNotice }}
+            </p>
             <div
                 v-if="setupActive"
                 class="profile-security__setup"
@@ -369,15 +375,21 @@
 
         <section class="profile-security__section" aria-labelledby="profile-passkeys-title">
             <h3 id="profile-passkeys-title">{{ t('profile.security.passkeys') }}</h3>
+            <p class="profile-security__hint">{{ t('profile.security.passkey_hint') }}</p>
             <AppAsyncState
                 :pending="passkeysStatus === 'pending' || passkeysStatus === 'idle'"
                 :error="passkeysError"
-                :empty="passkeysStatus === 'success' && passkeys?.length === 0"
-                :empty-text="t('profile.security.no_passkeys')"
-                :empty-icon="KeyRound"
                 @retry="loadPasskeys(true)"
             >
-                <template v-if="passkeys">
+                <p
+                    v-if="passkeysStatus === 'success' && passkeys?.length === 0"
+                    class="profile-security__empty"
+                    role="status"
+                >
+                    <KeyRound :size="18" aria-hidden="true" />
+                    {{ t('profile.security.no_passkeys') }}
+                </p>
+                <template v-else-if="passkeys?.length">
                     <table class="profile-security__table">
                         <caption class="sr-only">
                             {{
@@ -455,7 +467,9 @@
             >
                 {{ removeError }}
             </p>
-            <p v-if="removeNotice" role="status">{{ removeNotice }}</p>
+            <p v-if="removeNotice" class="profile-security__status" role="status">
+                {{ removeNotice }}
+            </p>
             <form
                 method="post"
                 class="profile-security__form profile-security__passkey-form"
@@ -502,7 +516,9 @@
                 >
                     {{ passkeyError }}
                 </p>
-                <p v-if="passkeyNotice" role="status">{{ passkeyNotice }}</p>
+                <p v-if="passkeyNotice" class="profile-security__status" role="status">
+                    {{ passkeyNotice }}
+                </p>
                 <div class="profile-security__actions">
                     <el-button
                         ref="addPasskeyButton"
@@ -743,7 +759,7 @@ onBeforeUnmount(() => {
     min-width: 0;
 
     &__header {
-        margin-bottom: var(--space-5);
+        margin-bottom: var(--space-4);
 
         p {
             color: var(--text-secondary);
@@ -766,6 +782,11 @@ onBeforeUnmount(() => {
 
     &__section:last-child {
         padding-bottom: 0;
+    }
+
+    &__header + &__section {
+        border-top: 0;
+        padding-top: 0;
     }
 
     &__form {
@@ -796,6 +817,26 @@ onBeforeUnmount(() => {
     &__hint {
         color: var(--text-secondary);
         font-size: var(--font-size-control);
+    }
+    &__factor-status {
+        margin-bottom: var(--space-3);
+        font-weight: 600;
+    }
+    &__status {
+        padding: var(--space-2) var(--space-3);
+        border-left: 2px solid var(--accent);
+        background: var(--accent-subtle);
+        overflow-wrap: anywhere;
+    }
+    &__empty {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin: var(--space-3) 0;
+        color: var(--text-secondary);
+    }
+    &__empty svg {
+        flex-shrink: 0;
     }
     &__error {
         color: var(--el-color-danger);
@@ -835,7 +876,7 @@ onBeforeUnmount(() => {
         margin-block: var(--space-4);
     }
     &__passkey-form {
-        margin-top: var(--space-5);
+        margin-top: var(--space-4);
     }
 
     &__table {
@@ -899,6 +940,19 @@ onBeforeUnmount(() => {
     }
     :deep(.el-button + .el-button) {
         margin-left: 0;
+    }
+
+    @media (min-width: 768px) {
+        &__password-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            max-width: none;
+            align-items: start;
+        }
+        &__password-form > .profile-security__actions,
+        &__password-form > .profile-security__error,
+        &__password-form > .profile-security__status {
+            grid-column: 1 / -1;
+        }
     }
 }
 

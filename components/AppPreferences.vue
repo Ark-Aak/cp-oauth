@@ -85,8 +85,9 @@ const pending = ref(false);
 const error = ref('');
 const nextLanguage = computed(
     () =>
-        languages[(languages.findIndex(language => language === locale.value) + 1) % languages.length] ??
-        languages[0]
+        languages[
+            (languages.findIndex(language => language === locale.value) + 1) % languages.length
+        ] ?? languages[0]
 );
 const nextTheme = computed(() =>
     !hydrationReady.value || colorMode.value === 'dark' ? 'light' : 'dark'
@@ -174,13 +175,25 @@ async function changeLanguage(value: string) {
 }
 .preferences__field {
     display: grid;
+    flex: 1 1 160px;
     gap: var(--space-1);
+    min-width: 0;
+    max-width: 220px;
     font-size: var(--font-size-control);
     color: var(--text-secondary);
-    min-width: 132px;
 }
 .preferences__field :deep(.el-select) {
-    width: 144px;
+    width: 100%;
+}
+@media (max-width: 479px) {
+    .preferences:not(.preferences--icons) {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .preferences__field {
+        flex-basis: auto;
+        max-width: none;
+    }
 }
 .preferences__error {
     flex-basis: 100%;

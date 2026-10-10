@@ -1,8 +1,11 @@
 <template>
     <section class="auth-card" aria-labelledby="oauth-callback-title" :aria-busy="pending">
-        <h1 id="oauth-callback-title" class="auth-card__title">{{ $t(titleKey) }}</h1>
-        <p v-if="pending" class="auth-card__status" role="status">
-            {{ $t(`auth.login.${provider}_callback_loading`) }}
+        <h1 id="oauth-callback-title" class="auth-card__title">
+            {{ $t('auth.login.with_provider', { provider: providerName }) }}
+        </h1>
+        <p v-if="pending" class="auth-card__status oauth-callback__pending" role="status">
+            <LoaderCircle :size="18" aria-hidden="true" class="oauth-callback__spinner" />
+            <span>{{ $t('auth.login.callback_loading', { provider: providerName }) }}</span>
         </p>
         <p
             v-else-if="errorMessage"
@@ -16,13 +19,18 @@
         <p v-else class="auth-card__status" role="status">
             {{ $t('auth.flow.callback_complete') }}
         </p>
-        <NuxtLink v-if="errorMessage" :to="loginPath" class="auth-card__link">
+        <NuxtLink
+            v-if="errorMessage"
+            :to="loginPath"
+            class="el-button el-button--primary auth-card__button"
+        >
             {{ $t('auth.password.back_login') }}
         </NuxtLink>
     </section>
 </template>
 
 <script setup lang="ts">
+import { LoaderCircle } from 'lucide-vue-next';
 import type { AuthResult } from '~/types/auth';
 import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 
@@ -35,11 +43,14 @@ const pending = ref(true);
 const errorMessage = ref('');
 const errorEl = ref<HTMLElement | null>(null);
 const redirectTarget = ref(getSafeRedirectTarget(route.query.redirect));
-const titleKey = computed(() => `auth.login.${props.provider}_callback_title`);
+const providerName = computed(() => t(`binding.platforms.${props.provider}`));
 const loginPath = computed(() => buildLoginPath(redirectTarget.value));
 let exchangeStarted = false;
 
-useHead({ title: () => `${t(titleKey.value)} - ${t('app.name')}` });
+useHead({
+    title: () =>
+        `${t('auth.login.with_provider', { provider: providerName.value })} - ${t('app.name')}`
+});
 
 function queryString(name: string): string {
     const value = route.query[name];
@@ -70,7 +81,7 @@ onMounted(async () => {
     const code = queryString('code');
     const state = queryString('state');
     if (!code || !state) {
-        await showError(t(`auth.login.${props.provider}_callback_invalid`));
+        await showError(t('auth.login.callback_invalid'));
         return;
     }
     try {
@@ -91,3 +102,31 @@ onMounted(async () => {
     }
 });
 </script>
+
+<style scoped lang="scss">
+.oauth-callback {
+    &__pending {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    &__spinner {
+        flex-shrink: 0;
+        color: var(--accent);
+        animation: oauth-callback-spin 0.9s linear infinite;
+    }
+}
+
+@keyframes oauth-callback-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .oauth-callback__spinner {
+        animation: none;
+    }
+}
+</style>

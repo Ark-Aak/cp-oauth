@@ -36,12 +36,12 @@
                             <div class="admin-notices__meta">
                                 <h3>{{ notice.title }}</h3>
                                 <span v-if="notice.pinned" class="admin-notices__pin">{{
-                                    $t('admin.notices.pinned')
+                                    $t('admin.notices.pinned_status')
                                 }}</span>
                             </div>
                             <el-button
                                 type="danger"
-                                plain
+                                text
                                 native-type="button"
                                 :loading="!!deleting[notice.id]"
                                 :disabled="!!deleting[notice.id]"
@@ -347,10 +347,11 @@ async function deleteNotice(notice: NoticeSummary) {
     try {
         try {
             await ElMessageBox.confirm(
-                `${notice.title}: ${t('admin.notices.delete_confirm')}`,
-                t('common.confirm'),
+                t('admin.notices.delete_confirm', { title: notice.title }),
+                t('admin.notices.delete'),
                 {
                     confirmButtonText: t('admin.notices.delete'),
+                    confirmButtonClass: 'el-button--danger',
                     cancelButtonText: t('common.cancel'),
                     type: 'warning'
                 }
@@ -399,9 +400,9 @@ await loadNotices();
     }
 
     &__item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
         gap: var(--space-4);
     }
 
@@ -433,6 +434,8 @@ await loadNotices();
 
     &__content {
         margin: var(--space-3) 0;
+        font-size: var(--font-size-control);
+        line-height: 1.85;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
     }
@@ -456,13 +459,6 @@ await loadNotices();
 
     &__form-actions :deep(.el-button) {
         margin: 0;
-    }
-}
-
-@media (max-width: 479px) {
-    .admin-notices__item-header {
-        flex-direction: column;
-        gap: var(--space-3);
     }
 }
 </style>

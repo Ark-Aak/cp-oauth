@@ -3,18 +3,13 @@
         <h1 id="forgot-password-title" class="auth-card__title">
             {{ $t('auth.password.forgot_title') }}
         </h1>
-        <p class="auth-card__desc">{{ $t('auth.password.forgot_desc') }}</p>
+        <p class="auth-card__lead">{{ $t('auth.password.forgot_desc') }}</p>
         <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ errorMessage }}
         </p>
-        <el-alert
-            v-if="sent"
-            :title="$t('auth.password.reset_sent')"
-            type="success"
-            show-icon
-            :closable="false"
-            class="auth-card__alert"
-        />
+        <p v-if="sent" class="auth-card__status" role="status">
+            {{ $t('auth.password.reset_sent') }}
+        </p>
         <el-form
             ref="formRef"
             class="auth-card__form"
@@ -44,13 +39,13 @@
                     :disabled="!hydrationReady || pending"
                     class="auth-card__button"
                 >
-                    {{ $t('auth.password.send_reset') }}
+                    {{ $t(sent ? 'auth.password.send_again' : 'auth.password.send_reset') }}
                 </el-button>
             </el-form-item>
         </el-form>
-        <NuxtLink :to="loginPath" class="auth-card__link">
-            {{ $t('auth.password.back_login') }}
-        </NuxtLink>
+        <p class="auth-card__footer">
+            <NuxtLink :to="loginPath">{{ $t('auth.password.back_login') }}</NuxtLink>
+        </p>
     </section>
 </template>
 

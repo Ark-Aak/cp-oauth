@@ -56,6 +56,7 @@ defineProps<{ promotionSource?: 'oauth' }>();
     &__content {
         display: flex;
         align-items: center;
+        justify-content: center;
         flex-wrap: wrap;
         gap: 0 var(--space-3);
         width: 100%;

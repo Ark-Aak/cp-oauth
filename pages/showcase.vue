@@ -1,6 +1,12 @@
 <template>
     <div class="showcase">
-        <AppPageHeader :title="$t('showcase.title')" :description="$t('showcase.subtitle')" />
+        <AppPageHeader :title="$t('showcase.title')" :description="$t('showcase.subtitle')">
+            <template #actions>
+                <NuxtLink to="/about" class="showcase__action el-button">
+                    {{ $t('showcase.integration_guide') }}
+                </NuxtLink>
+            </template>
+        </AppPageHeader>
 
         <AppAsyncState
             :pending="pending"
@@ -112,6 +118,14 @@ function getFavicon(url: string | null): string {
 .showcase {
     min-width: 0;
 
+    &__action {
+        min-width: 44px;
+        min-height: 44px;
+        max-width: 100%;
+        height: auto;
+        white-space: normal;
+    }
+
     &__content {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -125,6 +139,7 @@ function getFavicon(url: string | null): string {
 
         h2 {
             margin-bottom: var(--space-3);
+            overflow-wrap: anywhere;
         }
     }
 
@@ -183,18 +198,7 @@ function getFavicon(url: string | null): string {
     }
 
     &__item-name {
-        display: flex;
-        align-items: baseline;
-        gap: var(--space-2);
         color: var(--text-primary);
-
-        span {
-            min-width: 0;
-        }
-
-        svg {
-            flex-shrink: 0;
-        }
     }
 
     &__item-description {

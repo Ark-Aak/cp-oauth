@@ -1,15 +1,21 @@
 <template>
     <article class="about">
-        <AppPageHeader :title="$t('about.title')" :description="$t('about.guide_intro')" />
+        <AppPageHeader :title="$t('about.title')" :description="$t('about.guide_intro')">
+            <template #actions>
+                <NuxtLink to="/developer" class="about__action el-button el-button--primary">
+                    {{ $t('about.create.action') }}
+                </NuxtLink>
+            </template>
+        </AppPageHeader>
 
         <nav class="about__contents ui-card" :aria-label="$t('about.contents')">
             <h2>{{ $t('about.contents') }}</h2>
             <ol>
                 <li>
-                    <a href="#flow">{{ $t('about.flow.title') }}</a>
+                    <a href="#create">{{ $t('about.create.title') }}</a>
                 </li>
                 <li>
-                    <a href="#create">{{ $t('about.create.title') }}</a>
+                    <a href="#flow">{{ $t('about.flow.title') }}</a>
                 </li>
                 <li>
                     <a href="#pkce">{{ $t('about.pkce.title') }}</a>
@@ -29,6 +35,11 @@
             </ol>
         </nav>
 
+        <section id="create" class="about__section" aria-labelledby="create-heading">
+            <h2 id="create-heading">{{ $t('about.create.title') }}</h2>
+            <p class="about__text">{{ $t('about.create.description') }}</p>
+        </section>
+
         <section id="flow" class="about__section" aria-labelledby="flow-heading">
             <h2 id="flow-heading">{{ $t('about.flow.title') }}</h2>
             <p class="about__text">{{ $t('about.intro') }}</p>
@@ -40,15 +51,26 @@
                 <li>{{ $t('about.flow.step5') }}</li>
                 <li>{{ $t('about.flow.step6') }}</li>
             </ol>
+            <p class="about__text">{{ $t('about.protocol_note') }}</p>
+            <p class="about__text">
+                {{ $t('about.metadata') }}
+                <a
+                    :href="`${oauthOrigin}/.well-known/oauth-authorization-server`"
+                    class="about__metadata-link"
+                >
+                    <code>/.well-known/oauth-authorization-server</code>
+                </a>
+            </p>
+            <p class="about__text">
+                {{ $t('about.metadata_compatibility') }}
+                <a
+                    :href="`${oauthOrigin}/.well-known/openid-configuration`"
+                    class="about__metadata-link"
+                >
+                    <code>/.well-known/openid-configuration</code>
+                </a>
+            </p>
             <p class="about__text about__boundary">{{ $t('about.cookie_boundary') }}</p>
-        </section>
-
-        <section id="create" class="about__section" aria-labelledby="create-heading">
-            <h2 id="create-heading">{{ $t('about.create.title') }}</h2>
-            <p class="about__text">{{ $t('about.create.description') }}</p>
-            <NuxtLink to="/developer" class="about__action el-button el-button--primary">
-                {{ $t('developer.register_app') }}
-            </NuxtLink>
         </section>
 
         <AppAsyncState
@@ -64,6 +86,8 @@
         <section id="pkce" class="about__section" aria-labelledby="pkce-heading">
             <h2 id="pkce-heading">{{ $t('about.pkce.title') }}</h2>
             <p class="about__text">{{ $t('about.pkce.description') }}</p>
+            <p class="about__text">{{ $t('about.pkce.verifier_rules') }}</p>
+            <p class="about__text">{{ $t('about.pkce.grant_rule') }}</p>
             <div class="about__code">
                 <div v-if="snippetStatus === 'success'" v-html="snippets?.pkce" />
                 <pre v-else class="about__source"><code>{{ snippetSources.pkce }}</code></pre>
@@ -81,6 +105,7 @@
         <section id="credentials" class="about__section" aria-labelledby="credentials-heading">
             <h2 id="credentials-heading">{{ $t('about.credentials.title') }}</h2>
             <p class="about__text">{{ $t('about.credentials.description') }}</p>
+            <p class="about__text">{{ $t('about.credentials.grant_rule') }}</p>
             <div class="about__code">
                 <div v-if="snippetStatus === 'success'" v-html="snippets?.token" />
                 <pre v-else class="about__source"><code>{{ snippetSources.token }}</code></pre>
@@ -105,6 +130,7 @@
             <div class="about__endpoint">
                 <h3><code>POST /api/oauth/token</code> — {{ $t('about.refresh_title') }}</h3>
                 <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
+                <p class="about__text">{{ $t('about.endpoints.token_lifetime') }}</p>
                 <div class="about__code">
                     <div v-if="snippetStatus === 'success'" v-html="snippets?.refresh" />
                     <pre
@@ -168,7 +194,7 @@
             <h2 id="card-heading">{{ $t('about.card.title') }}</h2>
             <p class="about__text">{{ $t('about.card.description') }}</p>
             <p class="about__text">
-                <strong>{{ $t('about.card.endpoint') }}:</strong>
+                <strong>{{ $t('about.card.endpoint') }}</strong>
                 <code>GET /api/users/{username}/card.svg</code>
             </p>
             <p class="about__text">{{ $t('about.card.params') }}</p>
@@ -364,7 +390,7 @@ const {
     const entries = await Promise.all(
         Object.entries(snippetSources).map(async ([name, source]) => [
             name,
-            await renderMarkdown(source)
+            (await renderMarkdown(source)).replace(/<pre\b/g, '<pre tabindex="0"')
         ])
     );
     return Object.fromEntries(entries) as Record<SnippetName, string>;
@@ -436,6 +462,19 @@ const {
     &__boundary {
         padding-left: var(--space-4);
         border-left: 2px solid var(--border-color);
+    }
+
+    &__metadata-link {
+        display: inline-flex;
+        align-items: center;
+        min-width: 44px;
+        min-height: 44px;
+        max-width: 100%;
+
+        code {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
     }
 
     &__steps {
@@ -528,6 +567,12 @@ const {
 @media (max-width: 767px) {
     .about__contents ol {
         column-gap: var(--space-4);
+    }
+}
+
+@media (max-width: 479px) {
+    .about__contents ol {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

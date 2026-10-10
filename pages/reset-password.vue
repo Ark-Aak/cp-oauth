@@ -3,23 +3,20 @@
         <h1 id="reset-password-title" class="auth-card__title">
             {{ $t('auth.password.reset_title') }}
         </h1>
+        <p v-if="!success && token && !tokenInvalid" class="auth-card__lead">
+            {{ $t('auth.password.reset_lead') }}
+        </p>
         <p v-if="visibleError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ visibleError }}
         </p>
         <template v-if="success">
-            <el-alert
-                :title="$t('auth.password.reset_success')"
-                type="success"
-                show-icon
-                :closable="false"
-                class="auth-card__alert"
-            />
-            <NuxtLink :to="loginPath" class="auth-card__link">
+            <p class="auth-card__status" role="status">{{ $t('auth.password.reset_success') }}</p>
+            <NuxtLink :to="loginPath" class="el-button el-button--primary auth-card__button">
                 {{ $t('auth.password.back_login') }}
             </NuxtLink>
         </template>
         <template v-else-if="!token || tokenInvalid">
-            <NuxtLink :to="forgotPath" class="auth-card__link">
+            <NuxtLink :to="forgotPath" class="el-button el-button--primary auth-card__button">
                 {{ $t('auth.flow.reset_request_again') }}
             </NuxtLink>
         </template>
@@ -35,6 +32,7 @@
             @submit.prevent="resetPassword"
         >
             <el-form-item
+                class="auth-card__field--with-help"
                 prop="newPassword"
                 :label="$t('auth.password.new_password')"
                 for="reset-password"
@@ -43,6 +41,7 @@
                     id="reset-password"
                     v-model="form.newPassword"
                     :aria-label="$t('auth.password.new_password')"
+                    aria-describedby="reset-password-hint"
                     :type="passwordVisible ? 'text' : 'password'"
                     name="new-password"
                     autocomplete="new-password"
@@ -70,7 +69,9 @@
                     </template>
                 </el-input>
             </el-form-item>
-            <p class="auth-card__desc">{{ $t('auth.flow.password_rule') }}</p>
+            <p id="reset-password-hint" class="auth-card__field-hint">
+                {{ $t('auth.flow.password_rule') }}
+            </p>
             <el-form-item>
                 <el-button
                     type="primary"
@@ -132,6 +133,7 @@ const visibleError = computed(() => {
 });
 const rules = computed<FormRules>(() => ({
     newPassword: [
+        { required: true, message: t('auth.flow.password_rule'), trigger: 'blur' },
         {
             validator: (_rule, value: string, callback) => {
                 callback(

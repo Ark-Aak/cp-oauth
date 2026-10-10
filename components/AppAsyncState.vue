@@ -40,8 +40,7 @@ defineEmits<{ retry: [] }>();
 .async-state {
     min-width: 0;
 }
-.async-state__message,
-.async-state__empty {
+.async-state__message {
     border: 1px solid var(--border-color);
     border-radius: var(--card-radius);
     background: var(--bg-primary);

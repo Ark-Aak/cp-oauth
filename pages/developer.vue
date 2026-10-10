@@ -83,7 +83,7 @@
                                         <code>{{ client.clientId }}</code>
                                         <el-button
                                             native-type="button"
-                                            plain
+                                            text
                                             :disabled="rowPending(client.id) || !!copyingId"
                                             :loading="copyingId === client.id"
                                             :aria-label="
@@ -120,7 +120,7 @@
                                         </el-button>
                                         <el-button
                                             type="danger"
-                                            plain
+                                            text
                                             native-type="button"
                                             :disabled="rowPending(client.id)"
                                             :loading="deletingId === client.id"
@@ -162,7 +162,7 @@
                             <code>{{ client.clientId }}</code>
                             <el-button
                                 native-type="button"
-                                plain
+                                text
                                 :disabled="rowPending(client.id) || !!copyingId"
                                 :loading="copyingId === client.id"
                                 :aria-label="$t('developer.copy_client_id') + ': ' + client.name"
@@ -191,7 +191,7 @@
                             </el-button>
                             <el-button
                                 type="danger"
-                                plain
+                                text
                                 native-type="button"
                                 :disabled="rowPending(client.id)"
                                 :loading="deletingId === client.id"
@@ -204,14 +204,14 @@
                     </li>
                 </ul>
             </AppAsyncState>
-        </section>
 
-        <section class="developer__help" aria-labelledby="developer-guide-title">
-            <h2 id="developer-guide-title">{{ $t('developer.integration_guide') }}</h2>
-            <p>{{ $t('developer.integration_hint') }}</p>
-            <NuxtLink to="/about" class="developer__help-link">
-                {{ $t('developer.open_guide') }}
-            </NuxtLink>
+            <aside class="developer__help" aria-labelledby="developer-guide-title">
+                <h3 id="developer-guide-title">{{ $t('developer.integration_guide') }}</h3>
+                <p>{{ $t('developer.integration_hint') }}</p>
+                <NuxtLink to="/about" class="developer__help-link">
+                    {{ $t('developer.open_guide') }}
+                </NuxtLink>
+            </aside>
         </section>
 
         <el-dialog
@@ -267,6 +267,9 @@
             <template v-if="deleteTarget">
                 <p class="developer__delete-target">
                     {{ $t('developer.delete_target', { name: deleteTarget.name }) }}
+                </p>
+                <p class="developer__delete-id">
+                    {{ $t('developer.client_id') }}: <code>{{ deleteTarget.clientId }}</code>
                 </p>
                 <p>{{ $t('developer.delete_impact') }}</p>
                 <p v-if="deleteError" class="developer__dialog-error" role="alert">
@@ -557,6 +560,7 @@ async function copyClientId(client: OAuthClient) {
 
     &__applications {
         padding: var(--panel-padding);
+        min-width: 0;
     }
 
     &__table-wrap {
@@ -605,10 +609,8 @@ async function copyClientId(client: OAuthClient) {
     }
 
     &__client-heading {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--space-2) var(--space-3);
+        display: grid;
+        gap: var(--space-1);
         min-width: 0;
     }
 
@@ -627,11 +629,12 @@ async function copyClientId(client: OAuthClient) {
         gap: var(--space-2);
         width: fit-content;
         max-width: 100%;
-        margin-top: var(--space-3);
+        margin-top: var(--space-2);
         min-width: 0;
 
         code {
             min-width: 0;
+            font-size: var(--font-size-meta);
         }
 
         :deep(.el-button) {
@@ -667,10 +670,6 @@ async function copyClientId(client: OAuthClient) {
 
     &__uris code {
         display: block;
-        padding: var(--space-2) var(--space-3);
-        border-radius: var(--card-radius);
-        background: var(--bg-secondary);
-        color: var(--text-primary);
     }
 
     &__unsafe {
@@ -731,9 +730,14 @@ async function copyClientId(client: OAuthClient) {
 
     &__help {
         margin-top: var(--space-5);
-        padding-top: var(--space-5);
+        padding-top: var(--space-4);
         border-top: 1px solid var(--border-color);
         color: var(--text-secondary);
+        font-size: var(--font-size-control);
+
+        h3 {
+            margin-bottom: var(--space-2);
+        }
     }
 
     &__help-link {
@@ -754,6 +758,13 @@ async function copyClientId(client: OAuthClient) {
     &__delete-target {
         margin-bottom: var(--space-3);
         font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    &__delete-id {
+        margin-bottom: var(--space-4);
+        color: var(--text-secondary);
+        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
     }
 

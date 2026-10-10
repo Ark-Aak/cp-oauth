@@ -29,8 +29,8 @@ const sections = [
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
-    margin-bottom: var(--space-5);
-    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
     border-bottom: 1px solid var(--border-color);
 
     &__link {
@@ -64,6 +64,7 @@ const sections = [
     .admin-section-nav {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-1);
     }
 }
 </style>
