@@ -50,7 +50,7 @@
         >
             <div v-if="user" class="profile-workbench__layout">
                 <ProfileTaskNav :model-value="activeTask" @update:model-value="selectTask" />
-                <div id="profile-active-panel" class="profile-workbench__panel">
+                <div id="profile-active-panel" class="profile-workbench__panel ui-card">
                     <ProfileIdentityPanel v-if="activeTask === 'basic'" />
                     <ProfileBindingsPanel v-else-if="activeTask === 'bindings'" />
                     <ProfileSecurityPanel v-else-if="activeTask === 'security'" />
@@ -61,8 +61,13 @@
                         class="profile-workbench__preferences"
                         aria-labelledby="profile-preferences-title"
                     >
-                        <h2 id="profile-preferences-title">{{ t('profile.tabs.preferences') }}</h2>
-                        <p>{{ t('profile.workbench.preferences_hint') }}</p>
+                        <header class="profile-workbench__preferences-header ui-card__header">
+                            <h2 id="profile-preferences-title" class="ui-card__title">
+                                <SlidersHorizontal :size="18" aria-hidden="true" />
+                                {{ t('profile.tabs.preferences') }}
+                            </h2>
+                            <p>{{ t('profile.workbench.preferences_hint') }}</p>
+                        </header>
                         <AppPreferences />
                     </section>
                 </div>
@@ -74,7 +79,7 @@
 <script setup lang="ts">
 import { getCurrentInstance } from 'vue';
 import { ElMessageBox } from 'element-plus';
-import { ArrowLeft, ExternalLink } from 'lucide-vue-next';
+import { ArrowLeft, ExternalLink, SlidersHorizontal } from 'lucide-vue-next';
 import ProfileTaskNav from '~/components/profile/ProfileTaskNav.vue';
 import ProfileIdentityPanel from '~/components/profile/ProfileIdentityPanel.vue';
 import ProfileBindingsPanel from '~/components/profile/ProfileBindingsPanel.vue';
@@ -228,8 +233,12 @@ onBeforeUnmount(() => {
     &__session {
         margin-bottom: var(--space-4);
     }
-    &__preferences p {
-        margin: var(--space-2) 0 var(--space-4);
+    &__preferences-header {
+        gap: var(--space-2);
+    }
+    &__preferences-header p {
+        flex-basis: 100%;
+        margin: 0;
         color: var(--text-secondary);
     }
     @media (max-width: 767px) {
@@ -240,10 +249,6 @@ onBeforeUnmount(() => {
     @media (min-width: 1024px) {
         &__layout {
             grid-template-columns: 180px minmax(0, 1fr);
-        }
-        &__panel {
-            border-left: 1px solid var(--border-color);
-            padding-left: var(--space-5);
         }
     }
 }

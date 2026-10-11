@@ -74,11 +74,10 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
         align-items: center;
         gap: var(--space-2) var(--space-4);
         min-width: 0;
-        padding: var(--space-2) 0;
-        border-bottom: 1px solid var(--card-border);
+        padding: var(--space-3) 0;
 
-        &:last-child {
-            border-bottom: 0;
+        & + & {
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 

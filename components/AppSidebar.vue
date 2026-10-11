@@ -1,53 +1,44 @@
 <template>
-    <nav v-if="orientation === 'horizontal'" :aria-label="$t('nav.navigation')" class="app-top-nav">
-        <NuxtLink
-            v-for="item in navigation"
-            :key="item.path"
-            :to="item.path"
-            class="app-top-nav__link"
-            :class="{ 'is-active': active(item.path) }"
-            :aria-current="active(item.path) ? 'page' : undefined"
-            @click="$emit('navigate')"
-        >
-            {{ $t(item.label) }}
+    <div class="app-sidebar">
+        <NuxtLink to="/" class="app-sidebar__brand ui-navigation-link" @click="$emit('navigate')">
+            <img src="/favicon.svg" alt="" width="28" height="28" />
+            <span>{{ $t('app.name') }}</span>
         </NuxtLink>
-    </nav>
-    <div v-else class="app-top-nav-panel">
-        <nav :aria-label="$t('nav.navigation')" class="app-top-nav-panel__nav">
+        <nav class="app-sidebar__nav" :aria-label="$t('nav.navigation')">
             <NuxtLink
                 v-for="item in navigation"
                 :key="item.path"
                 :to="item.path"
-                class="ui-menu-link"
+                class="app-sidebar__link ui-menu-link"
                 :class="{ 'is-active': active(item.path) }"
                 :aria-current="active(item.path) ? 'page' : undefined"
                 @click="$emit('navigate')"
             >
-                <component :is="item.icon" :size="18" :stroke-width="1.6" aria-hidden="true" />
+                <component :is="item.icon" :size="18" :stroke-width="1.75" aria-hidden="true" />
                 <span>{{ $t(item.label) }}</span>
             </NuxtLink>
         </nav>
-        <div class="app-top-nav-panel__account">
+        <div class="app-sidebar__account">
             <template v-if="user">
                 <NuxtLink
                     to="/profile"
-                    class="app-top-nav-panel__identity ui-menu-link"
+                    class="app-sidebar__identity ui-navigation-link"
                     @click="$emit('navigate')"
                 >
                     <AppUserAvatar
-                        :size="28"
+                        :size="36"
                         :src="user.avatarUrl"
                         :name="user.displayName || user.username"
                         :seed="user.id"
                     />
-                    <span class="app-top-nav-panel__identity-text"
+                    <span class="app-sidebar__identity-text"
                         ><strong>{{ user.displayName || user.username }}</strong
                         ><span>@{{ user.username }}</span></span
                     >
                 </NuxtLink>
                 <button
                     type="button"
-                    class="app-top-nav-panel__logout ui-menu-link"
+                    class="app-sidebar__logout ui-menu-link"
                     :disabled="logoutPending"
                     :aria-busy="logoutPending"
                     @click="$emit('logout')"
@@ -58,9 +49,9 @@
             <NuxtLink
                 v-else-if="anonymous"
                 to="/login"
-                class="ui-menu-link"
+                class="el-button el-button--primary app-sidebar__login"
                 @click="$emit('navigate')"
-                ><LogIn :size="18" aria-hidden="true" />{{ $t('nav.login') }}</NuxtLink
+                ><LogIn :size="16" aria-hidden="true" /><span>{{ $t('nav.login') }}</span></NuxtLink
             >
         </div>
     </div>
@@ -69,15 +60,11 @@
 <script setup lang="ts">
 import { Home, LogOut, LogIn, Code, BookOpen, UserCircle, Shield, Globe } from 'lucide-vue-next';
 import type { MeResponse } from '~/types/api';
-const props = withDefaults(
-    defineProps<{
-        user: MeResponse | null;
-        anonymous: boolean;
-        logoutPending: boolean;
-        orientation?: 'horizontal' | 'vertical';
-    }>(),
-    { orientation: 'horizontal' }
-);
+const props = defineProps<{
+    user: MeResponse | null;
+    anonymous: boolean;
+    logoutPending: boolean;
+}>();
 defineEmits<{ logout: []; navigate: [] }>();
 const route = useRoute();
 const navigation = computed(() => {
@@ -98,74 +85,84 @@ function active(path: string) {
 </script>
 
 <style scoped lang="scss">
-.app-top-nav {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-.app-top-nav::-webkit-scrollbar {
-    display: none;
-}
-.app-top-nav__link {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    height: 32px;
-    padding: 0 var(--space-3);
-    border-bottom: 2px solid transparent;
-    color: var(--text-secondary);
-    font-size: var(--font-size-control);
-    white-space: nowrap;
-    transition: color 140ms ease;
-}
-.app-top-nav__link:hover {
-    color: var(--accent);
-}
-.app-top-nav__link.is-active {
-    color: var(--accent);
-    font-weight: 600;
-    border-bottom-color: var(--accent);
-}
-.app-top-nav-panel {
+.app-sidebar {
     display: flex;
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    padding: var(--space-3);
+    padding: var(--space-4) var(--space-3);
     background: var(--bg-primary);
 }
-.app-top-nav-panel__nav {
+.app-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3) var(--space-5);
+    color: var(--text-primary);
+    font-size: var(--font-size-section);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.app-sidebar__brand img {
+    flex-shrink: 0;
+}
+.app-sidebar__nav {
     display: grid;
     gap: var(--space-1);
 }
-.app-top-nav-panel__account {
+.app-sidebar__link {
+    font-size: var(--font-size-body);
+}
+.app-sidebar__account {
     display: grid;
     gap: var(--space-1);
     margin-top: auto;
-    padding-top: var(--space-2);
-    border-top: 1px solid var(--divider-subtle);
+    padding: var(--space-2);
+    background: var(--bg-secondary);
+    border: 1px solid var(--divider-subtle);
+    border-radius: var(--card-radius);
 }
-.app-top-nav-panel__identity-text {
+.app-sidebar__identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     min-width: 0;
-    display: grid;
-    line-height: 1.4;
+    padding: var(--space-1);
+    border-radius: var(--card-radius);
+    color: var(--text-primary);
 }
-.app-top-nav-panel__identity-text strong {
+.app-sidebar__identity:hover {
+    background: var(--bg-primary);
+}
+.app-sidebar__identity-text {
+    display: grid;
+    min-width: 0;
+    line-height: 1.35;
+}
+.app-sidebar__identity-text strong {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--text-primary);
+    font-size: var(--font-size-control);
     font-weight: 600;
 }
-.app-top-nav-panel__identity-text > span {
+.app-sidebar__identity-text > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--text-muted);
     font-size: var(--font-size-meta);
-    overflow-wrap: anywhere;
 }
-.app-top-nav-panel__logout:disabled {
+.app-sidebar__logout {
+    width: 100%;
+}
+.app-sidebar__logout:hover {
+    background: var(--bg-primary);
+}
+.app-sidebar__logout:disabled {
     cursor: wait;
+}
+.app-sidebar__login {
+    justify-self: start;
 }
 </style>

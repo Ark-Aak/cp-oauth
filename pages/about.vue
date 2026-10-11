@@ -8,202 +8,271 @@
             </template>
         </AppPageHeader>
 
-        <nav class="about__contents" :aria-label="$t('about.contents')">
-            <h2>{{ $t('about.contents') }}</h2>
-            <ol>
-                <li>
-                    <a href="#create">{{ $t('about.create.title') }}</a>
-                </li>
-                <li>
-                    <a href="#flow">{{ $t('about.flow.title') }}</a>
-                </li>
-                <li>
-                    <a href="#pkce">{{ $t('about.pkce.title') }}</a>
-                </li>
-                <li>
-                    <a href="#credentials">{{ $t('about.credentials.title') }}</a>
-                </li>
-                <li>
-                    <a href="#endpoints">{{ $t('about.endpoints.title') }}</a>
-                </li>
-                <li>
-                    <a href="#scopes">{{ $t('about.scopes.title') }}</a>
-                </li>
-                <li>
-                    <a href="#card">{{ $t('about.card.title') }}</a>
-                </li>
-            </ol>
-        </nav>
+        <div class="about__layout ui-stack">
+            <nav class="about__contents ui-card" :aria-label="$t('about.contents')">
+                <div class="ui-card__header">
+                    <h2 class="ui-card__title">{{ $t('about.contents') }}</h2>
+                </div>
+                <ol>
+                    <li>
+                        <a href="#create">{{ $t('about.create.title') }}</a>
+                    </li>
+                    <li>
+                        <a href="#flow">{{ $t('about.flow.title') }}</a>
+                    </li>
+                    <li>
+                        <a href="#pkce">{{ $t('about.pkce.title') }}</a>
+                    </li>
+                    <li>
+                        <a href="#credentials">{{ $t('about.credentials.title') }}</a>
+                    </li>
+                    <li>
+                        <a href="#endpoints">{{ $t('about.endpoints.title') }}</a>
+                    </li>
+                    <li>
+                        <a href="#scopes">{{ $t('about.scopes.title') }}</a>
+                    </li>
+                    <li>
+                        <a href="#card">{{ $t('about.card.title') }}</a>
+                    </li>
+                </ol>
+            </nav>
 
-        <section id="create" class="about__section" aria-labelledby="create-heading">
-            <h2 id="create-heading">{{ $t('about.create.title') }}</h2>
-            <p class="about__text">{{ $t('about.create.description') }}</p>
-        </section>
-
-        <section id="flow" class="about__section" aria-labelledby="flow-heading">
-            <h2 id="flow-heading">{{ $t('about.flow.title') }}</h2>
-            <p class="about__text">{{ $t('about.intro') }}</p>
-            <ol class="about__steps">
-                <li>{{ $t('about.flow.step1') }}</li>
-                <li>{{ $t('about.flow.step2') }}</li>
-                <li>{{ $t('about.flow.step3') }}</li>
-                <li>{{ $t('about.flow.step4') }}</li>
-                <li>{{ $t('about.flow.step5') }}</li>
-                <li>{{ $t('about.flow.step6') }}</li>
-            </ol>
-            <p class="about__text">{{ $t('about.protocol_note') }}</p>
-            <p class="about__text">
-                {{ $t('about.metadata') }}
-                <a
-                    :href="`${oauthOrigin}/.well-known/oauth-authorization-server`"
-                    class="about__metadata-link"
+            <div class="about__body ui-card">
+                <section
+                    id="create"
+                    class="about__section ui-section"
+                    aria-labelledby="create-heading"
                 >
-                    <code>/.well-known/oauth-authorization-server</code>
-                </a>
-            </p>
-            <p class="about__text">
-                {{ $t('about.metadata_compatibility') }}
-                <a
-                    :href="`${oauthOrigin}/.well-known/openid-configuration`"
-                    class="about__metadata-link"
+                    <div class="ui-card__header">
+                        <h2 id="create-heading" class="ui-card__title">
+                            {{ $t('about.create.title') }}
+                        </h2>
+                    </div>
+                    <p class="about__text">{{ $t('about.create.description') }}</p>
+                </section>
+
+                <section id="flow" class="about__section ui-section" aria-labelledby="flow-heading">
+                    <div class="ui-card__header">
+                        <h2 id="flow-heading" class="ui-card__title">
+                            {{ $t('about.flow.title') }}
+                        </h2>
+                    </div>
+                    <p class="about__text">{{ $t('about.intro') }}</p>
+                    <ol class="about__steps">
+                        <li>{{ $t('about.flow.step1') }}</li>
+                        <li>{{ $t('about.flow.step2') }}</li>
+                        <li>{{ $t('about.flow.step3') }}</li>
+                        <li>{{ $t('about.flow.step4') }}</li>
+                        <li>{{ $t('about.flow.step5') }}</li>
+                        <li>{{ $t('about.flow.step6') }}</li>
+                    </ol>
+                    <p class="about__text">{{ $t('about.protocol_note') }}</p>
+                    <p class="about__text">
+                        {{ $t('about.metadata') }}
+                        <a
+                            :href="`${oauthOrigin}/.well-known/oauth-authorization-server`"
+                            class="about__metadata-link"
+                        >
+                            <code>/.well-known/oauth-authorization-server</code>
+                        </a>
+                    </p>
+                    <p class="about__text">
+                        {{ $t('about.metadata_compatibility') }}
+                        <a
+                            :href="`${oauthOrigin}/.well-known/openid-configuration`"
+                            class="about__metadata-link"
+                        >
+                            <code>/.well-known/openid-configuration</code>
+                        </a>
+                    </p>
+                    <p class="about__text about__boundary">{{ $t('about.cookie_boundary') }}</p>
+                </section>
+
+                <AppAsyncState
+                    v-if="snippetError"
+                    class="about__snippet-state"
+                    :pending="snippetStatus === 'pending'"
+                    :error="$t('markdown.render_error')"
+                    @retry="retrySnippets()"
+                />
+                <p
+                    v-else-if="snippetStatus === 'pending'"
+                    role="status"
+                    class="about__text about__snippet-state"
                 >
-                    <code>/.well-known/openid-configuration</code>
-                </a>
-            </p>
-            <p class="about__text about__boundary">{{ $t('about.cookie_boundary') }}</p>
-        </section>
+                    {{ $t('user.loading') }}
+                </p>
 
-        <AppAsyncState
-            v-if="snippetError"
-            :pending="snippetStatus === 'pending'"
-            :error="$t('markdown.render_error')"
-            @retry="retrySnippets()"
-        />
-        <p v-else-if="snippetStatus === 'pending'" role="status" class="about__text">
-            {{ $t('user.loading') }}
-        </p>
+                <section id="pkce" class="about__section ui-section" aria-labelledby="pkce-heading">
+                    <div class="ui-card__header">
+                        <h2 id="pkce-heading" class="ui-card__title">
+                            {{ $t('about.pkce.title') }}
+                        </h2>
+                    </div>
+                    <p class="about__text">{{ $t('about.pkce.description') }}</p>
+                    <p class="about__text">{{ $t('about.pkce.verifier_rules') }}</p>
+                    <p class="about__text">{{ $t('about.pkce.grant_rule') }}</p>
+                    <div class="about__code">
+                        <div v-if="snippetStatus === 'success'" v-html="snippets?.pkce" />
+                        <pre
+                            v-else
+                            class="about__source"
+                        ><code>{{ snippetSources.pkce }}</code></pre>
+                    </div>
+                    <h3>{{ $t('about.pkce.exchange_title') }}</h3>
+                    <div class="about__code">
+                        <div v-if="snippetStatus === 'success'" v-html="snippets?.publicToken" />
+                        <pre
+                            v-else
+                            class="about__source"
+                        ><code>{{ snippetSources.publicToken }}</code></pre>
+                    </div>
+                </section>
 
-        <section id="pkce" class="about__section" aria-labelledby="pkce-heading">
-            <h2 id="pkce-heading">{{ $t('about.pkce.title') }}</h2>
-            <p class="about__text">{{ $t('about.pkce.description') }}</p>
-            <p class="about__text">{{ $t('about.pkce.verifier_rules') }}</p>
-            <p class="about__text">{{ $t('about.pkce.grant_rule') }}</p>
-            <div class="about__code">
-                <div v-if="snippetStatus === 'success'" v-html="snippets?.pkce" />
-                <pre v-else class="about__source"><code>{{ snippetSources.pkce }}</code></pre>
+                <section
+                    id="credentials"
+                    class="about__section ui-section"
+                    aria-labelledby="credentials-heading"
+                >
+                    <div class="ui-card__header">
+                        <h2 id="credentials-heading" class="ui-card__title">
+                            {{ $t('about.credentials.title') }}
+                        </h2>
+                    </div>
+                    <p class="about__text">{{ $t('about.credentials.description') }}</p>
+                    <p class="about__text">{{ $t('about.credentials.grant_rule') }}</p>
+                    <div class="about__code">
+                        <div v-if="snippetStatus === 'success'" v-html="snippets?.token" />
+                        <pre
+                            v-else
+                            class="about__source"
+                        ><code>{{ snippetSources.token }}</code></pre>
+                    </div>
+                </section>
+
+                <section
+                    id="endpoints"
+                    class="about__section ui-section"
+                    aria-labelledby="endpoints-heading"
+                >
+                    <div class="ui-card__header">
+                        <h2 id="endpoints-heading" class="ui-card__title">
+                            {{ $t('about.endpoints.title') }}
+                        </h2>
+                    </div>
+
+                    <div class="about__endpoint">
+                        <h3><code>GET /oauth/authorize</code></h3>
+                        <p class="about__text">{{ $t('about.endpoints.authorize_desc') }}</p>
+                        <div class="about__code">
+                            <div v-if="snippetStatus === 'success'" v-html="snippets?.authorize" />
+                            <pre
+                                v-else
+                                class="about__source"
+                            ><code>{{ snippetSources.authorize }}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="about__endpoint">
+                        <h3>
+                            <code>POST /api/oauth/token</code> — {{ $t('about.refresh_title') }}
+                        </h3>
+                        <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
+                        <p class="about__text">{{ $t('about.endpoints.token_lifetime') }}</p>
+                        <div class="about__code">
+                            <div v-if="snippetStatus === 'success'" v-html="snippets?.refresh" />
+                            <pre
+                                v-else
+                                class="about__source"
+                            ><code>{{ snippetSources.refresh }}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="about__endpoint">
+                        <h3><code>GET /api/oauth/userinfo</code></h3>
+                        <p class="about__text">{{ $t('about.endpoints.userinfo_desc') }}</p>
+                        <div class="about__code">
+                            <div v-if="snippetStatus === 'success'" v-html="snippets?.userinfo" />
+                            <pre
+                                v-else
+                                class="about__source"
+                            ><code>{{ snippetSources.userinfo }}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="about__endpoint">
+                        <h3><code>POST /api/oauth/revoke</code></h3>
+                        <p class="about__text">{{ $t('about.endpoints.revoke_desc') }}</p>
+                        <div class="about__code">
+                            <div v-if="snippetStatus === 'success'" v-html="snippets?.revoke" />
+                            <pre
+                                v-else
+                                class="about__source"
+                            ><code>{{ snippetSources.revoke }}</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    id="scopes"
+                    class="about__section ui-section"
+                    aria-labelledby="scopes-heading"
+                >
+                    <div class="ui-card__header">
+                        <h2 id="scopes-heading" class="ui-card__title">
+                            {{ $t('about.scopes.title') }}
+                        </h2>
+                    </div>
+                    <p class="about__text">{{ $t('about.scopes.description') }}</p>
+                    <div
+                        class="about__scope-table"
+                        tabindex="0"
+                        role="region"
+                        :aria-label="$t('about.scopes.title')"
+                    >
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ $t('about.scopes.scope_col') }}</th>
+                                    <th scope="col">{{ $t('about.scopes.data_col') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="row in scopeData" :key="row.scope">
+                                    <th scope="row">
+                                        <code>{{ row.scope }}</code>
+                                    </th>
+                                    <td>{{ row.data }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="card" class="about__section ui-section" aria-labelledby="card-heading">
+                    <div class="ui-card__header">
+                        <h2 id="card-heading" class="ui-card__title">
+                            {{ $t('about.card.title') }}
+                        </h2>
+                    </div>
+                    <p class="about__text">{{ $t('about.card.description') }}</p>
+                    <p class="about__text">
+                        <strong>{{ $t('about.card.endpoint') }}</strong>
+                        <code>GET /api/users/{username}/card.svg</code>
+                    </p>
+                    <p class="about__text">{{ $t('about.card.params') }}</p>
+                    <h3>{{ $t('about.card.example') }}</h3>
+                    <div class="about__code">
+                        <div v-if="snippetStatus === 'success'" v-html="snippets?.card" />
+                        <pre
+                            v-else
+                            class="about__source"
+                        ><code>{{ snippetSources.card }}</code></pre>
+                    </div>
+                </section>
             </div>
-            <h3>{{ $t('about.pkce.exchange_title') }}</h3>
-            <div class="about__code">
-                <div v-if="snippetStatus === 'success'" v-html="snippets?.publicToken" />
-                <pre
-                    v-else
-                    class="about__source"
-                ><code>{{ snippetSources.publicToken }}</code></pre>
-            </div>
-        </section>
-
-        <section id="credentials" class="about__section" aria-labelledby="credentials-heading">
-            <h2 id="credentials-heading">{{ $t('about.credentials.title') }}</h2>
-            <p class="about__text">{{ $t('about.credentials.description') }}</p>
-            <p class="about__text">{{ $t('about.credentials.grant_rule') }}</p>
-            <div class="about__code">
-                <div v-if="snippetStatus === 'success'" v-html="snippets?.token" />
-                <pre v-else class="about__source"><code>{{ snippetSources.token }}</code></pre>
-            </div>
-        </section>
-
-        <section id="endpoints" class="about__section" aria-labelledby="endpoints-heading">
-            <h2 id="endpoints-heading">{{ $t('about.endpoints.title') }}</h2>
-
-            <div class="about__endpoint">
-                <h3><code>GET /oauth/authorize</code></h3>
-                <p class="about__text">{{ $t('about.endpoints.authorize_desc') }}</p>
-                <div class="about__code">
-                    <div v-if="snippetStatus === 'success'" v-html="snippets?.authorize" />
-                    <pre
-                        v-else
-                        class="about__source"
-                    ><code>{{ snippetSources.authorize }}</code></pre>
-                </div>
-            </div>
-
-            <div class="about__endpoint">
-                <h3><code>POST /api/oauth/token</code> — {{ $t('about.refresh_title') }}</h3>
-                <p class="about__text">{{ $t('about.endpoints.token_desc') }}</p>
-                <p class="about__text">{{ $t('about.endpoints.token_lifetime') }}</p>
-                <div class="about__code">
-                    <div v-if="snippetStatus === 'success'" v-html="snippets?.refresh" />
-                    <pre
-                        v-else
-                        class="about__source"
-                    ><code>{{ snippetSources.refresh }}</code></pre>
-                </div>
-            </div>
-
-            <div class="about__endpoint">
-                <h3><code>GET /api/oauth/userinfo</code></h3>
-                <p class="about__text">{{ $t('about.endpoints.userinfo_desc') }}</p>
-                <div class="about__code">
-                    <div v-if="snippetStatus === 'success'" v-html="snippets?.userinfo" />
-                    <pre
-                        v-else
-                        class="about__source"
-                    ><code>{{ snippetSources.userinfo }}</code></pre>
-                </div>
-            </div>
-
-            <div class="about__endpoint">
-                <h3><code>POST /api/oauth/revoke</code></h3>
-                <p class="about__text">{{ $t('about.endpoints.revoke_desc') }}</p>
-                <div class="about__code">
-                    <div v-if="snippetStatus === 'success'" v-html="snippets?.revoke" />
-                    <pre v-else class="about__source"><code>{{ snippetSources.revoke }}</code></pre>
-                </div>
-            </div>
-        </section>
-
-        <section id="scopes" class="about__section" aria-labelledby="scopes-heading">
-            <h2 id="scopes-heading">{{ $t('about.scopes.title') }}</h2>
-            <p class="about__text">{{ $t('about.scopes.description') }}</p>
-            <div
-                class="about__scope-table"
-                tabindex="0"
-                role="region"
-                :aria-label="$t('about.scopes.title')"
-            >
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">{{ $t('about.scopes.scope_col') }}</th>
-                            <th scope="col">{{ $t('about.scopes.data_col') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="row in scopeData" :key="row.scope">
-                            <th scope="row">
-                                <code>{{ row.scope }}</code>
-                            </th>
-                            <td>{{ row.data }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="card" class="about__section" aria-labelledby="card-heading">
-            <h2 id="card-heading">{{ $t('about.card.title') }}</h2>
-            <p class="about__text">{{ $t('about.card.description') }}</p>
-            <p class="about__text">
-                <strong>{{ $t('about.card.endpoint') }}</strong>
-                <code>GET /api/users/{username}/card.svg</code>
-            </p>
-            <p class="about__text">{{ $t('about.card.params') }}</p>
-            <h3>{{ $t('about.card.example') }}</h3>
-            <div class="about__code">
-                <div v-if="snippetStatus === 'success'" v-html="snippets?.card" />
-                <pre v-else class="about__source"><code>{{ snippetSources.card }}</code></pre>
-            </div>
-        </section>
+        </div>
     </article>
 </template>
 
@@ -404,16 +473,13 @@ const {
     font-size: var(--font-size-body);
 
     &__contents {
-        margin-bottom: 0;
-        padding-left: var(--space-4);
-        border-left: 2px solid var(--border-color);
         font-size: var(--font-size-control);
 
         ol {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0 var(--space-5);
-            margin: var(--space-3) 0 0;
+            margin: 0;
             padding-left: var(--space-5);
         }
 
@@ -433,18 +499,15 @@ const {
 
     &__section {
         min-width: 0;
-        padding: var(--space-5) 0;
-        border-bottom: 1px solid var(--border-color);
         scroll-margin-top: 80px;
-
-        &:last-child {
-            border-bottom: 0;
-        }
 
         h2,
         h3 {
-            margin-bottom: var(--space-3);
             overflow-wrap: anywhere;
+        }
+
+        h3 {
+            margin-bottom: var(--space-3);
         }
 
         > :last-child {
@@ -456,6 +519,10 @@ const {
         color: var(--text-secondary);
         margin-bottom: var(--space-3);
         overflow-wrap: anywhere;
+    }
+
+    &__snippet-state {
+        margin: var(--space-5) 0 0;
     }
 
     &__boundary {

@@ -1,5 +1,5 @@
 <template>
-    <div class="input-format-hint" :data-format="format">
+    <div class="input-format-hint ui-note ui-note--accent" :data-format="format">
         <FileCode2 :size="18" aria-hidden="true" />
         <div>
             <strong>{{ $t(`input_format.${format}.label`) }}</strong>
@@ -22,10 +22,6 @@ defineProps<{ format: 'markdown' | 'html' }>();
     width: 100%;
     min-width: 0;
     margin: var(--space-2) 0 var(--space-3);
-    padding: var(--space-3);
-    border-left: 3px solid var(--accent);
-    color: var(--text-primary);
-    font-size: var(--font-size-control);
     line-height: 1.6;
     overflow-wrap: anywhere;
 

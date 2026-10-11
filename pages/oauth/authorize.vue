@@ -1,8 +1,8 @@
 <template>
     <div class="consent">
-        <section class="auth-card" aria-labelledby="oauth-authorize-title">
+        <section class="auth-card consent__card" aria-labelledby="oauth-authorize-title">
             <h1 id="oauth-authorize-title" class="auth-card__title consent__title">
-                <ShieldCheck :size="24" :stroke-width="1.5" aria-hidden="true" />
+                <ShieldCheck :size="22" :stroke-width="1.75" aria-hidden="true" />
                 <span>{{ $t('oauth.consent.title') }}</span>
             </h1>
             <AppAsyncState
@@ -11,13 +11,16 @@
                 @retry="refreshAuthorization()"
             >
                 <template v-if="clientData">
-                    <p class="consent__request">
-                        <i18n-t keypath="oauth.consent.wants_access" scope="global">
-                            <template #app>
-                                <strong>{{ clientData.client.name }}</strong>
-                            </template>
-                        </i18n-t>
-                    </p>
+                    <div class="consent__app">
+                        <span class="consent__app-mark" aria-hidden="true">{{ appInitial }}</span>
+                        <p class="consent__request">
+                            <i18n-t keypath="oauth.consent.wants_access" scope="global">
+                                <template #app>
+                                    <strong>{{ clientData.client.name }}</strong>
+                                </template>
+                            </i18n-t>
+                        </p>
+                    </div>
 
                     <section
                         class="consent__permissions"
@@ -32,7 +35,9 @@
                                 :key="scope"
                                 class="consent__scope"
                             >
-                                <Shield :size="18" :stroke-width="1.5" aria-hidden="true" />
+                                <span class="consent__scope-icon" aria-hidden="true">
+                                    <Check :size="16" :stroke-width="2.25" />
+                                </span>
                                 <span>{{ $t(`oauth.scopes.${scope.replace(':', '_')}`) }}</span>
                             </li>
                         </ul>
@@ -44,7 +49,7 @@
                         </h2>
                         <div v-if="user && status === 'authenticated'" class="consent__account-row">
                             <AppUserAvatar
-                                :size="36"
+                                :size="44"
                                 :src="user.avatarUrl || undefined"
                                 :name="user.displayName || user.username"
                                 :seed="user.id"
@@ -143,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { LogOut, Shield, ShieldCheck } from 'lucide-vue-next';
+import { Check, LogOut, ShieldCheck } from 'lucide-vue-next';
 import { getCurrentInstance, markRaw } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import type { OAuthAuthorizationResponse } from '~/types/api';
@@ -240,6 +245,9 @@ const needsEmailVerification = computed(
         (!!clientData.value?.client.requireEmailVerified &&
             !!user.value &&
             !user.value.emailVerified)
+);
+const appInitial = computed(
+    () => Array.from(clientData.value?.client.name.trim() || '?')[0]?.toUpperCase() || '?'
 );
 
 watch(
@@ -355,15 +363,15 @@ async function handleDecision(approved: boolean) {
 .consent {
     width: 100%;
     min-width: 0;
-    font-size: var(--font-size-control);
+    font-size: var(--font-size-body);
 
     &__title {
         display: flex;
         align-items: center;
         gap: var(--space-2);
-        margin-bottom: var(--space-3);
-        font-size: var(--font-size-section);
-        line-height: 1.4;
+        margin-bottom: var(--space-5);
+        font-size: var(--font-size-title-mobile);
+        line-height: 1.35;
 
         svg {
             flex-shrink: 0;
@@ -371,59 +379,93 @@ async function handleDecision(approved: boolean) {
         }
     }
 
+    &__app {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-5);
+        padding: var(--space-4);
+        border-radius: var(--card-radius);
+        background: var(--accent-subtle);
+    }
+
+    &__app-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: var(--card-radius);
+        background: var(--accent);
+        color: var(--el-bg-color);
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
     &__request {
-        margin-bottom: var(--space-3);
         color: var(--text-secondary);
-        font-size: var(--font-size-body);
+        font-size: var(--font-size-subheading);
+        line-height: 1.5;
         overflow-wrap: anywhere;
 
         strong {
+            display: block;
             color: var(--text-primary);
+            font-size: var(--font-size-section);
+            line-height: 1.35;
         }
     }
 
     h2 {
-        margin-bottom: var(--space-2);
-        font-size: var(--font-size-subheading);
+        margin-bottom: var(--space-3);
+        color: var(--text-secondary);
+        font-size: var(--font-size-control);
         font-weight: 600;
         line-height: 1.4;
     }
 
     &__permissions {
-        margin-bottom: var(--space-3);
+        margin-bottom: var(--space-5);
     }
 
     &__scope-list {
-        list-style: none;
-        padding: 0;
+        display: grid;
+        gap: var(--space-2);
         margin: 0;
+        padding: 0;
+        list-style: none;
     }
 
     &__scope {
         display: grid;
-        grid-template-columns: 18px minmax(0, 1fr);
-        align-items: start;
-        gap: var(--space-2);
-        padding-block: var(--space-1);
-        border-bottom: 1px solid var(--border-color);
-        font-size: var(--font-size-control);
-        line-height: 1.45;
+        grid-template-columns: 28px minmax(0, 1fr);
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        border: 1px solid var(--divider-subtle);
+        border-radius: var(--card-radius);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: var(--font-size-body);
+        line-height: 1.5;
         overflow-wrap: anywhere;
-
-        svg {
-            margin-top: 2px;
-            color: var(--accent);
-        }
     }
 
-    &__scope:last-child {
-        border-bottom: 0;
+    &__scope-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent-subtle);
+        color: var(--accent);
     }
 
     &__account {
-        margin-bottom: var(--space-3);
-        padding-top: var(--space-3);
-        border-top: 1px solid var(--border-color);
+        margin-bottom: var(--space-5);
     }
 
     &__account-row {
@@ -432,6 +474,9 @@ async function handleDecision(approved: boolean) {
         align-items: center;
         gap: var(--space-3);
         min-width: 0;
+        padding: var(--space-3) var(--space-4);
+        border: 1px solid var(--divider-subtle);
+        border-radius: var(--card-radius);
     }
 
     &__account-name {
@@ -442,12 +487,12 @@ async function handleDecision(approved: boolean) {
 
         strong {
             color: var(--text-primary);
-            font-size: var(--font-size-control);
+            font-size: var(--font-size-subheading);
         }
 
         span {
             color: var(--text-secondary);
-            font-size: var(--font-size-meta);
+            font-size: var(--font-size-control);
         }
     }
 
@@ -458,7 +503,7 @@ async function handleDecision(approved: boolean) {
     }
 
     &__notice {
-        margin-bottom: var(--space-3);
+        margin-bottom: var(--space-4);
         overflow-wrap: anywhere;
     }
 
@@ -473,12 +518,35 @@ async function handleDecision(approved: boolean) {
     }
 
     &__actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: var(--space-2);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        gap: var(--space-3);
+        padding-top: var(--space-5);
+        border-top: 1px solid var(--divider-subtle);
 
         > .el-button {
+            height: 42px;
             margin: 0;
+            font-size: var(--font-size-body);
+            font-weight: 600;
+        }
+    }
+
+    @media (max-width: 479px) {
+        &__app {
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: var(--space-3);
+            padding: var(--space-3);
+        }
+
+        &__app-mark {
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+        }
+
+        &__scope {
+            padding: var(--space-2) var(--space-3);
         }
     }
 

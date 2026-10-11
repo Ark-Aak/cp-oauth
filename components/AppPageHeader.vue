@@ -31,6 +31,7 @@ defineProps<{ title: string; description?: string; icon?: Component }>();
     margin-bottom: var(--space-5);
     &__text {
         min-width: 0;
+        flex: 1;
     }
     h1 {
         display: flex;
@@ -57,6 +58,7 @@ defineProps<{ title: string; description?: string; icon?: Component }>();
     &__actions {
         display: flex;
         flex-wrap: wrap;
+        justify-content: flex-end;
         gap: var(--space-2);
         flex-shrink: 0;
         align-items: center;
@@ -70,9 +72,17 @@ defineProps<{ title: string; description?: string; icon?: Component }>();
     .page-header {
         flex-wrap: wrap;
         gap: var(--space-3);
-        margin-bottom: var(--space-4);
+
         h1 {
             font-size: var(--font-size-title-mobile);
+        }
+
+        &__text {
+            flex-basis: 100%;
+        }
+
+        &__actions {
+            justify-content: flex-start;
         }
     }
 }

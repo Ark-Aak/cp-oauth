@@ -277,9 +277,6 @@ onBeforeUnmount(() => {
         height: 260px;
         width: 100%;
         min-width: 0;
-        padding: var(--space-3);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
     }
 
     &__status {

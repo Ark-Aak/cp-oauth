@@ -1,7 +1,12 @@
 <template>
     <section class="profile-public" aria-labelledby="profile-public-title">
-        <h2 id="profile-public-title">{{ t('profile.tabs.public') }}</h2>
-        <p class="profile-public__intro">{{ t('profile.workbench.public_audience') }}</p>
+        <header class="profile-public__header ui-card__header">
+            <h2 id="profile-public-title" class="ui-card__title">
+                <Globe :size="18" aria-hidden="true" />
+                {{ t('profile.tabs.public') }}
+            </h2>
+            <p class="profile-public__intro">{{ t('profile.workbench.public_audience') }}</p>
+        </header>
         <p
             v-if="mutationError"
             ref="errorElement"
@@ -189,7 +194,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileText, Link2 } from 'lucide-vue-next';
+import { FileText, Globe, Link2 } from 'lucide-vue-next';
 import type { MeResponse } from '~/types/api';
 import type { ProfileIdentityPatch } from '~/composables/useProfileIdentity';
 import { PLATFORMS } from '~/utils/platforms';
@@ -329,8 +334,12 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .profile-public {
     min-width: 0;
+    &__header {
+        gap: var(--space-2);
+    }
     &__intro {
-        margin: var(--space-2) 0 var(--space-4);
+        flex-basis: 100%;
+        margin: 0;
         color: var(--text-secondary);
     }
     &__hint {
@@ -392,15 +401,19 @@ onBeforeUnmount(() => {
     }
     &__account-list {
         display: grid;
-        gap: var(--space-2);
     }
     &__account {
+        height: auto;
+        padding: var(--space-3) 0;
         margin: 0;
         :deep(.el-checkbox__label) {
             white-space: normal;
             min-width: 0;
             width: 100%;
         }
+    }
+    &__account + &__account {
+        border-top: 1px solid var(--divider-subtle);
     }
     &__account-identity {
         display: flex;
@@ -430,7 +443,7 @@ onBeforeUnmount(() => {
     &__actions {
         justify-self: stretch;
         padding-top: var(--space-4);
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid var(--divider-subtle);
     }
     &__preview-region {
         margin-top: var(--space-4);

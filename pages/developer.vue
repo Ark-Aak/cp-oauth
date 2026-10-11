@@ -23,197 +23,221 @@
             {{ $t('nav.login') }}
         </NuxtLink>
 
-        <section class="developer__applications" aria-labelledby="developer-applications-title">
-            <h2 id="developer-applications-title">{{ $t('developer.your_apps') }}</h2>
-            <AppAsyncState
-                :pending="pending"
-                :error="loadError"
-                :empty="clients.length === 0"
-                :empty-text="$t('developer.no_apps')"
-                :empty-icon="AppWindow"
-                @retry="refresh()"
+        <div class="ui-stack">
+            <section
+                class="developer__applications ui-card"
+                aria-labelledby="developer-applications-title"
             >
-                <template #empty>
-                    <p>{{ $t('developer.no_apps') }}</p>
-                    <el-button native-type="button" @click="openCreate">
-                        {{ $t('developer.register_app') }}
-                    </el-button>
-                </template>
-
-                <div class="developer__table-wrap">
-                    <table class="developer__table">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ $t('developer.app_name') }}</th>
-                                <th scope="col">{{ $t('developer.redirect_uris') }}</th>
-                                <th scope="col">{{ $t('developer.actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="client in clients"
-                                :key="client.id"
-                                :aria-busy="rowPending(client.id)"
-                            >
-                                <td>
-                                    <div class="developer__client-heading">
-                                        <p
-                                            :id="`developer-table-name-${client.id}`"
-                                            class="developer__client-name"
-                                        >
-                                            {{ client.name }}
-                                        </p>
-                                        <span class="developer__email-policy">
-                                            {{
-                                                $t(
-                                                    client.requireEmailVerified
-                                                        ? 'developer.email_verified_required'
-                                                        : 'developer.email_not_required'
-                                                )
-                                            }}
-                                        </span>
-                                    </div>
-                                    <div class="developer__client-id">
-                                        <span class="sr-only"
-                                            >{{ $t('developer.client_id') }}:
-                                        </span>
-                                        <code>{{ client.clientId }}</code>
-                                        <el-button
-                                            class="is-icon-only"
-                                            native-type="button"
-                                            text
-                                            :disabled="rowPending(client.id) || !!copyingId"
-                                            :loading="copyingId === client.id"
-                                            :aria-label="
-                                                $t('developer.copy_client_id') + ': ' + client.name
-                                            "
-                                            @click="copyClientId(client)"
-                                        >
-                                            <Copy :size="18" aria-hidden="true" />
-                                        </el-button>
-                                    </div>
-                                </td>
-                                <td>
-                                    <ul class="developer__uris">
-                                        <li v-for="uri in client.redirectUris" :key="uri">
-                                            <code>{{ uri }}</code>
-                                            <p
-                                                v-if="!isSafeOAuthRedirectUri(uri)"
-                                                class="developer__unsafe"
-                                            >
-                                                {{ $t('developer.unsafe_callback') }}
-                                            </p>
-                                        </li>
-                                    </ul>
-                                </td>
-                                <td>
-                                    <div class="developer__row-actions">
-                                        <el-button
-                                            native-type="button"
-                                            text
-                                            :disabled="rowPending(client.id)"
-                                            :aria-label="$t('developer.edit') + ': ' + client.name"
-                                            @click="openEdit(client, $event)"
-                                        >
-                                            {{ $t('developer.edit') }}
-                                        </el-button>
-                                        <el-button
-                                            type="danger"
-                                            text
-                                            native-type="button"
-                                            :disabled="rowPending(client.id)"
-                                            :loading="deletingId === client.id"
-                                            :aria-label="
-                                                $t('developer.delete') + ': ' + client.name
-                                            "
-                                            @click="openDelete(client, $event)"
-                                        >
-                                            {{ $t('developer.delete') }}
-                                        </el-button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="ui-card__header">
+                    <h2 id="developer-applications-title" class="ui-card__title">
+                        <AppWindow :size="18" aria-hidden="true" />
+                        {{ $t('developer.your_apps') }}
+                    </h2>
                 </div>
+                <AppAsyncState
+                    :pending="pending"
+                    :error="loadError"
+                    :empty="clients.length === 0"
+                    :empty-text="$t('developer.no_apps')"
+                    :empty-icon="AppWindow"
+                    @retry="refresh()"
+                >
+                    <template #empty>
+                        <p>{{ $t('developer.no_apps') }}</p>
+                        <el-button native-type="button" @click="openCreate">
+                            {{ $t('developer.register_app') }}
+                        </el-button>
+                    </template>
 
-                <ul class="developer__mobile-list">
-                    <li
-                        v-for="client in clients"
-                        :key="client.id"
-                        class="developer__mobile-client"
-                        :aria-busy="rowPending(client.id)"
-                    >
-                        <div class="developer__client-heading">
-                            <h3 class="developer__client-name">{{ client.name }}</h3>
-                            <span class="developer__email-policy">
-                                {{
-                                    $t(
-                                        client.requireEmailVerified
-                                            ? 'developer.email_verified_required'
-                                            : 'developer.email_not_required'
-                                    )
-                                }}
-                            </span>
-                        </div>
-                        <div class="developer__client-id">
-                            <span class="sr-only">{{ $t('developer.client_id') }}: </span>
-                            <code>{{ client.clientId }}</code>
-                            <el-button
-                                class="is-icon-only"
-                                native-type="button"
-                                text
-                                :disabled="rowPending(client.id) || !!copyingId"
-                                :loading="copyingId === client.id"
-                                :aria-label="$t('developer.copy_client_id') + ': ' + client.name"
-                                @click="copyClientId(client)"
-                            >
-                                <Copy :size="18" aria-hidden="true" />
-                            </el-button>
-                        </div>
-                        <p class="developer__meta-label">{{ $t('developer.redirect_uris') }}</p>
-                        <ul class="developer__uris">
-                            <li v-for="uri in client.redirectUris" :key="uri">
-                                <code>{{ uri }}</code>
-                                <p v-if="!isSafeOAuthRedirectUri(uri)" class="developer__unsafe">
-                                    {{ $t('developer.unsafe_callback') }}
-                                </p>
-                            </li>
-                        </ul>
-                        <div class="developer__row-actions">
-                            <el-button
-                                native-type="button"
-                                text
-                                :disabled="rowPending(client.id)"
-                                :aria-label="$t('developer.edit') + ': ' + client.name"
-                                @click="openEdit(client, $event)"
-                            >
-                                {{ $t('developer.edit') }}
-                            </el-button>
-                            <el-button
-                                type="danger"
-                                text
-                                native-type="button"
-                                :disabled="rowPending(client.id)"
-                                :loading="deletingId === client.id"
-                                :aria-label="$t('developer.delete') + ': ' + client.name"
-                                @click="openDelete(client, $event)"
-                            >
-                                {{ $t('developer.delete') }}
-                            </el-button>
-                        </div>
-                    </li>
-                </ul>
-            </AppAsyncState>
+                    <div class="developer__table-wrap">
+                        <table class="developer__table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ $t('developer.app_name') }}</th>
+                                    <th scope="col">{{ $t('developer.redirect_uris') }}</th>
+                                    <th scope="col">{{ $t('developer.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="client in clients"
+                                    :key="client.id"
+                                    :aria-busy="rowPending(client.id)"
+                                >
+                                    <td>
+                                        <div class="developer__client-heading">
+                                            <p
+                                                :id="`developer-table-name-${client.id}`"
+                                                class="developer__client-name"
+                                            >
+                                                {{ client.name }}
+                                            </p>
+                                            <span class="developer__email-policy">
+                                                {{
+                                                    $t(
+                                                        client.requireEmailVerified
+                                                            ? 'developer.email_verified_required'
+                                                            : 'developer.email_not_required'
+                                                    )
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div class="developer__client-id">
+                                            <span class="sr-only"
+                                                >{{ $t('developer.client_id') }}:
+                                            </span>
+                                            <code>{{ client.clientId }}</code>
+                                            <el-button
+                                                class="is-icon-only"
+                                                native-type="button"
+                                                text
+                                                :disabled="rowPending(client.id) || !!copyingId"
+                                                :loading="copyingId === client.id"
+                                                :aria-label="
+                                                    $t('developer.copy_client_id') +
+                                                    ': ' +
+                                                    client.name
+                                                "
+                                                @click="copyClientId(client)"
+                                            >
+                                                <Copy :size="18" aria-hidden="true" />
+                                            </el-button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <ul class="developer__uris">
+                                            <li v-for="uri in client.redirectUris" :key="uri">
+                                                <code>{{ uri }}</code>
+                                                <p
+                                                    v-if="!isSafeOAuthRedirectUri(uri)"
+                                                    class="developer__unsafe"
+                                                >
+                                                    {{ $t('developer.unsafe_callback') }}
+                                                </p>
+                                            </li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <div class="developer__row-actions">
+                                            <el-button
+                                                native-type="button"
+                                                text
+                                                :disabled="rowPending(client.id)"
+                                                :aria-label="
+                                                    $t('developer.edit') + ': ' + client.name
+                                                "
+                                                @click="openEdit(client, $event)"
+                                            >
+                                                {{ $t('developer.edit') }}
+                                            </el-button>
+                                            <el-button
+                                                type="danger"
+                                                text
+                                                native-type="button"
+                                                :disabled="rowPending(client.id)"
+                                                :loading="deletingId === client.id"
+                                                :aria-label="
+                                                    $t('developer.delete') + ': ' + client.name
+                                                "
+                                                @click="openDelete(client, $event)"
+                                            >
+                                                {{ $t('developer.delete') }}
+                                            </el-button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-            <aside class="developer__help ui-section" aria-labelledby="developer-guide-title">
-                <h3 id="developer-guide-title">{{ $t('developer.integration_guide') }}</h3>
+                    <ul class="developer__mobile-list">
+                        <li
+                            v-for="client in clients"
+                            :key="client.id"
+                            class="developer__mobile-client"
+                            :aria-busy="rowPending(client.id)"
+                        >
+                            <div class="developer__client-heading">
+                                <h3 class="developer__client-name">{{ client.name }}</h3>
+                                <span class="developer__email-policy">
+                                    {{
+                                        $t(
+                                            client.requireEmailVerified
+                                                ? 'developer.email_verified_required'
+                                                : 'developer.email_not_required'
+                                        )
+                                    }}
+                                </span>
+                            </div>
+                            <div class="developer__client-id">
+                                <span class="sr-only">{{ $t('developer.client_id') }}: </span>
+                                <code>{{ client.clientId }}</code>
+                                <el-button
+                                    class="is-icon-only"
+                                    native-type="button"
+                                    text
+                                    :disabled="rowPending(client.id) || !!copyingId"
+                                    :loading="copyingId === client.id"
+                                    :aria-label="
+                                        $t('developer.copy_client_id') + ': ' + client.name
+                                    "
+                                    @click="copyClientId(client)"
+                                >
+                                    <Copy :size="18" aria-hidden="true" />
+                                </el-button>
+                            </div>
+                            <p class="developer__meta-label">{{ $t('developer.redirect_uris') }}</p>
+                            <ul class="developer__uris">
+                                <li v-for="uri in client.redirectUris" :key="uri">
+                                    <code>{{ uri }}</code>
+                                    <p
+                                        v-if="!isSafeOAuthRedirectUri(uri)"
+                                        class="developer__unsafe"
+                                    >
+                                        {{ $t('developer.unsafe_callback') }}
+                                    </p>
+                                </li>
+                            </ul>
+                            <div class="developer__row-actions">
+                                <el-button
+                                    native-type="button"
+                                    text
+                                    :disabled="rowPending(client.id)"
+                                    :aria-label="$t('developer.edit') + ': ' + client.name"
+                                    @click="openEdit(client, $event)"
+                                >
+                                    {{ $t('developer.edit') }}
+                                </el-button>
+                                <el-button
+                                    type="danger"
+                                    text
+                                    native-type="button"
+                                    :disabled="rowPending(client.id)"
+                                    :loading="deletingId === client.id"
+                                    :aria-label="$t('developer.delete') + ': ' + client.name"
+                                    @click="openDelete(client, $event)"
+                                >
+                                    {{ $t('developer.delete') }}
+                                </el-button>
+                            </div>
+                        </li>
+                    </ul>
+                </AppAsyncState>
+            </section>
+
+            <aside class="developer__help ui-card" aria-labelledby="developer-guide-title">
+                <div class="ui-card__header">
+                    <h2 id="developer-guide-title" class="ui-card__title">
+                        <BookOpen :size="18" aria-hidden="true" />
+                        {{ $t('developer.integration_guide') }}
+                    </h2>
+                </div>
                 <p>{{ $t('developer.integration_hint') }}</p>
                 <NuxtLink to="/about" class="developer__help-link">
                     {{ $t('developer.open_guide') }}
                 </NuxtLink>
             </aside>
-        </section>
+        </div>
 
         <el-dialog
             v-model="formVisible"
@@ -303,7 +327,7 @@
 </template>
 
 <script setup lang="ts">
-import { AppWindow, Copy, Plus } from 'lucide-vue-next';
+import { AppWindow, BookOpen, Copy, Plus } from 'lucide-vue-next';
 import OAuthClientForm from '~/components/developer/OAuthClientForm.vue';
 import OAuthClientSecretDialog from '~/components/developer/OAuthClientSecretDialog.vue';
 import type { OAuthClient, OAuthClientDraft } from '~/types/api';
@@ -546,10 +570,6 @@ async function copyClientId(client: OAuthClient) {
 .developer {
     min-width: 0;
 
-    h2 {
-        margin-bottom: var(--space-4);
-    }
-
     &__notice {
         margin-bottom: var(--space-4);
         color: var(--text-primary);
@@ -574,19 +594,22 @@ async function copyClientId(client: OAuthClient) {
         min-width: 620px;
         table-layout: fixed;
         border-collapse: collapse;
+
+        thead {
+            background: var(--bg-secondary);
+        }
     }
 
     th,
     td {
         padding: var(--space-3);
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--divider-subtle);
         text-align: left;
         vertical-align: top;
         overflow-wrap: anywhere;
     }
 
     th {
-        background: var(--bg-secondary);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
         font-weight: 600;
@@ -694,6 +717,7 @@ async function copyClientId(client: OAuthClient) {
 
     &__mobile-list {
         display: none;
+        gap: var(--space-3);
         list-style: none;
         margin: 0;
         padding: 0;
@@ -701,17 +725,9 @@ async function copyClientId(client: OAuthClient) {
 
     &__mobile-client {
         min-width: 0;
-        padding: var(--space-4) 0;
-        border-bottom: 1px solid var(--border-color);
-
-        &:first-child {
-            padding-top: 0;
-        }
-
-        &:last-child {
-            padding-bottom: 0;
-            border-bottom: 0;
-        }
+        padding: var(--space-4);
+        border: 1px solid var(--divider-subtle);
+        border-radius: var(--card-radius);
     }
 
     &__meta-label {
@@ -721,13 +737,8 @@ async function copyClientId(client: OAuthClient) {
     }
 
     &__help {
-        margin-top: var(--space-5);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
-
-        h3 {
-            margin-bottom: var(--space-2);
-        }
     }
 
     &__help-link {

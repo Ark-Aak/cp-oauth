@@ -99,10 +99,10 @@ const verificationPath = computed(() => ({
         gap: var(--space-2);
         width: fit-content;
         min-width: 0;
-        margin: 0 auto var(--space-3);
+        margin: 0 auto var(--space-4);
         color: var(--text-primary);
-        font-size: var(--font-size-subheading);
-        font-weight: 600;
+        font-size: var(--font-size-section);
+        font-weight: 700;
         overflow-wrap: anywhere;
 
         img {
@@ -121,7 +121,7 @@ const verificationPath = computed(() => ({
 
     &--consent &__main {
         margin: var(--space-1);
-        padding: var(--space-1) var(--space-3) var(--space-3);
+        padding: var(--space-3) var(--space-3) var(--space-4);
         overflow-y: auto;
     }
 
@@ -129,8 +129,12 @@ const verificationPath = computed(() => ({
         flex: 0 0 auto;
         width: 100%;
         min-width: 0;
-        max-width: 400px;
+        max-width: 440px;
         margin-block: auto;
+    }
+
+    &--consent &__content {
+        max-width: 520px;
     }
 
     &__footer {
@@ -157,8 +161,12 @@ const verificationPath = computed(() => ({
 <style lang="scss">
 .auth-card {
     width: 100%;
-    max-width: 400px;
     min-width: 0;
+    padding: var(--space-6);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--el-box-shadow-light);
 
     > :last-child {
         margin-bottom: 0;
@@ -168,8 +176,8 @@ const verificationPath = computed(() => ({
         margin-bottom: var(--space-2);
         color: var(--text-primary);
         font-size: var(--font-size-title-mobile);
-        font-weight: 600;
-        line-height: 1.4;
+        font-weight: 700;
+        line-height: 1.35;
         overflow-wrap: anywhere;
     }
 
@@ -198,6 +206,8 @@ const verificationPath = computed(() => ({
         margin-bottom: var(--space-4);
         padding: var(--space-2) var(--space-3);
         border-left: 3px solid var(--el-color-danger);
+        border-radius: 0 var(--card-radius) var(--card-radius) 0;
+        background: var(--el-color-danger-light-9);
         color: var(--text-primary);
         font-size: var(--font-size-control);
         line-height: 1.65;
@@ -250,8 +260,11 @@ const verificationPath = computed(() => ({
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        justify-content: center;
         gap: 0 var(--space-2);
         margin-top: var(--space-5);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--divider-subtle);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
         line-height: 1.65;
@@ -276,6 +289,12 @@ const verificationPath = computed(() => ({
         display: inline-flex;
         align-items: center;
         justify-content: center;
+    }
+}
+
+@media (max-width: 479px) {
+    .auth-card {
+        padding: var(--space-5) var(--space-4);
     }
 }
 </style>

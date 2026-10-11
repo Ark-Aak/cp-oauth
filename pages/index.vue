@@ -1,7 +1,7 @@
 <template>
-    <div class="home">
+    <div class="home ui-stack">
         <div class="home__intro">
-            <section class="home__primary" :aria-label="$t('home.account_tasks')">
+            <section class="home__primary ui-card" :aria-label="$t('home.account_tasks')">
                 <AppPageHeader
                     :title="homeTitle"
                     :description="$t(me ? 'home.task_description' : 'home.guest_description')"
@@ -66,11 +66,13 @@
                 />
             </section>
 
-            <section class="home__quote" aria-labelledby="home-quote">
-                <h2 id="home-quote" class="home__heading">
-                    <Quote :size="18" aria-hidden="true" />
-                    <span>{{ $t('home.quote') }}</span>
-                </h2>
+            <section class="home__quote ui-card" aria-labelledby="home-quote">
+                <div class="ui-card__header">
+                    <h2 id="home-quote" class="ui-card__title">
+                        <Quote :size="18" aria-hidden="true" />
+                        <span>{{ $t('home.quote') }}</span>
+                    </h2>
+                </div>
                 <AppAsyncState
                     :pending="quotePending || (!quote && !quoteError)"
                     :error="quoteError ? $t('identity.network_error') : null"
@@ -84,12 +86,14 @@
             </section>
         </div>
 
-        <div class="home__layout">
-            <section class="home__announcements ui-section" aria-labelledby="home-announcements">
-                <h2 id="home-announcements" class="home__heading">
-                    <Bell :size="18" aria-hidden="true" />
-                    <span>{{ $t('home.announcements') }}</span>
-                </h2>
+        <div class="home__layout ui-stack">
+            <section class="home__announcements ui-card" aria-labelledby="home-announcements">
+                <div class="ui-card__header">
+                    <h2 id="home-announcements" class="ui-card__title">
+                        <Bell :size="18" aria-hidden="true" />
+                        <span>{{ $t('home.announcements') }}</span>
+                    </h2>
+                </div>
                 <AppAsyncState
                     :pending="noticePending"
                     :error="noticeError ? $t('identity.network_error') : null"
@@ -118,11 +122,13 @@
             </section>
 
             <aside class="home__side">
-                <section class="home__section ui-section" aria-labelledby="home-stats">
-                    <h2 id="home-stats" class="home__heading">
-                        <ChartNoAxesCombined :size="18" aria-hidden="true" />
-                        <span>{{ $t('home.stats') }}</span>
-                    </h2>
+                <section class="home__section ui-card" aria-labelledby="home-stats">
+                    <div class="ui-card__header">
+                        <h2 id="home-stats" class="ui-card__title">
+                            <ChartNoAxesCombined :size="18" aria-hidden="true" />
+                            <span>{{ $t('home.stats') }}</span>
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="statsPending"
                         :error="statsError || !stats ? $t('identity.network_error') : null"
@@ -137,11 +143,13 @@
                     </AppAsyncState>
                 </section>
 
-                <section class="home__section ui-section" aria-labelledby="home-recent-users">
-                    <h2 id="home-recent-users" class="home__heading">
-                        <UsersRound :size="18" aria-hidden="true" />
-                        <span>{{ $t('home.recent_users') }}</span>
-                    </h2>
+                <section class="home__section ui-card" aria-labelledby="home-recent-users">
+                    <div class="ui-card__header">
+                        <h2 id="home-recent-users" class="ui-card__title">
+                            <UsersRound :size="18" aria-hidden="true" />
+                            <span>{{ $t('home.recent_users') }}</span>
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="usersPending"
                         :error="usersError ? $t('identity.network_error') : null"
@@ -157,7 +165,7 @@
                                     class="home__user ui-navigation-link"
                                 >
                                     <AppUserAvatar
-                                        :size="32"
+                                        :size="36"
                                         :src="u.avatarUrl || undefined"
                                         :name="u.displayName || u.username"
                                         :seed="u.id"
@@ -325,10 +333,6 @@ function formatNumber(value: number): string {
 .home {
     min-width: 0;
 
-    &__intro {
-        margin-bottom: var(--space-5);
-    }
-
     &__account {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
@@ -360,8 +364,6 @@ function formatNumber(value: number): string {
         justify-self: start;
         max-width: 100%;
         min-width: 0;
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
         line-height: 1.4;
         overflow-wrap: anywhere;
 
@@ -400,11 +402,6 @@ function formatNumber(value: number): string {
         gap: var(--space-5);
     }
 
-    &__layout {
-        display: grid;
-        gap: var(--space-5);
-    }
-
     &__primary,
     &__quote,
     &__announcements,
@@ -420,38 +417,12 @@ function formatNumber(value: number): string {
         align-items: start;
     }
 
-    &__side > &__section + &__section {
-        margin-top: 0;
-        padding-top: 0;
-        padding-left: var(--space-5);
-        border-top: 0;
-        border-left: 1px solid var(--border-color);
-    }
-
-    &__heading {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        margin-bottom: var(--space-3);
-
-        svg {
-            flex-shrink: 0;
-            color: var(--text-secondary);
-        }
-    }
-
     &__notice {
         min-width: 0;
-        padding: var(--space-5) 0;
-        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-3) 0;
 
-        &:first-child {
-            padding-top: 0;
-        }
-
-        &:last-child {
-            border-bottom: 0;
-            padding-bottom: 0;
+        & + & {
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 
@@ -569,26 +540,33 @@ function formatNumber(value: number): string {
     }
 
     &__stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
         margin: 0;
     }
 
     &__stat {
         display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: var(--space-4);
-        padding: var(--space-3) 0;
-        border-bottom: 1px solid var(--border-color);
+        flex-direction: column;
+        gap: var(--space-1);
+        min-width: 0;
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--card-radius);
+        background: var(--bg-secondary);
 
         dt {
             color: var(--text-secondary);
-            font-size: var(--font-size-control);
+            font-size: var(--font-size-meta);
+            overflow-wrap: anywhere;
         }
 
         dd {
             margin: 0;
-            font-size: var(--font-size-section);
-            font-weight: 600;
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.3;
+            font-variant-numeric: tabular-nums;
             overflow-wrap: anywhere;
         }
     }
@@ -603,19 +581,18 @@ function formatNumber(value: number): string {
 
         li {
             min-width: 0;
-            border-bottom: 1px solid var(--border-color);
         }
 
-        li:nth-last-child(-n + 2) {
-            border-bottom: 0;
+        li:nth-child(n + 3) {
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 
     &__user {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: var(--space-3);
-        padding: var(--space-2) 0;
+        padding: var(--space-3) 0;
     }
 
     &__user-name {
@@ -629,13 +606,8 @@ function formatNumber(value: number): string {
     }
 
     &__quote {
-        padding-left: var(--space-5);
-        border-left: 1px solid var(--border-color);
-
         blockquote {
             margin: 0;
-            padding-left: var(--space-4);
-            border-left: 2px solid var(--border-color);
             color: var(--text-secondary);
             font-size: var(--font-size-control);
             line-height: 1.85;
@@ -657,16 +629,8 @@ function formatNumber(value: number): string {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .home__users li:nth-last-child(2) {
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .home__quote,
-    .home__side > .home__section + .home__section {
-        padding-top: var(--space-4);
-        padding-left: 0;
-        border-top: 1px solid var(--border-color);
-        border-left: 0;
+    .home__users li:nth-child(2) {
+        border-top: 1px solid var(--divider-subtle);
     }
 }
 </style>

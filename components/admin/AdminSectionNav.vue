@@ -1,5 +1,5 @@
 <template>
-    <nav class="admin-section-nav" :aria-label="$t('admin.title')">
+    <nav class="admin-section-nav ui-card" :aria-label="$t('admin.title')">
         <NuxtLink
             v-for="section in sections"
             :key="section.name"
@@ -28,8 +28,8 @@ const sections = [
 .admin-section-nav {
     display: flex;
     gap: var(--space-1);
-    margin-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-color);
+    min-width: 0;
+    padding: var(--space-1);
     overflow-x: auto;
 
     &__link {
@@ -39,21 +39,19 @@ const sections = [
         flex-shrink: 0;
         height: 32px;
         padding: 0 var(--space-3);
-        border-radius: 0;
-        border-bottom: 2px solid transparent;
-        background: none;
+        border-radius: var(--card-radius);
         font-size: var(--font-size-control);
         color: var(--text-secondary);
         text-decoration: none;
         white-space: nowrap;
 
         &:hover {
-            color: var(--accent);
+            background: var(--bg-secondary);
         }
 
         &--current {
+            background: var(--accent-subtle);
             color: var(--accent);
-            border-bottom-color: var(--accent);
             font-weight: 600;
         }
     }

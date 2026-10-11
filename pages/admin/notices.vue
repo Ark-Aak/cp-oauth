@@ -10,56 +10,67 @@
                 </el-button>
             </template>
         </AppPageHeader>
-        <AdminSectionNav current="notices" />
-        <p v-if="sessionExpired" class="admin-notices__help">
-            <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-        </p>
+        <div class="ui-stack">
+            <AdminSectionNav current="notices" />
+            <p v-if="sessionExpired" class="admin-notices__help">
+                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
+            </p>
 
-        <section class="admin-notices__results" aria-labelledby="notice-list-title">
-            <h2 id="notice-list-title">{{ $t('admin.notices.list_title') }}</h2>
-            <AppAsyncState
-                :pending="loading"
-                :error="loadError"
-                :empty="notices.length === 0"
-                :empty-text="$t('admin.notices.empty')"
-                :empty-icon="Bell"
-                @retry="loadNotices"
-            >
-                <div class="admin-notices__list">
-                    <article
-                        v-for="notice in notices"
-                        :key="notice.id"
-                        class="admin-notices__item"
-                        :aria-busy="!!deleting[notice.id]"
-                    >
-                        <header class="admin-notices__item-header">
-                            <div class="admin-notices__meta">
-                                <h3>{{ notice.title }}</h3>
-                                <span v-if="notice.pinned" class="admin-notices__pin">{{
-                                    $t('admin.notices.pinned_status')
-                                }}</span>
-                            </div>
-                            <el-button
-                                type="danger"
-                                text
-                                native-type="button"
-                                :loading="!!deleting[notice.id]"
-                                :disabled="!!deleting[notice.id]"
-                                :aria-label="`${$t('admin.notices.delete')}: ${notice.title}`"
-                                @click="deleteNotice(notice)"
-                            >
-                                {{ $t('admin.notices.delete') }}
-                            </el-button>
-                        </header>
-                        <p class="admin-notices__content">{{ notice.content }}</p>
-                        <p class="admin-notices__time">{{ formatTime(notice.publishedAt) }}</p>
-                        <p v-if="deleteErrors[notice.id]" class="admin-notices__error" role="alert">
-                            {{ deleteErrors[notice.id] }}
-                        </p>
-                    </article>
+            <section class="admin-notices__results ui-card" aria-labelledby="notice-list-title">
+                <div class="ui-card__header">
+                    <h2 id="notice-list-title" class="ui-card__title">
+                        <Bell :size="18" aria-hidden="true" />
+                        {{ $t('admin.notices.list_title') }}
+                    </h2>
                 </div>
-            </AppAsyncState>
-        </section>
+                <AppAsyncState
+                    :pending="loading"
+                    :error="loadError"
+                    :empty="notices.length === 0"
+                    :empty-text="$t('admin.notices.empty')"
+                    :empty-icon="Bell"
+                    @retry="loadNotices"
+                >
+                    <div class="admin-notices__list">
+                        <article
+                            v-for="notice in notices"
+                            :key="notice.id"
+                            class="admin-notices__item"
+                            :aria-busy="!!deleting[notice.id]"
+                        >
+                            <header class="admin-notices__item-header">
+                                <div class="admin-notices__meta">
+                                    <h3>{{ notice.title }}</h3>
+                                    <span v-if="notice.pinned" class="admin-notices__pin">{{
+                                        $t('admin.notices.pinned_status')
+                                    }}</span>
+                                </div>
+                                <el-button
+                                    type="danger"
+                                    text
+                                    native-type="button"
+                                    :loading="!!deleting[notice.id]"
+                                    :disabled="!!deleting[notice.id]"
+                                    :aria-label="`${$t('admin.notices.delete')}: ${notice.title}`"
+                                    @click="deleteNotice(notice)"
+                                >
+                                    {{ $t('admin.notices.delete') }}
+                                </el-button>
+                            </header>
+                            <p class="admin-notices__content">{{ notice.content }}</p>
+                            <p class="admin-notices__time">{{ formatTime(notice.publishedAt) }}</p>
+                            <p
+                                v-if="deleteErrors[notice.id]"
+                                class="admin-notices__error"
+                                role="alert"
+                            >
+                                {{ deleteErrors[notice.id] }}
+                            </p>
+                        </article>
+                    </div>
+                </AppAsyncState>
+            </section>
+        </div>
 
         <el-dialog
             v-model="createOpen"
@@ -376,24 +387,12 @@ await loadNotices();
 .admin-notices {
     min-width: 0;
 
-    &__results {
-        > h2 {
-            margin-bottom: var(--space-4);
-        }
-    }
-
-    &__list {
-        border-top: 1px solid var(--border-color);
-    }
-
     &__item {
-        padding: var(--space-4) 0;
-        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-3) 0;
         min-width: 0;
 
-        &:last-child {
-            padding-bottom: 0;
-            border-bottom: 0;
+        & + & {
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 
@@ -446,6 +445,19 @@ await loadNotices();
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
         margin-bottom: var(--space-3);
+    }
+
+    @media (max-width: 767px) {
+        &__list {
+            display: grid;
+            gap: var(--space-3);
+        }
+
+        &__item {
+            padding: var(--space-4);
+            border: 1px solid var(--divider-subtle);
+            border-radius: var(--card-radius);
+        }
     }
 }
 </style>

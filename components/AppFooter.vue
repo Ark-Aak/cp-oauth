@@ -50,7 +50,7 @@ defineProps<{ promotionSource?: 'oauth' }>();
     margin-top: var(--space-4);
     padding: var(--space-3) 0;
     border-top: 1px solid var(--border-color);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-meta);
 
     &__content {

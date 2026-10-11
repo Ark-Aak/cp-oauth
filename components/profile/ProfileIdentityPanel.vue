@@ -1,7 +1,12 @@
 <template>
     <section class="profile-identity" aria-labelledby="profile-identity-title">
-        <h2 id="profile-identity-title">{{ t('profile.tabs.basic') }}</h2>
-        <p class="profile-identity__intro">{{ t('profile.workbench.identity_hint') }}</p>
+        <header class="profile-identity__header ui-card__header">
+            <h2 id="profile-identity-title" class="ui-card__title">
+                <UserRound :size="18" aria-hidden="true" />
+                {{ t('profile.tabs.basic') }}
+            </h2>
+            <p class="profile-identity__intro">{{ t('profile.workbench.identity_hint') }}</p>
+        </header>
         <div class="profile-identity__person">
             <AppUserAvatar
                 :size="64"
@@ -223,6 +228,7 @@
 </template>
 
 <script setup lang="ts">
+import { UserRound } from 'lucide-vue-next';
 import type { MeResponse } from '~/types/api';
 import type { ProfileIdentityPatch } from '~/composables/useProfileIdentity';
 import { normalizeUsername } from '~/utils/username';
@@ -352,13 +358,17 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .profile-identity {
     min-width: 0;
+    &__header {
+        gap: var(--space-2);
+    }
     &__intro,
     &__hint,
     &__username {
         color: var(--text-secondary);
     }
     &__intro {
-        margin: var(--space-2) 0 var(--space-5);
+        flex-basis: 100%;
+        margin: 0;
     }
     &__hint {
         font-size: var(--font-size-control);

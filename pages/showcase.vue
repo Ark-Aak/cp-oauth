@@ -9,6 +9,7 @@
         </AppPageHeader>
 
         <AppAsyncState
+            :class="{ 'ui-card': pending || !!error }"
             :pending="pending"
             :error="error ? $t('identity.network_error') : null"
             @retry="refresh()"
@@ -17,10 +18,14 @@
                 <section
                     v-for="section in sections"
                     :key="section.id"
-                    class="showcase__section ui-section"
+                    class="showcase__section ui-card"
                     :aria-labelledby="`showcase-${section.id}`"
                 >
-                    <h2 :id="`showcase-${section.id}`">{{ section.title }}</h2>
+                    <div class="ui-card__header">
+                        <h2 :id="`showcase-${section.id}`" class="ui-card__title">
+                            {{ section.title }}
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="false"
                         :empty="!section.items.length"
@@ -133,17 +138,8 @@ function getFavicon(url: string | null): string {
         min-width: 0;
 
         h2 {
-            margin-bottom: var(--space-3);
             overflow-wrap: anywhere;
         }
-    }
-
-    &__section + &__section {
-        margin-top: 0;
-        padding-top: 0;
-        padding-left: var(--space-5);
-        border-top: 0;
-        border-left: 1px solid var(--border-color);
     }
 
     &__list {
@@ -156,7 +152,7 @@ function getFavicon(url: string | null): string {
         }
 
         li + li {
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 
@@ -212,13 +208,6 @@ function getFavicon(url: string | null): string {
 @media (max-width: 767px) {
     .showcase__content {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .showcase__section + .showcase__section {
-        padding-top: var(--space-4);
-        padding-left: 0;
-        border-top: 1px solid var(--border-color);
-        border-left: 0;
     }
 }
 </style>

@@ -10,95 +10,102 @@
                 </el-button>
             </template>
         </AppPageHeader>
-        <AdminSectionNav current="showcase" />
-        <p v-if="sessionExpired" class="admin-showcase__help">
-            <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-        </p>
+        <div class="ui-stack">
+            <AdminSectionNav current="showcase" />
+            <p v-if="sessionExpired" class="admin-showcase__help">
+                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
+            </p>
 
-        <section class="admin-showcase__results" aria-labelledby="showcase-list-title">
-            <h2 id="showcase-list-title">{{ $t('admin.showcase.list_title') }}</h2>
-            <AppAsyncState
-                :pending="loading"
-                :error="loadError"
-                :empty="items.length === 0"
-                :empty-text="$t('admin.showcase.empty')"
-                :empty-icon="Globe"
-                @retry="loadItems"
-            >
-                <div class="admin-showcase__list">
-                    <article
-                        v-for="item in items"
-                        :key="item.id"
-                        class="admin-showcase__item"
-                        :aria-busy="!!deleting[item.id]"
-                    >
-                        <div class="admin-showcase__item-info">
-                            <h3>{{ item.name }}</h3>
-                            <p class="admin-showcase__category">
-                                {{
-                                    $t(
-                                        item.category === 'site'
-                                            ? 'admin.showcase.category_site'
-                                            : 'admin.showcase.category_project'
-                                    )
-                                }}
-                                · {{ $t('admin.showcase.sort_order') }}: {{ item.sortOrder }}
-                            </p>
-                            <a
-                                v-if="item.url"
-                                :href="item.url"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="admin-showcase__url"
-                                >{{ item.url }}</a
-                            >
-                            <p v-if="item.iconUrl" class="admin-showcase__icon-url">
-                                {{ $t('admin.showcase.icon_url') }}: {{ item.iconUrl }}
-                            </p>
-                            <p
-                                v-if="item.invalidUrls?.length"
-                                class="admin-showcase__warning ui-note ui-note--accent"
-                                role="status"
-                            >
-                                {{ $t('admin.showcase.invalid_url_warning') }}
-                                ({{
-                                    item.invalidUrls
-                                        .map(field =>
-                                            $t(
-                                                field === 'url'
-                                                    ? 'admin.showcase.url'
-                                                    : 'admin.showcase.icon_url'
-                                            )
-                                        )
-                                        .join(', ')
-                                }})
-                            </p>
-                            <p v-if="item.description" class="admin-showcase__description">
-                                {{ item.description }}
-                            </p>
-                            <p
-                                v-if="deleteErrors[item.id]"
-                                class="admin-showcase__error"
-                                role="alert"
-                            >
-                                {{ deleteErrors[item.id] }}
-                            </p>
-                        </div>
-                        <el-button
-                            type="danger"
-                            text
-                            native-type="button"
-                            :loading="!!deleting[item.id]"
-                            :disabled="!!deleting[item.id]"
-                            :aria-label="`${$t('admin.showcase.delete')}: ${item.name}`"
-                            @click="handleDelete(item)"
-                        >
-                            {{ $t('admin.showcase.delete') }}
-                        </el-button>
-                    </article>
+            <section class="admin-showcase__results ui-card" aria-labelledby="showcase-list-title">
+                <div class="ui-card__header">
+                    <h2 id="showcase-list-title" class="ui-card__title">
+                        <Globe :size="18" aria-hidden="true" />
+                        {{ $t('admin.showcase.list_title') }}
+                    </h2>
                 </div>
-            </AppAsyncState>
-        </section>
+                <AppAsyncState
+                    :pending="loading"
+                    :error="loadError"
+                    :empty="items.length === 0"
+                    :empty-text="$t('admin.showcase.empty')"
+                    :empty-icon="Globe"
+                    @retry="loadItems"
+                >
+                    <div class="admin-showcase__list">
+                        <article
+                            v-for="item in items"
+                            :key="item.id"
+                            class="admin-showcase__item"
+                            :aria-busy="!!deleting[item.id]"
+                        >
+                            <div class="admin-showcase__item-info">
+                                <h3>{{ item.name }}</h3>
+                                <p class="admin-showcase__category">
+                                    {{
+                                        $t(
+                                            item.category === 'site'
+                                                ? 'admin.showcase.category_site'
+                                                : 'admin.showcase.category_project'
+                                        )
+                                    }}
+                                    · {{ $t('admin.showcase.sort_order') }}: {{ item.sortOrder }}
+                                </p>
+                                <a
+                                    v-if="item.url"
+                                    :href="item.url"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="admin-showcase__url"
+                                    >{{ item.url }}</a
+                                >
+                                <p v-if="item.iconUrl" class="admin-showcase__icon-url">
+                                    {{ $t('admin.showcase.icon_url') }}: {{ item.iconUrl }}
+                                </p>
+                                <p
+                                    v-if="item.invalidUrls?.length"
+                                    class="admin-showcase__warning ui-note ui-note--accent"
+                                    role="status"
+                                >
+                                    {{ $t('admin.showcase.invalid_url_warning') }}
+                                    ({{
+                                        item.invalidUrls
+                                            .map(field =>
+                                                $t(
+                                                    field === 'url'
+                                                        ? 'admin.showcase.url'
+                                                        : 'admin.showcase.icon_url'
+                                                )
+                                            )
+                                            .join(', ')
+                                    }})
+                                </p>
+                                <p v-if="item.description" class="admin-showcase__description">
+                                    {{ item.description }}
+                                </p>
+                                <p
+                                    v-if="deleteErrors[item.id]"
+                                    class="admin-showcase__error"
+                                    role="alert"
+                                >
+                                    {{ deleteErrors[item.id] }}
+                                </p>
+                            </div>
+                            <el-button
+                                type="danger"
+                                text
+                                native-type="button"
+                                :loading="!!deleting[item.id]"
+                                :disabled="!!deleting[item.id]"
+                                :aria-label="`${$t('admin.showcase.delete')}: ${item.name}`"
+                                @click="handleDelete(item)"
+                            >
+                                {{ $t('admin.showcase.delete') }}
+                            </el-button>
+                        </article>
+                    </div>
+                </AppAsyncState>
+            </section>
+        </div>
 
         <el-dialog
             v-model="createOpen"
@@ -481,27 +488,15 @@ await loadItems();
 .admin-showcase {
     min-width: 0;
 
-    &__results {
-        > h2 {
-            margin-bottom: var(--space-4);
-        }
-    }
-
-    &__list {
-        border-top: 1px solid var(--border-color);
-    }
-
     &__item {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
         gap: var(--space-4);
-        padding: var(--space-4) 0;
-        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-3) 0;
 
-        &:last-child {
-            padding-bottom: 0;
-            border-bottom: 0;
+        & + & {
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 
@@ -560,6 +555,19 @@ await loadItems();
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
         margin-bottom: var(--space-3);
+    }
+
+    @media (max-width: 767px) {
+        &__list {
+            display: grid;
+            gap: var(--space-3);
+        }
+
+        &__item {
+            padding: var(--space-4);
+            border: 1px solid var(--divider-subtle);
+            border-radius: var(--card-radius);
+        }
     }
 }
 

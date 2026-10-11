@@ -1,9 +1,12 @@
 <template>
     <section class="profile-apps" aria-labelledby="profile-apps-title">
-        <h2 id="profile-apps-title" ref="heading" tabindex="-1">
-            {{ t('oauth.authorized_apps.title') }}
-        </h2>
-        <p class="profile-apps__intro">{{ t('oauth.authorized_apps.description') }}</p>
+        <header class="profile-apps__header ui-card__header">
+            <h2 id="profile-apps-title" ref="heading" class="ui-card__title" tabindex="-1">
+                <AppWindow :size="18" aria-hidden="true" />
+                {{ t('oauth.authorized_apps.title') }}
+            </h2>
+            <p class="profile-apps__intro">{{ t('oauth.authorized_apps.description') }}</p>
+        </header>
         <p
             v-if="mutationError"
             ref="errorElement"
@@ -99,7 +102,7 @@
                 <article
                     v-for="app in apps"
                     :key="app.clientId"
-                    class="profile-apps__card ui-section"
+                    class="profile-apps__card"
                     :aria-label="app.name"
                 >
                     <header class="profile-apps__card-header">
@@ -214,9 +217,13 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
 <style scoped lang="scss">
 .profile-apps {
     min-width: 0;
+    &__header {
+        gap: var(--space-2);
+    }
     &__intro {
+        flex-basis: 100%;
         color: var(--text-secondary);
-        margin: var(--space-2) 0 var(--space-5);
+        margin: 0;
     }
     &__error {
         color: var(--el-color-danger);
@@ -234,11 +241,17 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
     }
     &__table th,
     &__table td {
-        padding: var(--space-4) var(--space-3);
-        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-3) 0;
         text-align: left;
         vertical-align: top;
         overflow-wrap: anywhere;
+    }
+    &__table th:not(:last-child),
+    &__table td:not(:last-child) {
+        padding-right: var(--space-3);
+    }
+    &__table tbody tr + tr {
+        border-top: 1px solid var(--divider-subtle);
     }
     &__table thead th {
         color: var(--text-secondary);
@@ -247,7 +260,6 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
     }
     &__table th:first-child {
         width: 32%;
-        padding-left: 0;
     }
     &__table th:last-child {
         width: 24%;
@@ -279,7 +291,11 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
             display: grid;
         }
         &__card {
+            padding: var(--space-3) 0;
             overflow-wrap: anywhere;
+        }
+        &__card + &__card {
+            border-top: 1px solid var(--divider-subtle);
         }
         &__card-header {
             display: flex;

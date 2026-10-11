@@ -1,7 +1,10 @@
 <template>
     <section class="profile-security" aria-labelledby="profile-security-title">
-        <header class="profile-security__header">
-            <h2 id="profile-security-title">{{ t('profile.security.title') }}</h2>
+        <header class="profile-security__header ui-card__header">
+            <h2 id="profile-security-title" class="ui-card__title">
+                <Shield :size="18" aria-hidden="true" />
+                {{ t('profile.security.title') }}
+            </h2>
             <p>{{ t('profile.security.description') }}</p>
         </header>
 
@@ -575,7 +578,7 @@
 </template>
 
 <script setup lang="ts">
-import { Eye, EyeOff, KeyRound } from 'lucide-vue-next';
+import { Eye, EyeOff, KeyRound, Shield } from 'lucide-vue-next';
 import type { ButtonInstance, InputInstance } from 'element-plus';
 import type { TwoFactorMethod } from '~/types/auth';
 import { useProfileTaskGuard } from '~/components/profile/profile-workbench';
@@ -792,11 +795,12 @@ onBeforeUnmount(() => {
     min-width: 0;
 
     &__header {
-        margin-bottom: var(--space-4);
+        gap: var(--space-2);
 
         p {
+            flex-basis: 100%;
             color: var(--text-secondary);
-            margin-top: var(--space-2);
+            margin: 0;
         }
     }
 
@@ -867,8 +871,9 @@ onBeforeUnmount(() => {
         max-width: 680px;
         margin-top: var(--space-4);
         padding: var(--space-4);
-        border: 0 solid var(--accent);
-        border-left-width: 2px;
+        border: 1px solid var(--divider-subtle);
+        border-radius: var(--card-radius);
+        background: var(--bg-secondary);
 
         h3 {
             margin-bottom: var(--space-3);
@@ -893,9 +898,17 @@ onBeforeUnmount(() => {
 
         th,
         td {
-            padding: var(--space-3);
-            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-3) 0;
+            text-align: left;
+            vertical-align: top;
             overflow-wrap: anywhere;
+        }
+        th:not(:last-child),
+        td:not(:last-child) {
+            padding-right: var(--space-3);
+        }
+        tbody tr + tr {
+            border-top: 1px solid var(--divider-subtle);
         }
         thead th {
             color: var(--text-secondary);
@@ -914,13 +927,13 @@ onBeforeUnmount(() => {
         display: none;
         list-style: none;
         padding: 0;
+        margin: 0;
     }
 
     &__passkey-card {
         display: grid;
         gap: var(--space-3);
-        padding-block: var(--space-4);
-        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-3) 0;
         overflow-wrap: anywhere;
 
         dl {
@@ -938,6 +951,9 @@ onBeforeUnmount(() => {
         .el-button {
             justify-self: start;
         }
+    }
+    &__passkey-card + &__passkey-card {
+        border-top: 1px solid var(--divider-subtle);
     }
 
     :deep(.el-button + .el-button) {

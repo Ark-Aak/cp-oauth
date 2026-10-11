@@ -1,9 +1,9 @@
 <template>
     <div class="user-profile">
         <template v-if="user">
-            <header class="user-profile__identity">
+            <header class="user-profile__identity ui-card">
                 <AppUserAvatar
-                    :size="48"
+                    :size="56"
                     :src="user.avatarUrl || undefined"
                     :name="user.displayName || user.username"
                     :seed="user.id"
@@ -26,9 +26,13 @@
                 </div>
             </header>
 
-            <div class="user-profile__content">
-                <section class="user-profile__section" aria-labelledby="public-accounts">
-                    <h2 id="public-accounts">{{ $t('user.public_accounts') }}</h2>
+            <div class="user-profile__content ui-stack">
+                <section class="user-profile__section ui-card" aria-labelledby="public-accounts">
+                    <div class="ui-card__header">
+                        <h2 id="public-accounts" class="ui-card__title">
+                            {{ $t('user.public_accounts') }}
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="false"
                         :empty="!user.linkedAccounts.length"
@@ -53,10 +57,14 @@
 
                 <section
                     v-if="user.homepage"
-                    class="user-profile__section"
+                    class="user-profile__section ui-card"
                     aria-labelledby="public-homepage"
                 >
-                    <h2 id="public-homepage">{{ $t('user.homepage') }}</h2>
+                    <div class="ui-card__header">
+                        <h2 id="public-homepage" class="ui-card__title">
+                            {{ $t('user.homepage') }}
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="markdownStatus === 'pending'"
                         :error="markdownError ? $t('markdown.render_error') : null"
@@ -71,10 +79,14 @@
 
                 <section
                     v-if="user.publicCpStats"
-                    class="user-profile__section"
+                    class="user-profile__section ui-card"
                     aria-labelledby="public-cp-stats"
                 >
-                    <h2 id="public-cp-stats">{{ $t('user.cp_stats') }}</h2>
+                    <div class="ui-card__header">
+                        <h2 id="public-cp-stats" class="ui-card__title">
+                            {{ $t('user.cp_stats') }}
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="statsPending"
                         :error="
@@ -125,10 +137,14 @@
 
                 <section
                     v-if="showRatingHistory"
-                    class="user-profile__section"
+                    class="user-profile__section ui-card"
                     aria-labelledby="public-rating-history"
                 >
-                    <h2 id="public-rating-history">{{ $t('user.rating_history') }}</h2>
+                    <div class="ui-card__header">
+                        <h2 id="public-rating-history" class="ui-card__title">
+                            {{ $t('user.rating_history') }}
+                        </h2>
+                    </div>
                     <AppAsyncState
                         :pending="statsPending"
                         :error="
@@ -156,6 +172,7 @@
         <template v-else>
             <AppPageHeader :title="`@${username}`" />
             <AppAsyncState
+                class="ui-card"
                 :pending="!error"
                 :error="error && !isNotFound ? $t('identity.network_error') : null"
                 :empty="isNotFound"
@@ -348,8 +365,6 @@ const renderedHtml = computed(() =>
         align-items: flex-start;
         gap: var(--space-4);
         margin-bottom: var(--space-5);
-        padding-bottom: var(--space-5);
-        border-bottom: 1px solid var(--border-color);
     }
 
     &__identity-text {
@@ -386,12 +401,6 @@ const renderedHtml = computed(() =>
 
     &__section {
         min-width: 0;
-        padding: var(--space-5) 0;
-        border-top: 1px solid var(--border-color);
-
-        h2 {
-            margin-bottom: var(--space-3);
-        }
     }
 
     &__accounts {
@@ -425,10 +434,10 @@ const renderedHtml = computed(() =>
         align-items: center;
         justify-content: space-between;
         gap: var(--space-3) var(--space-5);
-        padding: var(--space-4) 0;
+        padding: var(--space-3) 0;
 
         & + & {
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--divider-subtle);
         }
     }
 
@@ -452,26 +461,33 @@ const renderedHtml = computed(() =>
     }
 
     &__stat-values {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-3) var(--space-5);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
+        flex: 1 1 280px;
         margin: 0;
         min-width: 0;
         max-width: 100%;
 
         > div {
             min-width: 0;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--card-radius);
+            background: var(--bg-secondary);
         }
 
         dt {
-            font-size: var(--font-size-control);
+            font-size: var(--font-size-meta);
             color: var(--text-secondary);
+            overflow-wrap: anywhere;
         }
 
         dd {
-            margin: 0;
-            font-weight: 600;
-            font-size: var(--font-size-subheading);
+            margin: var(--space-1) 0 0;
+            font-weight: 700;
+            font-size: 24px;
+            line-height: 1.3;
+            font-variant-numeric: tabular-nums;
             overflow-wrap: anywhere;
         }
     }

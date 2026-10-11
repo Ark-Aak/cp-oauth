@@ -11,7 +11,7 @@
     --card-bg: var(--el-bg-color);
     --card-border: var(--el-border-color);
     --card-radius: 4px;
-    --card-shadow: none;
+    --card-shadow: var(--el-box-shadow-lighter);
     --divider-subtle: var(--el-border-color-light);
     --accent-subtle: var(--el-color-primary-light-9);
     --space-1: 4px;
@@ -20,6 +20,7 @@
     --space-4: 16px;
     --space-5: 24px;
     --space-6: 32px;
+    --sidebar-width: 232px;
     --panel-padding: 20px;
     --font-size-body: 15px;
     --font-size-control: 14px;
@@ -87,8 +88,8 @@ a:where(.el-button, .ui-navigation-link):hover,
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    min-height: 32px;
-    padding: var(--space-1) var(--space-3);
+    min-height: var(--control-height);
+    padding: var(--space-2) var(--space-3);
     border: 0;
     border-radius: var(--el-border-radius-base);
     background: transparent;
@@ -156,6 +157,39 @@ pre {
     white-space: nowrap;
     border: 0;
 }
+.ui-stack {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+}
+.ui-card {
+    min-width: 0;
+    padding: var(--panel-padding);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+}
+.ui-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+}
+.ui-card__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--font-size-section);
+    line-height: 1.4;
+}
+.ui-card__title svg {
+    flex-shrink: 0;
+    color: var(--accent);
+}
 .ui-section {
     min-width: 0;
     padding-top: var(--space-5);
@@ -173,19 +207,23 @@ pre {
 }
 .ui-note {
     padding: var(--space-2) var(--space-3);
-    border-left: 2px solid var(--border-color);
-    color: var(--text-secondary);
+    border-left: 3px solid var(--border-color);
+    border-radius: 0 var(--card-radius) var(--card-radius) 0;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     font-size: var(--font-size-control);
 }
 .ui-note--accent {
     border-left-color: var(--accent);
+    background: var(--accent-subtle);
 }
 .ui-note--warning {
     border-left-color: var(--el-color-warning);
+    background: var(--el-color-warning-light-9);
 }
 .ui-note--danger {
     border-left-color: var(--el-color-danger);
-    color: var(--text-primary);
+    background: var(--el-color-danger-light-9);
 }
 .task-section {
     padding: var(--space-5) 0;

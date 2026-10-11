@@ -16,219 +16,235 @@
                 </el-button>
             </template>
         </AppPageHeader>
-        <AdminSectionNav current="config" />
-        <p v-if="sessionExpired" class="admin-config__help">
-            <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-        </p>
+        <div class="ui-stack">
+            <AdminSectionNav current="config" />
+            <p v-if="sessionExpired" class="admin-config__help">
+                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
+            </p>
 
-        <AppAsyncState :pending="formLoading" :error="loadError" @retry="loadConfig">
-            <div class="admin-config__editor">
-                <p v-if="saveNotice" class="admin-config__notice" role="status">{{ saveNotice }}</p>
-                <div
-                    v-if="saveError"
-                    id="config-save-error"
-                    class="admin-config__error"
-                    tabindex="-1"
-                    role="alert"
-                >
-                    <p>{{ saveError }}</p>
-                </div>
-                <p v-if="secretNotice" class="admin-config__help" role="status">
-                    {{ secretNotice }}
-                </p>
-                <el-form
-                    method="post"
-                    label-position="top"
-                    :disabled="!clientReady || saving || !loaded"
-                    @submit.prevent="handleSave"
-                >
-                    <section
-                        v-for="group in groups"
-                        :key="group.id"
-                        class="admin-config__group"
-                        :aria-labelledby="`config-group-${group.id}`"
+            <div class="admin-config__editor ui-card">
+                <AppAsyncState :pending="formLoading" :error="loadError" @retry="loadConfig">
+                    <p v-if="saveNotice" class="admin-config__notice" role="status">
+                        {{ saveNotice }}
+                    </p>
+                    <div
+                        v-if="saveError"
+                        id="config-save-error"
+                        class="admin-config__error"
+                        tabindex="-1"
+                        role="alert"
                     >
-                        <h2 :id="`config-group-${group.id}`">{{ $t(group.title) }}</h2>
-                        <p v-if="group.id === 'providers'" class="admin-config__help">
-                            {{ $t('admin.config.provider_hint') }}
-                        </p>
-                        <div
-                            v-for="(block, index) in group.blocks"
-                            :key="index"
-                            class="admin-config__block"
+                        <p>{{ saveError }}</p>
+                    </div>
+                    <p v-if="secretNotice" class="admin-config__help" role="status">
+                        {{ secretNotice }}
+                    </p>
+                    <el-form
+                        method="post"
+                        label-position="top"
+                        :disabled="!clientReady || saving || !loaded"
+                        @submit.prevent="handleSave"
+                    >
+                        <section
+                            v-for="group in groups"
+                            :key="group.id"
+                            class="admin-config__group ui-section"
+                            :aria-labelledby="`config-group-${group.id}`"
                         >
-                            <h3 v-if="block.title">{{ $t(block.title) }}</h3>
-                            <p v-if="block.provider" class="admin-config__help">
-                                {{
-                                    $t(
-                                        providerReady(block.provider)
-                                            ? 'admin.config.provider_ready'
-                                            : 'admin.config.provider_incomplete'
-                                    )
-                                }}
+                            <h2 :id="`config-group-${group.id}`">{{ $t(group.title) }}</h2>
+                            <p v-if="group.id === 'providers'" class="admin-config__help">
+                                {{ $t('admin.config.provider_hint') }}
                             </p>
-                            <el-form-item
-                                v-for="field in block.fields"
-                                :key="field.key"
-                                class="admin-config__field"
-                                :class="{
-                                    'admin-config__field--wide':
-                                        block.fields.length === 1 ||
-                                        [
-                                            'site_title',
-                                            'smtp_from',
-                                            'turnstile_secret_key'
-                                        ].includes(field.key)
-                                }"
-                                :for="`config-${field.key}`"
-                                :label="$t(field.label)"
-                                :error="fieldErrors[field.key]"
+                            <div
+                                v-for="(block, index) in group.blocks"
+                                :key="index"
+                                class="admin-config__block"
                             >
-                                <template v-if="field.kind === 'secret'">
-                                    <el-input
-                                        :id="`config-${field.key}`"
-                                        v-model="secretDrafts[field.key]"
-                                        :aria-label="$t(field.label)"
-                                        type="password"
-                                        show-password
-                                        autocomplete="new-password"
-                                        :disabled="
-                                            !clientReady ||
-                                            saving ||
-                                            !loaded ||
-                                            clearSecret[field.key]
-                                        "
-                                        :placeholder="$t('admin.config.secret_leave_empty')"
-                                        :aria-invalid="!!fieldErrors[field.key]"
-                                        :aria-describedby="describedBy(field.key)"
-                                        @input="touch(field.key)"
-                                        @blur="touch(field.key)"
-                                    />
-                                    <p
-                                        :id="`config-${field.key}-help`"
-                                        class="admin-config__secret-status"
-                                    >
-                                        {{
-                                            $t(
-                                                secretState[field.key].configured
-                                                    ? 'admin.config.secret_configured'
-                                                    : 'admin.config.secret_not_configured'
-                                            )
-                                        }}
-                                    </p>
-                                    <el-checkbox
-                                        v-model="clearSecret[field.key]"
-                                        class="admin-config__secret-clear"
-                                        :disabled="
-                                            !clientReady ||
-                                            saving ||
-                                            !loaded ||
-                                            !secretState[field.key].configured ||
-                                            !!secretDrafts[field.key]
-                                        "
-                                        :aria-label="`${$t('admin.config.clear_secret')}: ${$t(field.label)}`"
-                                        @change="touch(field.key)"
-                                    >
-                                        {{ $t('admin.config.clear_secret') }}
-                                    </el-checkbox>
-                                </template>
-                                <el-select
-                                    v-else-if="field.input === 'boolean'"
-                                    :id="`config-${field.key}`"
-                                    v-model="form[field.key]"
-                                    :aria-label="$t(field.label)"
-                                    :disabled="!clientReady || saving || !loaded"
-                                    :aria-invalid="!!fieldErrors[field.key]"
-                                    :aria-describedby="describedBy(field.key)"
-                                    @change="touch(field.key)"
+                                <h3 v-if="block.title">{{ $t(block.title) }}</h3>
+                                <p v-if="block.provider" class="admin-config__help">
+                                    {{
+                                        $t(
+                                            providerReady(block.provider)
+                                                ? 'admin.config.provider_ready'
+                                                : 'admin.config.provider_incomplete'
+                                        )
+                                    }}
+                                </p>
+                                <el-form-item
+                                    v-for="field in block.fields"
+                                    :key="field.key"
+                                    class="admin-config__field"
+                                    :class="{
+                                        'admin-config__field--wide':
+                                            block.fields.length === 1 ||
+                                            [
+                                                'site_title',
+                                                'smtp_from',
+                                                'turnstile_secret_key'
+                                            ].includes(field.key)
+                                    }"
+                                    :for="`config-${field.key}`"
+                                    :label="$t(field.label)"
+                                    :error="fieldErrors[field.key]"
                                 >
-                                    <el-option value="true" :label="$t('admin.config.enabled')" />
-                                    <el-option value="false" :label="$t('admin.config.disabled')" />
-                                </el-select>
-                                <template v-else>
-                                    <el-input
+                                    <template v-if="field.kind === 'secret'">
+                                        <el-input
+                                            :id="`config-${field.key}`"
+                                            v-model="secretDrafts[field.key]"
+                                            :aria-label="$t(field.label)"
+                                            type="password"
+                                            show-password
+                                            autocomplete="new-password"
+                                            :disabled="
+                                                !clientReady ||
+                                                saving ||
+                                                !loaded ||
+                                                clearSecret[field.key]
+                                            "
+                                            :placeholder="$t('admin.config.secret_leave_empty')"
+                                            :aria-invalid="!!fieldErrors[field.key]"
+                                            :aria-describedby="describedBy(field.key)"
+                                            @input="touch(field.key)"
+                                            @blur="touch(field.key)"
+                                        />
+                                        <p
+                                            :id="`config-${field.key}-help`"
+                                            class="admin-config__secret-status"
+                                        >
+                                            {{
+                                                $t(
+                                                    secretState[field.key].configured
+                                                        ? 'admin.config.secret_configured'
+                                                        : 'admin.config.secret_not_configured'
+                                                )
+                                            }}
+                                        </p>
+                                        <el-checkbox
+                                            v-model="clearSecret[field.key]"
+                                            class="admin-config__secret-clear"
+                                            :disabled="
+                                                !clientReady ||
+                                                saving ||
+                                                !loaded ||
+                                                !secretState[field.key].configured ||
+                                                !!secretDrafts[field.key]
+                                            "
+                                            :aria-label="`${$t('admin.config.clear_secret')}: ${$t(field.label)}`"
+                                            @change="touch(field.key)"
+                                        >
+                                            {{ $t('admin.config.clear_secret') }}
+                                        </el-checkbox>
+                                    </template>
+                                    <el-select
+                                        v-else-if="field.input === 'boolean'"
                                         :id="`config-${field.key}`"
                                         v-model="form[field.key]"
                                         :aria-label="$t(field.label)"
                                         :disabled="!clientReady || saving || !loaded"
-                                        :inputmode="
-                                            field.input === 'integer' ? 'numeric' : undefined
-                                        "
                                         :aria-invalid="!!fieldErrors[field.key]"
                                         :aria-describedby="describedBy(field.key)"
-                                        @input="touch(field.key)"
-                                        @blur="touch(field.key)"
-                                    />
+                                        @change="touch(field.key)"
+                                    >
+                                        <el-option
+                                            value="true"
+                                            :label="$t('admin.config.enabled')"
+                                        />
+                                        <el-option
+                                            value="false"
+                                            :label="$t('admin.config.disabled')"
+                                        />
+                                    </el-select>
+                                    <template v-else>
+                                        <el-input
+                                            :id="`config-${field.key}`"
+                                            v-model="form[field.key]"
+                                            :aria-label="$t(field.label)"
+                                            :disabled="!clientReady || saving || !loaded"
+                                            :inputmode="
+                                                field.input === 'integer' ? 'numeric' : undefined
+                                            "
+                                            :aria-invalid="!!fieldErrors[field.key]"
+                                            :aria-describedby="describedBy(field.key)"
+                                            @input="touch(field.key)"
+                                            @blur="touch(field.key)"
+                                        />
+                                        <p
+                                            v-if="field.input === 'integer'"
+                                            :id="`config-${field.key}-help`"
+                                            class="admin-config__help"
+                                        >
+                                            {{
+                                                $t('admin.config.integer_range', {
+                                                    min: field.min,
+                                                    max: field.max
+                                                })
+                                            }}
+                                        </p>
+                                    </template>
                                     <p
-                                        v-if="field.input === 'integer'"
-                                        :id="`config-${field.key}-help`"
+                                        v-if="field.key === 'registration_enabled'"
+                                        id="config-registration_enabled-help"
                                         class="admin-config__help"
                                     >
-                                        {{
-                                            $t('admin.config.integer_range', {
-                                                min: field.min,
-                                                max: field.max
-                                            })
-                                        }}
+                                        {{ $t('admin.config.registration_hint') }}
                                     </p>
-                                </template>
-                                <p
-                                    v-if="field.key === 'registration_enabled'"
-                                    id="config-registration_enabled-help"
-                                    class="admin-config__help"
-                                >
-                                    {{ $t('admin.config.registration_hint') }}
-                                </p>
-                                <template #error="{ error }"
-                                    ><span :id="`config-${field.key}-error`">{{
-                                        error
-                                    }}</span></template
-                                >
-                            </el-form-item>
-                        </div>
-                    </section>
+                                    <template #error="{ error }"
+                                        ><span :id="`config-${field.key}-error`">{{
+                                            error
+                                        }}</span></template
+                                    >
+                                </el-form-item>
+                            </div>
+                        </section>
 
-                    <section
-                        class="admin-config__summary"
-                        aria-labelledby="config-summary-title"
-                        aria-live="polite"
-                    >
-                        <h2 id="config-summary-title">{{ $t('admin.config.change_summary') }}</h2>
-                        <p class="admin-config__help">{{ $t('admin.config.secret_rules') }}</p>
-                        <ul v-if="changes.length" class="admin-config__changes">
-                            <li v-for="change in changes" :key="change.key">
-                                {{ $t(change.label) }} — {{ $t(change.action) }}
-                            </li>
-                        </ul>
-                        <p v-else class="admin-config__help">{{ $t('admin.config.no_changes') }}</p>
-                        <ul
-                            v-if="formErrors.length"
-                            id="config-form-errors"
-                            class="admin-config__error"
-                            role="alert"
+                        <section
+                            class="admin-config__summary ui-section"
+                            aria-labelledby="config-summary-title"
+                            aria-live="polite"
                         >
-                            <li v-for="message in formErrors" :key="message">{{ message }}</li>
-                        </ul>
-                        <div class="task-actions">
-                            <el-button
-                                type="primary"
-                                native-type="submit"
-                                :loading="saving"
-                                :disabled="!clientReady || saving || !hasChanges"
+                            <h2 id="config-summary-title">
+                                {{ $t('admin.config.change_summary') }}
+                            </h2>
+                            <p class="admin-config__help">{{ $t('admin.config.secret_rules') }}</p>
+                            <ul v-if="changes.length" class="admin-config__changes">
+                                <li v-for="change in changes" :key="change.key">
+                                    {{ $t(change.label) }} — {{ $t(change.action) }}
+                                </li>
+                            </ul>
+                            <p v-else class="admin-config__help">
+                                {{ $t('admin.config.no_changes') }}
+                            </p>
+                            <ul
+                                v-if="formErrors.length"
+                                id="config-form-errors"
+                                class="admin-config__error"
+                                role="alert"
                             >
-                                {{ saving ? $t('admin.config.saving') : $t('admin.config.save') }}
-                            </el-button>
-                            <el-button
-                                native-type="button"
-                                :disabled="!clientReady || saving || !hasChanges"
-                                @click="discardChanges"
-                                >{{ $t('admin.workbench.discard') }}</el-button
-                            >
-                        </div>
-                    </section>
-                </el-form>
+                                <li v-for="message in formErrors" :key="message">{{ message }}</li>
+                            </ul>
+                            <div class="task-actions">
+                                <el-button
+                                    type="primary"
+                                    native-type="submit"
+                                    :loading="saving"
+                                    :disabled="!clientReady || saving || !hasChanges"
+                                >
+                                    {{
+                                        saving ? $t('admin.config.saving') : $t('admin.config.save')
+                                    }}
+                                </el-button>
+                                <el-button
+                                    native-type="button"
+                                    :disabled="!clientReady || saving || !hasChanges"
+                                    @click="discardChanges"
+                                    >{{ $t('admin.workbench.discard') }}</el-button
+                                >
+                            </div>
+                        </section>
+                    </el-form>
+                </AppAsyncState>
             </div>
-        </AppAsyncState>
+        </div>
     </div>
 </template>
 
@@ -783,12 +799,6 @@ await loadConfig();
     }
 
     &__group {
-        padding: var(--space-5) 0;
-        border-bottom: 1px solid var(--border-color);
-
-        &:first-child {
-            padding-top: 0;
-        }
         h2 {
             margin-bottom: var(--space-4);
         }
@@ -840,10 +850,6 @@ await loadConfig();
         color: var(--text-secondary);
         font-size: var(--font-size-control);
         overflow-wrap: anywhere;
-    }
-
-    &__summary {
-        padding-top: var(--space-5);
     }
 
     &__changes {

@@ -3,7 +3,7 @@
         <component
             :is="icon || Inbox"
             class="empty-state__icon"
-            :size="18"
+            :size="28"
             :stroke-width="1.5"
             aria-hidden="true"
         />
@@ -23,15 +23,15 @@ defineProps<{ text?: string; icon?: Component }>();
 <style scoped lang="scss">
 .empty-state {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: var(--space-3);
     min-width: 0;
     min-height: 0;
-    padding: var(--space-3) 0;
+    padding: var(--space-6) var(--space-4);
     color: var(--text-secondary);
-    text-align: left;
+    text-align: center;
     font-size: var(--font-size-control);
     line-height: 1.6;
     overflow-wrap: anywhere;

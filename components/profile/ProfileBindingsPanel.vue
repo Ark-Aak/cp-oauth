@@ -1,7 +1,10 @@
 <template>
     <section ref="root" class="profile-bindings" aria-labelledby="profile-bindings-title">
-        <header class="profile-bindings__header">
-            <h2 id="profile-bindings-title">{{ t('binding.title') }}</h2>
+        <header class="profile-bindings__header ui-card__header">
+            <h2 id="profile-bindings-title" class="ui-card__title">
+                <Link2 :size="18" aria-hidden="true" />
+                {{ t('binding.title') }}
+            </h2>
             <el-button
                 native-type="button"
                 data-bind-reload
@@ -539,11 +542,7 @@ onBeforeUnmount(() => {
     min-width: 0;
 
     &__header {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
         gap: var(--space-2) var(--space-3);
-        margin-bottom: var(--space-5);
     }
 
     &__header h2 {
@@ -551,7 +550,8 @@ onBeforeUnmount(() => {
     }
 
     &__header > p {
-        grid-column: 1 / -1;
+        flex-basis: 100%;
+        margin: 0;
     }
 
     &__header > .el-button {
@@ -601,11 +601,19 @@ onBeforeUnmount(() => {
 
     &__table th,
     &__table td {
-        padding: var(--space-4) var(--space-3);
-        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-3) 0;
         text-align: left;
         vertical-align: top;
         overflow-wrap: anywhere;
+    }
+
+    &__table th:not(:last-child),
+    &__table td:not(:last-child) {
+        padding-right: var(--space-3);
+    }
+
+    &__table tbody tr + tr {
+        border-top: 1px solid var(--divider-subtle);
     }
 
     &__table th {
@@ -617,13 +625,11 @@ onBeforeUnmount(() => {
     &__table th:first-child,
     &__table td:first-child {
         width: 21%;
-        padding-left: 0;
     }
 
     &__table th:last-child,
     &__table td:last-child {
         width: 43%;
-        padding-right: 0;
     }
 
     &__platform {
@@ -659,6 +665,9 @@ onBeforeUnmount(() => {
     }
 
     &__available {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-2);
         padding: 0;
         margin: 0;
         list-style: none;
@@ -666,11 +675,20 @@ onBeforeUnmount(() => {
 
     &__available li {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: var(--space-4);
-        padding: var(--space-4) 0;
-        border-bottom: 1px solid var(--border-color);
+        gap: var(--space-3);
+        min-width: 0;
+        padding: var(--space-3) var(--space-4);
+        border: 1px solid var(--divider-subtle);
+        border-radius: var(--card-radius);
+        background: var(--bg-secondary);
+    }
+
+    &__available li:hover,
+    &__available li:focus-within {
+        border-color: var(--accent);
     }
 
     &__available-info {
@@ -725,11 +743,11 @@ onBeforeUnmount(() => {
         &__table tr {
             display: grid;
             gap: var(--space-3);
-            padding: var(--space-4) 0;
-            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-3) 0;
         }
 
         &__table td,
+        &__table td:not(:last-child),
         &__table td:first-child,
         &__table td:last-child {
             display: block;
@@ -738,9 +756,8 @@ onBeforeUnmount(() => {
             border: 0;
         }
 
-        &__available li {
-            align-items: flex-start;
-            flex-wrap: wrap;
+        &__available {
+            grid-template-columns: 1fr;
         }
     }
 }
