@@ -29,7 +29,7 @@
             />
         </el-drawer>
         <div class="app-layout__workspace">
-            <header class="app-layout__topbar">
+            <div class="app-layout__corner">
                 <button
                     ref="menuButton"
                     type="button"
@@ -39,32 +39,10 @@
                     aria-controls="mobile-navigation"
                     @click="sidebarOpen = true"
                 >
-                    <Menu :size="20" aria-hidden="true" />
+                    <Menu :size="18" :stroke-width="1.5" aria-hidden="true" />
                 </button>
-                <NuxtLink to="/" class="app-layout__brand ui-navigation-link">
-                    <img src="/favicon.svg" alt="" width="22" height="22" />
-                    <span>{{ $t('app.name') }}</span>
-                </NuxtLink>
-                <span class="app-layout__context">{{ $t(contextLabel) }}</span>
-                <el-popover
-                    trigger="click"
-                    placement="bottom-end"
-                    :width="288"
-                    role="dialog"
-                    :aria-label="$t('settings.title')"
-                    focus-on-show
-                >
-                    <AppPreferences />
-                    <template #reference
-                        ><button
-                            type="button"
-                            class="app-layout__icon-button"
-                            :aria-label="$t('settings.title')"
-                        >
-                            <SlidersHorizontal :size="18" aria-hidden="true" /></button
-                    ></template>
-                </el-popover>
-            </header>
+                <AppPreferences mode="icons" class="app-layout__preferences" />
+            </div>
             <main id="main-content" tabindex="-1" class="app-layout__main">
                 <div
                     v-if="authError"
@@ -106,14 +84,14 @@
                 >
                 <slot />
             </main>
-            <div class="app-layout__footer"><AppFooter /></div>
+            <AppFooter class="app-layout__footer" />
         </div>
         <AuthReauthenticationDialog />
     </div>
 </template>
 
 <script setup lang="ts">
-import { Menu, SlidersHorizontal } from 'lucide-vue-next';
+import { Menu } from 'lucide-vue-next';
 import { getCurrentInstance } from 'vue';
 import { ElMessageBox } from 'element-plus';
 const { t } = useI18n();
@@ -141,16 +119,6 @@ try {
     /* Network failure is not anonymous identity. */
 }
 const route = useRoute();
-const contextLabels: Record<string, string> = {
-    '/': 'nav.home',
-    '/profile': 'nav.my_profile',
-    '/developer': 'nav.developer',
-    '/showcase': 'nav.showcase',
-    '/about': 'nav.about'
-};
-const contextLabel = computed(() =>
-    route.path.startsWith('/admin') ? 'nav.admin' : contextLabels[route.path] || 'app.name'
-);
 watch(
     () => route.fullPath,
     () => {
@@ -210,64 +178,30 @@ async function handleLogout() {
     min-height: 100dvh;
     margin-left: var(--sidebar-width);
 }
-.app-layout__topbar {
-    position: sticky;
-    top: 0;
-    z-index: 15;
+.app-layout__corner {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    height: var(--topbar-height);
-    padding: 0 var(--space-6);
-    border-bottom: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
-    backdrop-filter: blur(8px);
+    justify-content: flex-end;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-4) 0;
 }
-.app-layout__brand {
+.app-layout__menu {
     display: none;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--text-primary);
-    font-size: var(--font-size-subheading);
-    font-weight: 700;
-    white-space: nowrap;
-}
-.app-layout__context {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-secondary);
-    font-size: var(--font-size-control);
-    font-weight: 600;
-}
-.app-layout__menu,
-.app-layout__icon-button {
-    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     width: var(--control-height);
     height: var(--control-height);
+    margin-right: auto;
     padding: 0;
-    border: 1px solid transparent;
+    border: 0;
     border-radius: var(--card-radius);
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
 }
-.app-layout__menu:hover,
-.app-layout__icon-button:hover {
-    border-color: var(--border-color);
-    background: var(--bg-secondary);
+.app-layout__menu:hover {
     color: var(--accent);
-}
-.app-layout__icon-button {
-    margin-left: auto;
-}
-.app-layout__menu {
-    display: none;
-    color: var(--text-primary);
 }
 .app-layout__main {
     flex: 1;
@@ -275,13 +209,14 @@ async function handleLogout() {
     max-width: 1240px;
     min-width: 0;
     margin: 0 auto;
-    padding: var(--space-6) var(--space-6) var(--space-6);
+    padding: var(--space-2) var(--space-6) var(--space-6);
 }
 .app-layout__footer {
+    --footer-content-width: 1100px;
     width: 100%;
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: 0 var(--space-6) var(--space-4);
+    min-width: 0;
+    margin: 0;
+    padding: var(--space-2) var(--space-4) var(--space-1);
 }
 .app-layout__notice {
     display: flex;
@@ -314,22 +249,14 @@ async function handleLogout() {
     .app-layout__workspace {
         margin-left: 0;
     }
-    .app-layout__topbar {
-        gap: var(--space-2);
-        padding: 0 var(--space-4);
+    .app-layout__corner {
+        padding: var(--space-2) var(--space-3) 0;
     }
-    .app-layout__menu,
-    .app-layout__brand {
+    .app-layout__menu {
         display: inline-flex;
     }
-    .app-layout__context {
-        display: none;
-    }
     .app-layout__main {
-        padding: var(--space-4);
-    }
-    .app-layout__footer {
-        padding: 0 var(--space-4) var(--space-4);
+        padding: var(--space-2) var(--space-4) var(--space-4);
     }
     .app-layout__skip:focus {
         left: 16px;

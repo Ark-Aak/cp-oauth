@@ -92,7 +92,7 @@
                             </div>
                             <el-button
                                 type="danger"
-                                text
+                                link
                                 native-type="button"
                                 :loading="!!deleting[item.id]"
                                 :disabled="!!deleting[item.id]"

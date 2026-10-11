@@ -28,12 +28,12 @@ version: 2026-10-11
 
 ## 3. 页面结构与构图
 
-- [必须] 工作台桌面使用 `--sidebar-width` 的 232px 固定左侧导航（`AppSidebar`）：顶部品牌，中部图标与文字导航，底部账号卡（头像、昵称、账号标识、退出）。右侧工作区顶部为 48px（`--topbar-height`）粘性条，显示当前分区名与偏好入口。来源：用户要求侧边栏。
+- [必须] 工作台桌面使用 `--sidebar-width` 的 232px 固定左侧导航（`AppSidebar`）：顶部品牌，中部图标与文字导航，底部账号卡（头像、昵称、账号标识、退出）。工作区不设顶栏，右上角与认证页一致只放无背景语言与主题图标（`AppPreferences mode="icons"`）；底部使用与认证页相同的全视宽分割线页脚。来源：用户要求删除顶栏、顶栏与底栏统一为授权页样式。
 - [建议] 工作区内容最大 1240px，左右内边距桌面 32px、手机 16px。
 - [建议] 独立任务表单（如站点配置）保留最大 680px 宽度。
 - [必须] 主从设置布局中的活动面板填满导航右侧的可用宽度，不受普通任务表单 680px 上限限制。来源：用户要求加宽中央设置卡片。
 - [建议，决策] 文档正文保留最大 880px 宽度。来源：已有 `pages/about.vue` 的阅读布局与轻度缩小要求。
-- [建议] 小于 1024px 时隐藏侧栏，顶部条显示菜单按钮与品牌，菜单打开同一 `AppSidebar` 的左侧 drawer。
+- [建议] 小于 1024px 时隐藏侧栏，左上角显示无背景菜单图标，打开同一 `AppSidebar` 的左侧 drawer；右上角仍为语言与主题图标。
 - [必须] 关闭 drawer 后不允许抽屉内容聚焦。
 - [建议] 首页将标题和账号操作放在同一个欢迎卡片。
 - [必须] 桌面欢迎表面与引用表面以 2:1 并排；小于 768px 时引用紧随欢迎表面向下重排。来源：用户要求调整一言位置。
@@ -69,7 +69,7 @@ version: 2026-10-11
 
 [建议] 控件、帮助和权限事实使用 `--font-size-control` 的 14px。
 
-[必须] 长公告正文使用 14px 和 1.85 行高，按段落与列表分组；保留标题、正文、发布时间的清晰间距。来源：用户要求改善文本密度。
+[必须] 长公告正文使用 14px 和 1.85 行高，按段落与列表分组；保留标题、正文、发布时间的清晰间距。纯文本公告中的裸 URL、域名与邮箱保持为文本，只有 `[文字](地址)` 与 `<地址>` 显式写法生成链接（`renderMarkdown(source, { autolinkLiterals: false })`）。来源：用户要求改善文本密度；用户要求关闭首页自动 URL 识别。
 
 [必须] 认证表面标题使用 `--font-size-title-mobile` 的 22px、字重 700；授权标题同为 22px 并附一个主色图标。标题下一句说明使用 `auth-card__lead`，字段规则使用紧贴字段的 `auth-card__field-hint`（14px）并以 `aria-describedby` 关联。来源：用户要求登录限制说明不使用 13px；授权页留白反馈。
 
@@ -136,7 +136,8 @@ version: 2026-10-11
 - [必须] 不裁剪焦点轮廓。
 - [必须] 按钮随文字宽度，任何表单按钮不使用 `width: 100%`；每个表单或状态只有一个主按钮，放在表单末尾 `task-actions` 行左对齐，次要动作在其右侧。授权卡片的拒绝与授权按钮是唯一例外，按 1:2 栅格填满卡片宽度。来源：用户要求摈弃大按钮；授权页留白反馈。
 - [必须] 删除、撤销、解绑等危险操作使用 `type="danger" text` 按钮，不使用带底框的 `plain` 样式。
-- [建议] 页面级操作放在 `AppPageHeader` 的 `#actions`，与标题同行右对齐；手机端换行到标题下方左对齐。
+- [建议] 页面级操作放在 `AppPageHeader` 的 `#actions`，与标题同行右对齐；手机端换行到标题下方左对齐。同一主操作不在页头与表单末尾重复出现。
+- [必须] 表格与列表行内操作使用 `link` 文字按钮（审核等用主色，删除用 danger），横向并排、不加边框；行内选择框 32px，单元格垂直居中。状态用小号 `el-tag`。来源：用户反馈后台按钮过大。
 - [必须] 小于 768px 时输入文字使用至少 16px 以避免 iOS 输入放大。
 - [建议] 侧栏与 drawer 导航悬停使用轻背景。
 - [建议] 当前导航同时使用主色、字重和明确的选中标记：侧栏为浅主色底加 3px 左侧标记，管理分区为浅主色底的胶囊标签。
@@ -167,7 +168,7 @@ version: 2026-10-11
 | 间距           | --space-1、--space-2、--space-3、--space-4、--space-5、--space-6、--panel-padding                                                                 | assets/scss/main.scss                                              | 分组间距与表面内边距                                | 已实现 |
 | 排版           | --font-size-body、--font-size-control、--font-size-meta、--font-size-title、--font-size-title-mobile、--font-size-section、--font-size-subheading | assets/scss/main.scss                                              | 对应文字角色；不得新增平行字号                      | 已实现 |
 | 字体           | --font-body、--font-code                                                                                                                          | assets/scss/main.scss；本地字体加载入口为 assets/css/vendor.css    | Lato 正文；Fira Code 代码；中文与日文保留本机回退   | 已实现 |
-| 布局尺寸       | --sidebar-width、--control-height、--topbar-height                                                                                                | assets/scss/main.scss                                              | 232px 侧栏、36px 控件、48px 工作区顶部条            | 已实现 |
+| 布局尺寸       | --sidebar-width、--control-height                                                                                                                 | assets/scss/main.scss                                              | 232px 侧栏、36px 控件                               | 已实现 |
 | 页面标题       | AppPageHeader(title,description?,icon?)、actions slot                                                                                             | components/AppPageHeader.vue                                       | 每页唯一标题；可选 24px Lucide 图标                 | 已实现 |
 | 异步结果       | `AppAsyncState(pending,error?,empty?,emptyText?,emptyIcon?)`、retry event                                                                         | components/AppAsyncState.vue                                       | 区块结果/错误/空；保留失败重试与空状态图标          | 已实现 |
 | 偏好           | `AppPreferences(mode?: fields/icons)`                                                                                                             | components/AppPreferences.vue                                      | 常规字段与无背景图标按钮两种展示；共享保存反馈      | 已实现 |
@@ -200,7 +201,7 @@ version: 2026-10-11
 
 最小调用：`<AppPageHeader :title="t('profile.title')" />`；操作插槽为 `#actions`。
 
-偏好调用：`<AppPreferences />`；工作区顶部条放入可访问的偏好弹出层，字段在 480px 以下纵向拉伸。认证布局使用无背景图标模式 `<AppPreferences mode="icons" />`。
+偏好调用：工作台与认证布局右上角均使用无背景图标模式 `<AppPreferences mode="icons" />`；个人资料偏好任务使用字段模式 `<AppPreferences />`，字段在 480px 以下纵向拉伸。
 
 ## 6. 文案与数据
 

@@ -45,7 +45,7 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 - **State**: Pinia (`@pinia/nuxt`)
 - **i18n**: `@nuxtjs/i18n` with `no_prefix` strategy — three locales: `en`, `zh`, `ja` in `i18n/locales/`
 - **Color mode**: `@nuxtjs/color-mode` with system preference, dark fallback, stored in `cp-oauth-color-mode`
-- **Layouts**: `default` (fixed `AppSidebar` + slim sticky top bar + card-based main content) and `auth` (no sidebar; language/theme icon buttons, centered `auth-card` surface and full-width footer — used for login, register, password reset, email verification, OAuth consent and third-party callbacks)
+- **Layouts**: `default` (fixed `AppSidebar` + card-based main content; no top bar — top-right language/theme icons and the full-width footer match `auth`) and `auth` (no sidebar; language/theme icon buttons, centered `auth-card` surface and full-width footer — used for login, register, password reset, email verification, OAuth consent and third-party callbacks)
 - **Components**: `AppSidebar.vue` (navigation sidebar in default layout), `AppPlatformIcon.vue` (competitive programming platform icons)
 - **Pages**: Nuxt 4 file-based routing under `pages/` — admin pages under `pages/admin/`, OAuth flow under `pages/oauth/`, third-party callbacks under `pages/oauth/thirdparty/`
 - **Styling**: SCSS — global styles in `assets/scss/main.scss`, Element Plus overrides in `assets/scss/element-overrides.scss`

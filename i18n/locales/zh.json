@@ -307,7 +307,7 @@
             "discard": "丢弃并离开",
             "keep_editing": "继续编辑",
             "return_task": "返回原来的操作",
-            "preferences_hint": "主题与语言修改会自动保存，也可在导航栏中调整。",
+            "preferences_hint": "主题与语言修改会自动保存，也可通过右上角的图标切换。",
             "correct_fields": "请检查标出的字段后再保存。",
             "identity_hint": "名称、头像与个人简介会显示在公开资料页中。",
             "email_status": "验证状态",

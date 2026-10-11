@@ -17,11 +17,14 @@
                         {{ $t('admin.users.list_title') }}
                     </h2>
                     <div class="admin-users__search">
-                        <label for="admin-user-search">{{ $t('admin.users.search') }}</label>
+                        <label for="admin-user-search" class="sr-only">{{
+                            $t('admin.users.search')
+                        }}</label>
                         <el-input
                             id="admin-user-search"
                             v-model="search"
                             clearable
+                            :placeholder="$t('admin.users.search')"
                             :aria-label="$t('admin.users.search')"
                             :aria-invalid="!!fieldErrors.search"
                             :aria-describedby="
@@ -99,18 +102,25 @@
                                         </el-select>
                                     </td>
                                     <td>
-                                        {{
-                                            $t(
-                                                row.emailVerified
-                                                    ? 'admin.workbench.email_verified'
-                                                    : 'admin.workbench.email_unverified'
-                                            )
-                                        }}
+                                        <el-tag
+                                            size="small"
+                                            :type="row.emailVerified ? 'success' : 'info'"
+                                            disable-transitions
+                                            >{{
+                                                $t(
+                                                    row.emailVerified
+                                                        ? 'admin.workbench.email_verified'
+                                                        : 'admin.workbench.email_unverified'
+                                                )
+                                            }}</el-tag
+                                        >
                                     </td>
                                     <td>
                                         <div class="admin-users__actions">
                                             <el-button
                                                 v-if="!row.emailVerified"
+                                                type="primary"
+                                                link
                                                 native-type="button"
                                                 :loading="!!verificationPending[row.id]"
                                                 :disabled="isRowPending(row.id)"
@@ -121,7 +131,7 @@
                                             </el-button>
                                             <el-button
                                                 type="danger"
-                                                text
+                                                link
                                                 native-type="button"
                                                 :loading="!!deletionPending[row.id]"
                                                 :disabled="isRowPending(row.id)"
@@ -195,6 +205,8 @@
                             <div class="admin-users__actions">
                                 <el-button
                                     v-if="!row.emailVerified"
+                                    type="primary"
+                                    link
                                     native-type="button"
                                     :loading="!!verificationPending[row.id]"
                                     :disabled="isRowPending(row.id)"
@@ -205,7 +217,7 @@
                                 </el-button>
                                 <el-button
                                     type="danger"
-                                    text
+                                    link
                                     native-type="button"
                                     :loading="!!deletionPending[row.id]"
                                     :disabled="isRowPending(row.id)"
@@ -498,19 +510,14 @@ await loadUsers();
     min-width: 0;
 
     &__toolbar {
-        align-items: flex-end;
+        align-items: center;
     }
 
     &__search {
         display: grid;
-        gap: var(--space-2);
-        flex: 0 1 360px;
+        gap: var(--space-1);
+        flex: 0 1 320px;
         min-width: 0;
-    }
-
-    &__search label {
-        font-size: var(--font-size-control);
-        font-weight: 600;
     }
 
     &__query-error {
@@ -541,10 +548,10 @@ await loadUsers();
 
         th,
         td {
-            padding: var(--space-3);
+            padding: var(--space-2) var(--space-3);
             border-bottom: 1px solid var(--divider-subtle);
             text-align: left;
-            vertical-align: top;
+            vertical-align: middle;
             overflow-wrap: anywhere;
         }
 
@@ -555,13 +562,17 @@ await loadUsers();
         }
 
         th:nth-child(3) {
-            width: 164px;
+            width: 132px;
         }
         th:nth-child(4) {
-            width: 128px;
+            width: 112px;
         }
         th:nth-child(5) {
-            width: 172px;
+            width: 196px;
+        }
+
+        :deep(.el-select__wrapper) {
+            min-height: 32px;
         }
     }
 
@@ -575,7 +586,16 @@ await loadUsers();
     &__actions {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--space-2);
+        align-items: center;
+        gap: var(--space-1) var(--space-4);
+
+        > .el-button {
+            padding: 0;
+        }
+
+        > .el-button + .el-button {
+            margin-left: 0;
+        }
     }
 
     &__error {

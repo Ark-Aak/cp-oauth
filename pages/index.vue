@@ -213,7 +213,9 @@ const noticesRequest = useAsyncData('public:notices', async () => {
             // HTML is sanitized by the public API. Plain-text notices need block formatting.
             const content = /<[a-z][a-z0-9]*(?:\s|>)/i.test(notice.content)
                 ? notice.content
-                : await renderMarkdown(notice.content.replace(/([^\n])\n(?=[^\n])/g, '$1  \n'));
+                : await renderMarkdown(notice.content.replace(/([^\n])\n(?=[^\n])/g, '$1  \n'), {
+                      autolinkLiterals: false
+                  });
             return {
                 ...notice,
                 content: content.replace(

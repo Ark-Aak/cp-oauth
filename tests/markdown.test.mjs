@@ -128,3 +128,17 @@ test('preserves safe links, images, GFM and escaped highlighted code', async () 
         attributes.style.includes('--shiki-dark:')
     ));
 });
+
+test('autolinkLiterals: false keeps bare URLs as text but still links explicit syntax', async () => {
+    const source = [
+        'Visit www.example.test, https://example.test/card.svg?lang=zh or person@example.test.',
+        '[guide](https://example.test/guide) and <https://example.test/angle>'
+    ].join('\n\n');
+    const plain = parseElements(await renderMarkdown(source, { autolinkLiterals: false }));
+    assert.deepEqual(
+        plain.filter(({ tag }) => tag === 'a').map(({ attributes }) => attributes.href),
+        ['https://example.test/guide', 'https://example.test/angle']
+    );
+    const linked = parseElements(await renderMarkdown(source));
+    assert.equal(linked.filter(({ tag }) => tag === 'a').length, 5);
+});

@@ -85,9 +85,9 @@ function selectLink(task: ProfileTask, event: MouseEvent) {
     }
     @media (min-width: 1024px) {
         position: sticky;
-        top: calc(var(--topbar-height) + var(--space-5));
+        top: var(--space-5);
         align-self: start;
-        max-height: calc(100dvh - var(--topbar-height) - var(--space-5) - var(--space-5));
+        max-height: calc(100dvh - var(--space-5) * 2);
         overflow-y: auto;
 
         &__mobile {

@@ -3,19 +3,7 @@
         <AppPageHeader
             :title="$t('admin.config.tab')"
             :description="$t('admin.workbench.config_description')"
-        >
-            <template #actions>
-                <el-button
-                    type="primary"
-                    native-type="button"
-                    :loading="saving"
-                    :disabled="!clientReady || saving || !loaded || !hasChanges || formLoading"
-                    @click="handleSave"
-                >
-                    {{ saving ? $t('admin.config.saving') : $t('admin.config.save') }}
-                </el-button>
-            </template>
-        </AppPageHeader>
+        />
         <div class="ui-stack">
             <AdminSectionNav current="config" />
             <p v-if="sessionExpired" class="admin-config__help">

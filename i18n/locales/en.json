@@ -307,7 +307,7 @@
             "discard": "Discard and leave",
             "keep_editing": "Keep editing",
             "return_task": "Return to original task",
-            "preferences_hint": "Theme and language changes are saved automatically. You can also change them from the navigation.",
+            "preferences_hint": "Theme and language changes are saved automatically. You can also switch them with the icons in the top-right corner.",
             "correct_fields": "Check the highlighted fields before saving.",
             "identity_hint": "Your name, avatar and bio are visible on your public profile.",
             "email_status": "Verification status",
