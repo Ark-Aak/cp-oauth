@@ -19,13 +19,11 @@
         <p v-else class="auth-card__status" role="status">
             {{ $t('auth.flow.callback_complete') }}
         </p>
-        <NuxtLink
-            v-if="errorMessage"
-            :to="loginPath"
-            class="el-button el-button--primary auth-card__button"
-        >
-            {{ $t('auth.password.back_login') }}
-        </NuxtLink>
+        <div v-if="errorMessage" class="task-actions">
+            <NuxtLink :to="loginPath" class="el-button el-button--primary">
+                {{ $t('auth.password.back_login') }}
+            </NuxtLink>
+        </div>
     </section>
 </template>
 

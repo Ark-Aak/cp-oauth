@@ -27,44 +27,35 @@ const sections = [
 <style scoped lang="scss">
 .admin-section-nav {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-2);
+    gap: var(--space-1);
+    margin-bottom: var(--space-5);
     border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
 
     &__link {
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 44px;
-        padding: var(--space-2) var(--space-4);
-        border-radius: var(--card-radius);
+        flex-shrink: 0;
+        height: 32px;
+        padding: 0 var(--space-3);
+        border-radius: 0;
         border-bottom: 2px solid transparent;
+        background: none;
         font-size: var(--font-size-control);
         color: var(--text-secondary);
         text-decoration: none;
-        overflow-wrap: anywhere;
+        white-space: nowrap;
 
         &:hover {
             color: var(--accent);
-            background: var(--bg-tertiary);
         }
 
         &--current {
-            background: var(--accent-subtle);
             color: var(--accent);
             border-bottom-color: var(--accent);
             font-weight: 600;
         }
-    }
-}
-
-@media (max-width: 479px) {
-    .admin-section-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-1);
     }
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
     <div class="user-profile">
         <template v-if="user">
-            <header class="user-profile__identity ui-card">
+            <header class="user-profile__identity">
                 <AppUserAvatar
-                    :size="56"
+                    :size="48"
                     :src="user.avatarUrl || undefined"
                     :name="user.displayName || user.username"
                     :seed="user.id"
@@ -348,7 +348,8 @@ const renderedHtml = computed(() =>
         align-items: flex-start;
         gap: var(--space-4);
         margin-bottom: var(--space-5);
-        padding: var(--panel-padding);
+        padding-bottom: var(--space-5);
+        border-bottom: 1px solid var(--border-color);
     }
 
     &__identity-text {

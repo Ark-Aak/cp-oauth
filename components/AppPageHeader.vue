@@ -2,7 +2,13 @@
     <header class="page-header">
         <div class="page-header__text">
             <h1>
-                <component :is="icon" v-if="icon" :size="24" :stroke-width="1.6" aria-hidden="true" />
+                <component
+                    :is="icon"
+                    v-if="icon"
+                    :size="24"
+                    :stroke-width="1.6"
+                    aria-hidden="true"
+                />
                 <span>{{ title }}</span>
             </h1>
             <p v-if="description">{{ description }}</p>
@@ -62,7 +68,7 @@ defineProps<{ title: string; description?: string; icon?: Component }>();
 }
 @media (max-width: 767px) {
     .page-header {
-        flex-direction: column;
+        flex-wrap: wrap;
         gap: var(--space-3);
         margin-bottom: var(--space-4);
         h1 {

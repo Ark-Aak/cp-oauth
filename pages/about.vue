@@ -8,7 +8,7 @@
             </template>
         </AppPageHeader>
 
-        <nav class="about__contents ui-card" :aria-label="$t('about.contents')">
+        <nav class="about__contents" :aria-label="$t('about.contents')">
             <h2>{{ $t('about.contents') }}</h2>
             <ol>
                 <li>
@@ -405,7 +405,8 @@ const {
 
     &__contents {
         margin-bottom: 0;
-        padding: var(--panel-padding);
+        padding-left: var(--space-4);
+        border-left: 2px solid var(--border-color);
         font-size: var(--font-size-control);
 
         ol {
@@ -424,9 +425,7 @@ const {
         a {
             display: flex;
             align-items: center;
-            min-height: 44px;
-            min-width: 44px;
-            padding: var(--space-2) var(--space-1);
+            padding: var(--space-1) 0;
             color: var(--accent);
             overflow-wrap: anywhere;
         }
@@ -467,8 +466,6 @@ const {
     &__metadata-link {
         display: inline-flex;
         align-items: center;
-        min-width: 44px;
-        min-height: 44px;
         max-width: 100%;
 
         code {
@@ -489,10 +486,6 @@ const {
 
     &__action {
         max-width: 100%;
-        min-width: 44px;
-        white-space: normal;
-        min-height: 44px;
-        height: auto;
         text-align: center;
     }
 

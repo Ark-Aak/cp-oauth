@@ -15,7 +15,7 @@
             <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
         </p>
 
-        <section class="admin-showcase__results ui-card" aria-labelledby="showcase-list-title">
+        <section class="admin-showcase__results" aria-labelledby="showcase-list-title">
             <h2 id="showcase-list-title">{{ $t('admin.showcase.list_title') }}</h2>
             <AppAsyncState
                 :pending="loading"
@@ -57,7 +57,7 @@
                             </p>
                             <p
                                 v-if="item.invalidUrls?.length"
-                                class="admin-showcase__warning"
+                                class="admin-showcase__warning ui-note ui-note--accent"
                                 role="status"
                             >
                                 {{ $t('admin.showcase.invalid_url_warning') }}
@@ -206,10 +206,7 @@
                         ><span id="showcase-sortOrder-error">{{ error }}</span></template
                     >
                 </el-form-item>
-                <div class="admin-showcase__form-actions">
-                    <el-button native-type="button" :disabled="creating" @click="closeCreate">{{
-                        $t('common.cancel')
-                    }}</el-button>
+                <div class="task-actions">
                     <el-button
                         type="primary"
                         native-type="submit"
@@ -218,6 +215,9 @@
                     >
                         {{ creating ? $t('admin.showcase.creating') : $t('admin.showcase.create') }}
                     </el-button>
+                    <el-button native-type="button" :disabled="creating" @click="closeCreate">{{
+                        $t('common.cancel')
+                    }}</el-button>
                 </div>
             </el-form>
         </el-dialog>
@@ -482,8 +482,6 @@ await loadItems();
     min-width: 0;
 
     &__results {
-        padding: var(--panel-padding);
-
         > h2 {
             margin-bottom: var(--space-4);
         }
@@ -532,7 +530,6 @@ await loadItems();
 
     &__url {
         display: block;
-        min-height: 44px;
         align-content: center;
         font-family: var(--font-code);
         font-size: var(--font-size-control);
@@ -550,9 +547,6 @@ await loadItems();
     }
 
     &__warning {
-        color: var(--text-secondary);
-        padding-left: var(--space-3);
-        border-left: 2px solid var(--accent);
         overflow-wrap: anywhere;
     }
 
@@ -566,17 +560,6 @@ await loadItems();
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
         margin-bottom: var(--space-3);
-    }
-
-    &__form-actions {
-        display: flex;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
-    &__form-actions :deep(.el-button) {
-        margin: 0;
     }
 }
 

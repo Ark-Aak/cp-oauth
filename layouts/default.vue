@@ -3,33 +3,8 @@
         <a class="app-layout__skip ui-navigation-link" href="#main-content">{{
             $t('nav.skip_content')
         }}</a>
-        <aside class="app-layout__desktop-nav">
-            <AppSidebar
-                :user="user"
-                :anonymous="status === 'anonymous'"
-                :logout-pending="logoutPending"
-                @logout="handleLogout"
-            />
-        </aside>
-        <el-drawer
-            id="mobile-navigation"
-            v-model="sidebarOpen"
-            direction="ltr"
-            :title="$t('nav.navigation')"
-            size="min(320px, calc(100vw - 32px))"
-            class="app-layout__drawer"
-            @closed="menuButton?.focus()"
-        >
-            <AppSidebar
-                :user="user"
-                :anonymous="status === 'anonymous'"
-                :logout-pending="logoutPending"
-                @logout="handleLogout"
-                @navigate="sidebarOpen = false"
-            />
-        </el-drawer>
-        <div class="app-layout__workspace">
-            <header class="app-layout__topbar">
+        <header class="app-layout__topbar">
+            <div class="app-layout__bar">
                 <button
                     ref="menuButton"
                     type="button"
@@ -39,57 +14,145 @@
                     aria-controls="mobile-navigation"
                     @click="sidebarOpen = true"
                 >
-                    <Menu :size="21" aria-hidden="true" />
+                    <Menu :size="20" aria-hidden="true" />
                 </button>
-                <span class="app-layout__context">{{ $t(contextLabel) }}</span>
-                <el-popover
-                    trigger="click"
-                    placement="bottom-end"
-                    :width="288"
-                    role="dialog"
-                    :aria-label="$t('settings.title')"
-                    focus-on-show
-                >
-                    <AppPreferences />
-                    <template #reference
-                        ><button
+                <NuxtLink to="/" class="app-layout__brand ui-navigation-link">
+                    <img src="/favicon.svg" alt="" width="20" height="20" />
+                    <span>{{ $t('app.name') }}</span>
+                </NuxtLink>
+                <AppTopNav
+                    class="app-layout__nav"
+                    orientation="horizontal"
+                    :user="user"
+                    :anonymous="status === 'anonymous'"
+                    :logout-pending="logoutPending"
+                />
+                <div class="app-layout__bar-end">
+                    <el-popover
+                        trigger="click"
+                        placement="bottom-end"
+                        :width="288"
+                        role="dialog"
+                        :aria-label="$t('settings.title')"
+                        focus-on-show
+                    >
+                        <AppPreferences />
+                        <template #reference
+                            ><button
+                                type="button"
+                                class="app-layout__icon-button"
+                                :aria-label="$t('settings.title')"
+                            >
+                                <SlidersHorizontal :size="18" aria-hidden="true" /></button
+                        ></template>
+                    </el-popover>
+                    <el-dropdown v-if="user" trigger="click" placement="bottom-end">
+                        <button
                             type="button"
-                            class="app-layout__preferences"
-                            :aria-label="$t('settings.title')"
+                            class="app-layout__account"
+                            :aria-label="user.displayName || user.username"
                         >
-                            <SlidersHorizontal :size="21" aria-hidden="true" /></button
-                    ></template>
-                </el-popover>
-            </header>
-            <main id="main-content" tabindex="-1" class="app-layout__main">
-                <div v-if="authError" role="alert" class="app-layout__notice">
-                    <p>{{ $t('identity.identity_unavailable') }}</p>
-                    <el-button :loading="identityPending" @click="retryIdentity">{{
-                        $t('identity.retry')
-                    }}</el-button>
+                            <AppUserAvatar
+                                :size="24"
+                                :src="user.avatarUrl"
+                                :name="user.displayName || user.username"
+                                :seed="user.id"
+                            />
+                            <span class="app-layout__account-name">{{
+                                user.displayName || user.username
+                            }}</span>
+                        </button>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item @click="openMenuLink($event, '/profile')">
+                                    <NuxtLink
+                                        to="/profile"
+                                        tabindex="-1"
+                                        class="app-layout__menu-link ui-navigation-link"
+                                        >{{ $t('nav.my_profile') }}</NuxtLink
+                                    >
+                                </el-dropdown-item>
+                                <el-dropdown-item
+                                    @click="openMenuLink($event, `/user/${user.username}`)"
+                                >
+                                    <NuxtLink
+                                        :to="`/user/${user.username}`"
+                                        tabindex="-1"
+                                        class="app-layout__menu-link ui-navigation-link"
+                                        >{{ $t('profile.view_public') }}</NuxtLink
+                                    >
+                                </el-dropdown-item>
+                                <el-dropdown-item
+                                    divided
+                                    :disabled="logoutPending"
+                                    @click="handleLogout"
+                                >
+                                    {{ $t('nav.logout') }}
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                    <NuxtLink
+                        v-else-if="status === 'anonymous'"
+                        to="/login"
+                        class="el-button el-button--primary"
+                        >{{ $t('nav.login') }}</NuxtLink
+                    >
                 </div>
-                <p v-if="logoutError" role="alert" class="app-layout__notice">{{ logoutError }}</p>
-                <div v-if="verificationEmailFailed" role="status" class="app-layout__notice">
-                    <p>{{ $t('identity.verification_delivery_failed') }}</p>
-                    <NuxtLink to="/profile?tab=basic">{{
-                        $t('identity.verification_resend')
-                    }}</NuxtLink>
-                </div>
-                <el-alert
-                    v-if="identityConfirmed"
-                    class="app-layout__notice"
-                    :title="$t('identity.identity_confirmed')"
-                    :closable="false"
-                    type="success"
-                    show-icon
-                    ><el-button text @click="identityConfirmed = false">{{
-                        $t('identity.dismiss_notice')
-                    }}</el-button></el-alert
-                >
-                <slot />
-            </main>
-            <div class="app-layout__footer"><AppFooter /></div>
-        </div>
+            </div>
+        </header>
+        <el-drawer
+            id="mobile-navigation"
+            v-model="sidebarOpen"
+            direction="ltr"
+            :title="$t('nav.navigation')"
+            size="min(320px, calc(100vw - 32px))"
+            class="app-layout__drawer"
+            @closed="menuButton?.focus()"
+        >
+            <AppTopNav
+                orientation="vertical"
+                :user="user"
+                :anonymous="status === 'anonymous'"
+                :logout-pending="logoutPending"
+                @logout="handleLogout"
+                @navigate="sidebarOpen = false"
+            />
+        </el-drawer>
+        <main id="main-content" tabindex="-1" class="app-layout__main">
+            <div v-if="authError" role="alert" class="app-layout__notice ui-note ui-note--danger">
+                <p>{{ $t('identity.identity_unavailable') }}</p>
+                <el-button :loading="identityPending" @click="retryIdentity">{{
+                    $t('identity.retry')
+                }}</el-button>
+            </div>
+            <p v-if="logoutError" role="alert" class="app-layout__notice ui-note ui-note--danger">
+                {{ logoutError }}
+            </p>
+            <div
+                v-if="verificationEmailFailed"
+                role="status"
+                class="app-layout__notice ui-note ui-note--warning"
+            >
+                <p>{{ $t('identity.verification_delivery_failed') }}</p>
+                <NuxtLink to="/profile?tab=basic">{{
+                    $t('identity.verification_resend')
+                }}</NuxtLink>
+            </div>
+            <el-alert
+                v-if="identityConfirmed"
+                class="app-layout__notice"
+                :title="$t('identity.identity_confirmed')"
+                :closable="false"
+                type="success"
+                show-icon
+                ><el-button text @click="identityConfirmed = false">{{
+                    $t('identity.dismiss_notice')
+                }}</el-button></el-alert
+            >
+            <slot />
+        </main>
+        <div class="app-layout__footer"><AppFooter /></div>
         <AuthReauthenticationDialog />
     </div>
 </template>
@@ -123,22 +186,16 @@ try {
     /* Network failure is not anonymous identity. */
 }
 const route = useRoute();
-const contextLabels: Record<string, string> = {
-    '/': 'nav.home',
-    '/profile': 'nav.my_profile',
-    '/developer': 'nav.developer',
-    '/showcase': 'nav.showcase',
-    '/about': 'nav.about'
-};
-const contextLabel = computed(() =>
-    route.path.startsWith('/admin') ? 'nav.admin' : contextLabels[route.path] || 'app.name'
-);
 watch(
     () => route.fullPath,
     () => {
         sidebarOpen.value = false;
     }
 );
+/* Pointer clicks land on the inner link; keyboard activation reaches only the menu item. */
+function openMenuLink(event: Event, path: string) {
+    if (event.type === 'keydown') void navigateTo(path);
+}
 async function handleLogout() {
     if (logoutPending.value) return;
     try {
@@ -175,86 +232,120 @@ async function handleLogout() {
 <style scoped lang="scss">
 .app-layout {
     min-height: 100dvh;
-}
-.app-layout__desktop-nav {
-    position: fixed;
-    inset: 0 auto 0 0;
-    width: var(--sidebar-width);
-    border-right: 1px solid var(--border-color);
-    z-index: 20;
-    overflow-y: auto;
-}
-.app-layout__workspace {
-    margin-left: var(--sidebar-width);
-    min-height: 100dvh;
     display: flex;
     flex-direction: column;
 }
 .app-layout__topbar {
-    min-height: 64px;
-    padding: var(--space-2) var(--space-5);
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    height: var(--topbar-height);
     border-bottom: 1px solid var(--border-color);
     background: var(--bg-primary);
 }
-.app-layout__context {
-    font-size: var(--font-size-control);
-    font-weight: 600;
-    color: var(--text-secondary);
-    letter-spacing: 0.06em;
+.app-layout__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-5);
 }
-.app-layout__preferences {
+.app-layout__brand {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-subheading);
+    font-weight: 700;
+    white-space: nowrap;
+}
+.app-layout__nav {
+    flex: 1 1 auto;
+    align-self: stretch;
+}
+.app-layout__bar-end {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: var(--space-1);
+    margin-left: auto;
+}
+.app-layout__menu,
+.app-layout__icon-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
     flex-shrink: 0;
-    margin-left: auto;
-    border: 1px solid var(--border-color);
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    border: 0;
     border-radius: var(--card-radius);
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background: transparent;
+    color: var(--text-secondary);
     cursor: pointer;
 }
-.app-layout__preferences:hover {
-    background: var(--bg-secondary);
-    border-color: var(--accent);
+.app-layout__menu:hover,
+.app-layout__icon-button:hover {
+    color: var(--accent);
 }
 .app-layout__menu {
     display: none;
+    color: var(--text-primary);
+}
+.app-layout__account {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: var(--control-height);
+    max-width: 200px;
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--card-radius);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: var(--font-size-control);
+    cursor: pointer;
+}
+.app-layout__account:hover {
+    color: var(--accent);
+}
+.app-layout__account-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.app-layout__menu-link {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    align-self: stretch;
+    margin: -5px -16px;
+    padding: 5px 16px;
 }
 .app-layout__main {
-    width: 100%;
-    max-width: 1248px;
-    padding: var(--space-5);
-    margin: 0 auto;
     flex: 1;
+    width: 100%;
+    max-width: 1200px;
     min-width: 0;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-5) var(--space-6);
 }
 .app-layout__footer {
     width: 100%;
-    max-width: 1248px;
-    padding: 0 var(--space-5) var(--space-4);
+    max-width: 1200px;
     margin: 0 auto;
+    padding: 0 var(--space-5) var(--space-4);
 }
 .app-layout__notice {
-    padding: var(--space-4);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    border-radius: var(--card-radius);
     margin-bottom: var(--space-5);
-}
-.app-layout__notice a {
-    display: inline-flex;
-    min-height: 44px;
-    align-items: center;
 }
 .app-layout__skip {
     position: fixed;
@@ -266,7 +357,7 @@ async function handleLogout() {
     color: var(--accent);
 }
 .app-layout__skip:focus {
-    left: calc(var(--sidebar-width) + 16px);
+    left: 16px;
 }
 :deep(.app-layout__drawer .el-drawer__body) {
     padding: 0;
@@ -274,43 +365,29 @@ async function handleLogout() {
     flex-direction: column;
 }
 @media (max-width: 1023px) {
-    .app-layout__desktop-nav {
-        display: none;
-    }
-    .app-layout__workspace {
-        margin-left: 0;
-    }
-    .app-layout__topbar {
-        min-height: 56px;
-        padding: 6px var(--space-4);
-        position: sticky;
-        top: 0;
-        z-index: 15;
-    }
-    .app-layout__context {
-        font-size: var(--font-size-body);
-        letter-spacing: 0;
+    .app-layout__bar {
+        gap: var(--space-2);
+        padding: 0 var(--space-4);
     }
     .app-layout__menu {
         display: inline-flex;
-        align-items: center;
+    }
+    .app-layout__nav {
+        display: none;
+    }
+    .app-layout__account {
+        width: var(--control-height);
         justify-content: center;
-        width: 44px;
-        height: 44px;
-        border: 0;
-        border-radius: var(--card-radius);
-        background: transparent;
-        color: var(--text-primary);
-        cursor: pointer;
+        padding: 0;
+    }
+    .app-layout__account-name {
+        display: none;
     }
     .app-layout__main {
         padding: var(--space-4);
     }
     .app-layout__footer {
         padding: 0 var(--space-4) var(--space-4);
-    }
-    .app-layout__skip:focus {
-        left: 16px;
     }
 }
 </style>

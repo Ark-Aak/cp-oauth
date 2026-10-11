@@ -15,7 +15,7 @@
             <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
         </p>
 
-        <section class="admin-notices__results ui-card" aria-labelledby="notice-list-title">
+        <section class="admin-notices__results" aria-labelledby="notice-list-title">
             <h2 id="notice-list-title">{{ $t('admin.notices.list_title') }}</h2>
             <AppAsyncState
                 :pending="loading"
@@ -148,10 +148,7 @@
                         ><span id="notice-pinned-error">{{ error }}</span></template
                     >
                 </el-form-item>
-                <div class="admin-notices__form-actions">
-                    <el-button native-type="button" :disabled="creating" @click="closeCreate">{{
-                        $t('common.cancel')
-                    }}</el-button>
+                <div class="task-actions">
                     <el-button
                         type="primary"
                         native-type="submit"
@@ -160,6 +157,9 @@
                     >
                         {{ creating ? $t('admin.notices.creating') : $t('admin.notices.create') }}
                     </el-button>
+                    <el-button native-type="button" :disabled="creating" @click="closeCreate">{{
+                        $t('common.cancel')
+                    }}</el-button>
                 </div>
             </el-form>
         </el-dialog>
@@ -377,8 +377,6 @@ await loadNotices();
     min-width: 0;
 
     &__results {
-        padding: var(--panel-padding);
-
         > h2 {
             margin-bottom: var(--space-4);
         }
@@ -448,17 +446,6 @@ await loadNotices();
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
         margin-bottom: var(--space-3);
-    }
-
-    &__form-actions {
-        display: flex;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
-    &__form-actions :deep(.el-button) {
-        margin: 0;
     }
 }
 </style>

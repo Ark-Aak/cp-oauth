@@ -74,8 +74,7 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
         align-items: center;
         gap: var(--space-2) var(--space-4);
         min-width: 0;
-        min-height: 52px;
-        padding: var(--space-1) 0;
+        padding: var(--space-2) 0;
         border-bottom: 1px solid var(--card-border);
 
         &:last-child {
@@ -106,8 +105,6 @@ function getProfileUrl(account: PublicLinkedAccount): string | null {
     &__identity {
         justify-self: end;
         max-width: 100%;
-        min-width: 44px;
-        min-height: 44px;
         padding: var(--space-1) 0;
 
         svg {

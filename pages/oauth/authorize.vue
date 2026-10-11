@@ -68,7 +68,7 @@
                         </p>
                         <div
                             v-if="authError"
-                            class="consent__notice consent__notice--error"
+                            class="consent__notice ui-note ui-note--danger"
                             role="alert"
                         >
                             <p>{{ $t('identity.identity_unavailable') }}</p>
@@ -85,7 +85,7 @@
 
                     <div
                         v-if="needsEmailVerification"
-                        class="consent__notice consent__notice--verification"
+                        class="consent__notice ui-note ui-note--warning"
                         role="status"
                     >
                         <p>{{ $t('oauth.consent.email_verification_required') }}</p>
@@ -100,7 +100,7 @@
                         v-if="decisionError"
                         ref="decisionErrorElement"
                         tabindex="-1"
-                        class="consent__notice consent__notice--error"
+                        class="consent__notice ui-note ui-note--danger"
                         role="alert"
                     >
                         {{ decisionError }}
@@ -459,25 +459,7 @@ async function handleDecision(approved: boolean) {
 
     &__notice {
         margin-bottom: var(--space-3);
-        padding: var(--space-3);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-left-width: 3px;
-        border-radius: 0;
-        color: var(--text-primary);
-        font-size: var(--font-size-control);
-        line-height: 1.5;
         overflow-wrap: anywhere;
-    }
-
-    &__notice--verification {
-        background: var(--el-color-warning-light-9);
-        border-color: var(--el-color-warning);
-    }
-
-    &__notice--error {
-        background: var(--el-color-danger-light-9);
-        border-color: var(--el-color-danger);
     }
 
     &__notice .el-button {
@@ -485,26 +467,19 @@ async function handleDecision(approved: boolean) {
     }
 
     &__task-link {
-        display: inline-flex;
-        align-items: center;
-        min-width: 44px;
-        min-height: 44px;
+        display: inline-block;
         margin-block: var(--space-1);
         overflow-wrap: anywhere;
     }
 
     &__actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: var(--space-3);
-    }
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
 
-    &__actions > .el-button {
-        margin: 0;
-        min-height: 44px;
-        height: auto;
-        padding-block: var(--space-2);
-        white-space: normal;
+        > .el-button {
+            margin: 0;
+        }
     }
 
     @media (max-width: 359px) {

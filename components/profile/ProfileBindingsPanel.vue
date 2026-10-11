@@ -14,13 +14,21 @@
             <p class="profile-bindings__hint">{{ t('binding.workbench.description') }}</p>
         </header>
 
-        <p v-if="success || notice" class="profile-bindings__notice" role="status">
+        <p
+            v-if="success || notice"
+            class="profile-bindings__notice ui-note ui-note--accent"
+            role="status"
+        >
             {{ success || notice }}
         </p>
         <p v-if="confirmationError" class="profile-bindings__error" role="alert">
             {{ confirmationError }}
         </p>
-        <div v-if="identityError" class="profile-bindings__identity-error" role="alert">
+        <div
+            v-if="identityError"
+            class="profile-bindings__identity-error ui-note ui-note--danger"
+            role="alert"
+        >
             <p>{{ identityError }}</p>
             <el-button
                 native-type="button"
@@ -37,7 +45,7 @@
             :error="error"
             @retry="reload"
         >
-            <div class="profile-bindings__section">
+            <div class="profile-bindings__section ui-section">
                 <h3>{{ t('binding.workbench.bound_accounts') }}</h3>
                 <p v-if="bindings.length === 0" class="profile-bindings__empty" role="status">
                     <Link2 :size="18" aria-hidden="true" />
@@ -145,7 +153,7 @@
                                         native-type="button"
                                         :data-bound-platform="account.platform"
                                         type="danger"
-                                        plain
+                                        text
                                         :aria-label="
                                             t('binding.workbench.unlink_named', {
                                                 platform: platformName(account.platform),
@@ -174,9 +182,13 @@
                 </table>
             </div>
 
-            <div v-if="unboundPlatforms.length" class="profile-bindings__section">
+            <div v-if="unboundPlatforms.length" class="profile-bindings__section ui-section">
                 <h3>{{ t('binding.workbench.unbound_accounts') }}</h3>
-                <div v-if="configProblem" class="profile-bindings__config-error" role="alert">
+                <div
+                    v-if="configProblem"
+                    class="profile-bindings__config-error ui-note ui-note--danger"
+                    role="alert"
+                >
                     <p>{{ configProblem }}</p>
                     <el-button
                         native-type="button"
@@ -544,10 +556,6 @@ onBeforeUnmount(() => {
 
     &__header > .el-button {
         gap: var(--space-2);
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
     }
 
     &__hint,
@@ -579,10 +587,6 @@ onBeforeUnmount(() => {
 
     &__empty svg {
         flex-shrink: 0;
-    }
-
-    &__section + &__section {
-        margin-top: var(--space-5);
     }
 
     &__section h3 {
@@ -650,13 +654,6 @@ onBeforeUnmount(() => {
         gap: var(--space-2);
     }
 
-    &__actions .el-button {
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
-    }
-
     &__actions .el-button + .el-button {
         margin-left: 0;
     }
@@ -686,18 +683,11 @@ onBeforeUnmount(() => {
 
     &__available .el-button {
         flex-shrink: 0;
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
     }
 
     &__notice {
         margin-bottom: var(--space-4);
         color: var(--text-primary);
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
         overflow-wrap: anywhere;
     }
 
@@ -714,8 +704,6 @@ onBeforeUnmount(() => {
         justify-items: start;
         gap: var(--space-3);
         margin-bottom: var(--space-4);
-        padding: var(--space-3) var(--space-4);
-        border-left: 2px solid var(--el-color-danger);
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
     }

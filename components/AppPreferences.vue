@@ -13,7 +13,7 @@
                 :disabled="pending || !hydrationReady"
                 @click="changeLanguage(nextLanguage)"
             >
-                <Languages :size="22" :stroke-width="1.5" aria-hidden="true" />
+                <Languages :size="18" :stroke-width="1.5" aria-hidden="true" />
             </button>
             <button
                 type="button"
@@ -25,7 +25,7 @@
             >
                 <component
                     :is="nextTheme === 'dark' ? Moon : Sun"
-                    :size="22"
+                    :size="18"
                     :stroke-width="1.5"
                     aria-hidden="true"
                 />
@@ -157,8 +157,8 @@ async function changeLanguage(value: string) {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 44px;
-    height: 44px;
+    width: var(--control-height);
+    height: var(--control-height);
     padding: 0;
     border: 0;
     border-radius: var(--card-radius);

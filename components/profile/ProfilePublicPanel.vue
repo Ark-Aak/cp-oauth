@@ -11,11 +11,16 @@
         >
             {{ mutationError }}
         </p>
-        <p v-if="notice" class="profile-public__notice" role="status" aria-live="polite">
+        <p
+            v-if="notice"
+            class="profile-public__notice ui-note ui-note--accent"
+            role="status"
+            aria-live="polite"
+        >
             {{ notice }}
         </p>
         <form class="profile-public__form" method="post" novalidate @submit.prevent="save">
-            <section class="profile-public__section">
+            <section class="profile-public__section ui-section">
                 <div class="profile-public__heading">
                     <label for="profile-public-homepage">{{ t('profile.homepage') }}</label>
                     <el-button
@@ -56,7 +61,7 @@
                 <section
                     v-if="previewOpen"
                     id="profile-public-preview"
-                    class="profile-public__preview-region"
+                    class="profile-public__preview-region ui-section"
                     aria-labelledby="profile-preview-title"
                 >
                     <h3 id="profile-preview-title">{{ t('profile.workbench.preview') }}</h3>
@@ -73,7 +78,7 @@
                 </section>
             </section>
 
-            <fieldset class="profile-public__section profile-public__accounts">
+            <fieldset class="profile-public__section profile-public__accounts ui-section">
                 <legend>{{ t('profile.public_accounts') }}</legend>
                 <p class="profile-public__hint">{{ t('profile.public_accounts_hint') }}</p>
                 <AppAsyncState
@@ -126,7 +131,10 @@
                 </p>
             </fieldset>
 
-            <section class="profile-public__section" aria-labelledby="profile-public-stats-title">
+            <section
+                class="profile-public__section ui-section"
+                aria-labelledby="profile-public-stats-title"
+            >
                 <h3 id="profile-public-stats-title">
                     {{ t('profile.workbench.public_statistics') }}
                 </h3>
@@ -167,7 +175,7 @@
                 </p>
                 <p class="profile-public__hint">{{ t('profile.workbench.oauth_visibility') }}</p>
             </section>
-            <div class="profile-public__actions">
+            <div class="profile-public__actions task-actions">
                 <el-button
                     type="primary"
                     native-type="submit"
@@ -332,17 +340,12 @@ onBeforeUnmount(() => {
     }
     &__form {
         display: grid;
-        gap: var(--space-5);
         justify-items: start;
         margin-top: var(--space-4);
     }
     &__section {
         width: 100%;
         min-width: 0;
-    }
-    &__section + &__section {
-        border-top: 1px solid var(--border-color);
-        padding-top: var(--space-5);
     }
     &__heading {
         display: flex;
@@ -363,9 +366,13 @@ onBeforeUnmount(() => {
         }
     }
     &__accounts {
-        margin: 0;
-        padding: 0;
-        border: 0;
+        margin-inline: 0;
+        margin-bottom: 0;
+        padding-inline: 0;
+        padding-bottom: 0;
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
     }
     &__empty {
         display: flex;
@@ -383,20 +390,12 @@ onBeforeUnmount(() => {
     &__empty svg {
         flex-shrink: 0;
     }
-    &__empty .el-button {
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
-    }
     &__account-list {
         display: grid;
         gap: var(--space-2);
     }
     &__account {
         margin: 0;
-        height: auto;
-        min-height: 44px;
         :deep(.el-checkbox__label) {
             white-space: normal;
             min-width: 0;
@@ -416,10 +415,6 @@ onBeforeUnmount(() => {
     }
     &__option {
         margin-top: var(--space-4);
-        :deep(.el-checkbox) {
-            height: auto;
-            min-height: 44px;
-        }
         :deep(.el-checkbox__label) {
             white-space: normal;
         }
@@ -430,21 +425,15 @@ onBeforeUnmount(() => {
         margin: var(--space-2) 0;
     }
     &__notice {
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
         overflow-wrap: anywhere;
     }
     &__actions {
-        width: 100%;
-        padding: var(--space-3) 0;
+        justify-self: stretch;
+        padding-top: var(--space-4);
         border-top: 1px solid var(--border-color);
-        background: var(--card-bg);
     }
     &__preview-region {
         margin-top: var(--space-4);
-        padding-top: var(--space-4);
-        border-top: 1px solid var(--border-color);
         min-width: 0;
     }
     &__preview-region h3 {
@@ -477,11 +466,6 @@ onBeforeUnmount(() => {
             margin-left: 0;
             padding-left: var(--space-4);
             border-left: 2px solid var(--border-color);
-        }
-    }
-    @media (max-width: 479px) {
-        &__actions > :deep(.el-button) {
-            width: 100%;
         }
     }
 }

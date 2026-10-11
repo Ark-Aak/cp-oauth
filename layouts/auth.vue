@@ -22,7 +22,7 @@
                 </NuxtLink>
                 <aside
                     v-if="verificationEmailFailed"
-                    class="auth-layout__verification"
+                    class="auth-layout__verification ui-note ui-note--warning"
                     role="status"
                 >
                     <p>{{ $t('identity.verification_delivery_failed') }}</p>
@@ -44,7 +44,12 @@ import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 const route = useRoute();
 const authorizationPage = computed(() => route.path.replace(/\/$/, '') === '/oauth/authorize');
-const { verificationEmailFailed } = useAuth();
+const { verificationEmailFailed, load } = useAuth();
+try {
+    await load();
+} catch {
+    /* Network failure is not anonymous identity. */
+}
 const verificationPath = computed(() => ({
     path: '/profile',
     query: {
@@ -94,7 +99,6 @@ const verificationPath = computed(() => ({
         gap: var(--space-2);
         width: fit-content;
         min-width: 0;
-        min-height: 44px;
         margin: 0 auto var(--space-3);
         color: var(--text-primary);
         font-size: var(--font-size-subheading);
@@ -125,7 +129,7 @@ const verificationPath = computed(() => ({
         flex: 0 0 auto;
         width: 100%;
         min-width: 0;
-        max-width: 420px;
+        max-width: 400px;
         margin-block: auto;
     }
 
@@ -139,19 +143,7 @@ const verificationPath = computed(() => ({
 
     &__verification {
         margin-bottom: var(--space-4);
-        padding: var(--panel-padding);
-        border: 1px solid var(--border-color);
-        border-radius: var(--card-radius);
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        font-size: var(--font-size-control);
         overflow-wrap: anywhere;
-
-        a {
-            display: inline-flex;
-            align-items: center;
-            min-height: 44px;
-        }
     }
 }
 
@@ -165,12 +157,8 @@ const verificationPath = computed(() => ({
 <style lang="scss">
 .auth-card {
     width: 100%;
-    max-width: 420px;
+    max-width: 400px;
     min-width: 0;
-    padding: var(--panel-padding);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--card-radius);
 
     > :last-child {
         margin-bottom: 0;
@@ -179,7 +167,7 @@ const verificationPath = computed(() => ({
     &__title {
         margin-bottom: var(--space-2);
         color: var(--text-primary);
-        font-size: var(--font-size-section);
+        font-size: var(--font-size-title-mobile);
         font-weight: 600;
         line-height: 1.4;
         overflow-wrap: anywhere;
@@ -208,9 +196,8 @@ const verificationPath = computed(() => ({
 
     &__error {
         margin-bottom: var(--space-4);
-        padding: var(--space-3);
+        padding: var(--space-2) var(--space-3);
         border-left: 3px solid var(--el-color-danger);
-        background: var(--bg-secondary);
         color: var(--text-primary);
         font-size: var(--font-size-control);
         line-height: 1.65;
@@ -232,23 +219,9 @@ const verificationPath = computed(() => ({
     &__field-hint {
         margin: 0 0 var(--space-4);
         color: var(--text-secondary);
-        font-size: var(--font-size-meta);
+        font-size: var(--font-size-control);
         line-height: 1.5;
         overflow-wrap: anywhere;
-    }
-
-    &__button {
-        width: 100%;
-    }
-
-    &__actions {
-        display: grid;
-        gap: var(--space-2);
-        margin-bottom: var(--space-4);
-
-        > .el-button {
-            margin: 0;
-        }
     }
 
     &__divider {
@@ -269,29 +242,16 @@ const verificationPath = computed(() => ({
 
     &__link,
     &__footer a {
-        display: inline-flex;
-        align-items: center;
-        min-width: 44px;
-        min-height: 44px;
+        display: inline;
         overflow-wrap: anywhere;
-    }
-
-    &__recovery {
-        display: flex;
-        width: fit-content;
-        margin: 0 0 var(--space-2) auto;
-        font-size: var(--font-size-control);
     }
 
     &__footer {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: center;
         gap: 0 var(--space-2);
-        margin-top: var(--space-3);
-        padding-top: var(--space-2);
-        border-top: 1px solid var(--border-color);
+        margin-top: var(--space-5);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
         line-height: 1.65;
@@ -316,8 +276,6 @@ const verificationPath = computed(() => ({
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 44px;
-        padding: 0;
     }
 }
 </style>

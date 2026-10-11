@@ -7,19 +7,15 @@
         <p v-if="identityError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
             {{ identityError }}
         </p>
-        <div class="auth-card__actions">
+        <div class="task-actions">
             <NuxtLink
                 v-if="outcome === 'success'"
                 :to="loginPath"
-                class="el-button el-button--primary auth-card__button"
+                class="el-button el-button--primary"
             >
                 {{ $t('auth.verify_result.go_login') }}
             </NuxtLink>
-            <NuxtLink
-                v-else
-                :to="verificationPath"
-                class="el-button el-button--primary auth-card__button"
-            >
+            <NuxtLink v-else :to="verificationPath" class="el-button el-button--primary">
                 {{ $t('auth.flow.verification_request_again') }}
             </NuxtLink>
         </div>

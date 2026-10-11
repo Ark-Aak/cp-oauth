@@ -183,22 +183,31 @@
     box-shadow: var(--el-box-shadow-dark);
 }
 .el-button {
-    min-height: 44px;
-    height: auto;
-    padding: 10px var(--space-4);
+    height: var(--control-height);
+    min-height: 0;
+    padding: 0 var(--space-3);
     font-size: var(--font-size-control);
     line-height: 1.5;
-    white-space: normal;
+    white-space: nowrap;
     text-align: center;
 }
 .el-button > span {
     gap: var(--space-2);
-    white-space: normal;
+    white-space: nowrap;
     line-height: 1.5;
+}
+.el-button.is-text,
+.el-button.is-link {
+    padding: 0 var(--space-2);
+}
+.el-button.is-circle,
+.el-button.is-icon-only {
+    width: var(--control-height);
+    padding: 0;
 }
 .el-select__wrapper,
 .el-input__wrapper {
-    min-height: 44px;
+    min-height: var(--control-height);
 }
 .el-input__inner,
 .el-select__input {
@@ -206,18 +215,21 @@
     font-size: var(--font-size-control);
 }
 .el-input__inner {
-    height: 42px;
+    height: calc(var(--control-height) - 2px);
+}
+.el-input__suffix .el-button,
+.el-input__prefix .el-button {
+    height: calc(var(--control-height) - 2px);
 }
 .el-checkbox,
 .el-radio,
 .el-dropdown-menu__item {
-    min-height: 44px;
+    min-height: 32px;
 }
 .el-select-dropdown__item {
     display: flex;
     align-items: center;
-    min-width: 44px;
-    min-height: 44px;
+    min-height: 32px;
     height: auto;
     line-height: 1.5;
 }
@@ -315,14 +327,14 @@
 .el-pagination {
     --el-pagination-bg-color: transparent;
     --el-pagination-hover-color: var(--el-color-primary);
-    --el-pagination-button-width: 44px;
-    --el-pagination-button-height: 44px;
+    --el-pagination-button-width: 32px;
+    --el-pagination-button-height: 32px;
 }
 .el-pagination .el-pager li,
 .el-pagination .btn-prev,
 .el-pagination .btn-next {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 32px;
+    min-height: 32px;
 }
 .el-pagination .el-pager li:focus-visible {
     outline: 2px solid var(--accent);

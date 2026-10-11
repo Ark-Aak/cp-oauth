@@ -16,7 +16,7 @@
     >
         <div class="profile-binding-dialog" :aria-busy="busy">
             <template v-if="finished">
-                <p class="profile-binding-dialog__success" role="status">
+                <p class="profile-binding-dialog__success ui-note ui-note--accent" role="status">
                     {{ t('binding.verify_success') }}
                 </p>
                 <div v-if="identityError" class="profile-binding-dialog__error" role="alert">
@@ -56,7 +56,7 @@
                 </div>
                 <form
                     v-else-if="!requestId"
-                    class="profile-binding-dialog__form"
+                    class="profile-binding-dialog__form ui-section"
                     method="post"
                     @submit.prevent="requestChallenge"
                 >
@@ -94,7 +94,7 @@
                             {{ uidError }}
                         </p>
                     </div>
-                    <div class="profile-binding-dialog__actions">
+                    <div class="profile-binding-dialog__actions task-actions">
                         <el-button
                             native-type="submit"
                             type="primary"
@@ -113,7 +113,7 @@
                 </form>
                 <form
                     v-else
-                    class="profile-binding-dialog__form"
+                    class="profile-binding-dialog__form ui-section"
                     method="post"
                     @submit.prevent="verifyChallenge"
                 >
@@ -213,7 +213,7 @@
                             {{ credentialError }}
                         </p>
                     </div>
-                    <div class="profile-binding-dialog__actions">
+                    <div class="profile-binding-dialog__actions task-actions">
                         <el-button
                             :id="`${id}-verify`"
                             native-type="submit"
@@ -639,9 +639,6 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
 
     &__success {
         color: var(--text-primary);
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
     }
 
     &__identity {
@@ -671,26 +668,12 @@ defineExpose({ dirty, pending: busy, discard, waitUntilClosed });
         font-family: var(--font-code);
     }
 
-    &__actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
     &__actions .el-button + .el-button {
         margin-left: 0;
     }
 
-    &__actions .el-button {
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
-    }
-
     &__link {
         display: inline-block;
-        min-height: 44px;
         padding: var(--space-2) 0;
         overflow-wrap: anywhere;
     }

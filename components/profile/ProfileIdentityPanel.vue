@@ -23,7 +23,12 @@
         >
             {{ mutationError }}
         </p>
-        <p v-if="notice" class="profile-identity__notice" role="status" aria-live="polite">
+        <p
+            v-if="notice"
+            class="profile-identity__notice ui-note ui-note--accent"
+            role="status"
+            aria-live="polite"
+        >
             {{ notice }}
         </p>
 
@@ -114,7 +119,7 @@
                     {{ fieldErrors.bio }}
                 </p>
             </div>
-            <div class="profile-identity__actions">
+            <div class="profile-identity__actions task-actions">
                 <el-button
                     type="primary"
                     native-type="submit"
@@ -125,7 +130,7 @@
             </div>
         </form>
 
-        <section class="profile-identity__email" aria-labelledby="profile-email-title">
+        <section class="profile-identity__email ui-section" aria-labelledby="profile-email-title">
             <h3 id="profile-email-title">{{ t('profile.email') }}</h3>
             <dl class="profile-identity__email-details">
                 <dt>{{ t('reauth.current_email') }}</dt>
@@ -390,15 +395,10 @@ onBeforeUnmount(() => {
     }
     &__notice {
         margin: 0 0 var(--space-4);
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
         overflow-wrap: anywhere;
     }
     &__email {
-        border-top: 1px solid var(--border-color);
         margin-top: var(--space-5);
-        padding-top: var(--space-5);
     }
     &__email-details {
         display: grid;
@@ -452,11 +452,6 @@ onBeforeUnmount(() => {
         }
         &__email-details dd {
             margin-bottom: var(--space-3);
-        }
-        &__actions :deep(.el-button),
-        &__new-email :deep(.el-button) {
-            width: 100%;
-            white-space: normal;
         }
     }
 }

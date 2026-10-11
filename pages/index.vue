@@ -1,7 +1,7 @@
 <template>
     <div class="home">
         <div class="home__intro">
-            <section class="home__primary ui-card" :aria-label="$t('home.account_tasks')">
+            <section class="home__primary" :aria-label="$t('home.account_tasks')">
                 <AppPageHeader
                     :title="homeTitle"
                     :description="$t(me ? 'home.task_description' : 'home.guest_description')"
@@ -14,7 +14,11 @@
                 >
                     <template v-if="me">
                         <div class="home__account">
-                            <div v-if="!me.emailVerified" class="home__verification" role="status">
+                            <div
+                                v-if="!me.emailVerified"
+                                class="home__verification ui-note ui-note--warning"
+                                role="status"
+                            >
                                 <p>{{ $t('profile.email_unverified') }}</p>
                                 <NuxtLink to="/profile?tab=basic">{{
                                     $t('profile.send_verify_email')
@@ -62,7 +66,7 @@
                 />
             </section>
 
-            <section class="home__quote ui-card" aria-labelledby="home-quote">
+            <section class="home__quote" aria-labelledby="home-quote">
                 <h2 id="home-quote" class="home__heading">
                     <Quote :size="18" aria-hidden="true" />
                     <span>{{ $t('home.quote') }}</span>
@@ -81,7 +85,7 @@
         </div>
 
         <div class="home__layout">
-            <section class="home__announcements ui-card" aria-labelledby="home-announcements">
+            <section class="home__announcements ui-section" aria-labelledby="home-announcements">
                 <h2 id="home-announcements" class="home__heading">
                     <Bell :size="18" aria-hidden="true" />
                     <span>{{ $t('home.announcements') }}</span>
@@ -114,7 +118,7 @@
             </section>
 
             <aside class="home__side">
-                <section class="home__section ui-card" aria-labelledby="home-stats">
+                <section class="home__section ui-section" aria-labelledby="home-stats">
                     <h2 id="home-stats" class="home__heading">
                         <ChartNoAxesCombined :size="18" aria-hidden="true" />
                         <span>{{ $t('home.stats') }}</span>
@@ -133,7 +137,7 @@
                     </AppAsyncState>
                 </section>
 
-                <section class="home__section ui-card" aria-labelledby="home-recent-users">
+                <section class="home__section ui-section" aria-labelledby="home-recent-users">
                     <h2 id="home-recent-users" class="home__heading">
                         <UsersRound :size="18" aria-hidden="true" />
                         <span>{{ $t('home.recent_users') }}</span>
@@ -153,7 +157,7 @@
                                     class="home__user ui-navigation-link"
                                 >
                                     <AppUserAvatar
-                                        :size="40"
+                                        :size="32"
                                         :src="u.avatarUrl || undefined"
                                         :name="u.displayName || u.username"
                                         :seed="u.id"
@@ -356,21 +360,14 @@ function formatNumber(value: number): string {
         justify-self: start;
         max-width: 100%;
         min-width: 0;
-        padding: var(--space-1) var(--space-2);
-        border: 1px solid var(--el-color-warning);
-        border-radius: 0;
-        background: var(--el-color-warning-light-9);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
-        font-weight: 600;
         line-height: 1.4;
         overflow-wrap: anywhere;
 
         a {
             display: inline-flex;
             align-items: center;
-            min-width: 44px;
-            min-height: 44px;
         }
     }
 
@@ -382,12 +379,8 @@ function formatNumber(value: number): string {
         min-width: 0;
 
         .el-button {
-            min-width: 44px;
-            min-height: 44px;
             max-width: 100%;
-            height: auto;
             margin: 0;
-            white-space: normal;
             text-align: center;
             overflow-wrap: anywhere;
         }
@@ -397,8 +390,6 @@ function formatNumber(value: number): string {
         display: inline-flex;
         align-items: center;
         gap: var(--space-2);
-        min-width: 44px;
-        min-height: 44px;
         color: var(--accent);
         font-size: var(--font-size-control);
     }
@@ -422,13 +413,6 @@ function formatNumber(value: number): string {
         min-width: 0;
     }
 
-    &__primary,
-    &__quote,
-    &__announcements,
-    &__section {
-        padding: var(--panel-padding);
-    }
-
     &__side {
         display: grid;
         grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
@@ -436,11 +420,19 @@ function formatNumber(value: number): string {
         align-items: start;
     }
 
+    &__side > &__section + &__section {
+        margin-top: 0;
+        padding-top: 0;
+        padding-left: var(--space-5);
+        border-top: 0;
+        border-left: 1px solid var(--border-color);
+    }
+
     &__heading {
         display: flex;
         align-items: center;
         gap: var(--space-2);
-        margin-bottom: var(--space-4);
+        margin-bottom: var(--space-3);
 
         svg {
             flex-shrink: 0;
@@ -623,8 +615,7 @@ function formatNumber(value: number): string {
         display: flex;
         align-items: flex-start;
         gap: var(--space-3);
-        min-height: 64px;
-        padding: var(--space-3) 0;
+        padding: var(--space-2) 0;
     }
 
     &__user-name {
@@ -638,6 +629,9 @@ function formatNumber(value: number): string {
     }
 
     &__quote {
+        padding-left: var(--space-5);
+        border-left: 1px solid var(--border-color);
+
         blockquote {
             margin: 0;
             padding-left: var(--space-4);
@@ -666,36 +660,13 @@ function formatNumber(value: number): string {
     .home__users li:nth-last-child(2) {
         border-bottom: 1px solid var(--border-color);
     }
-}
 
-@media (max-width: 479px) {
-    .home__actions--guest {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-
-        > .el-button {
-            min-width: 0;
-            width: 100%;
-        }
-
-        > .el-button:first-child:nth-last-child(2) {
-            grid-column: 1 / -1;
-        }
-
-        > .home__text-action {
-            grid-column: 1 / -1;
-            justify-self: start;
-        }
-    }
-
-    .home__actions--account {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--space-2);
-    }
-
-    .home__actions:not(.home__actions--guest) > .el-button {
-        width: 100%;
+    .home__quote,
+    .home__side > .home__section + .home__section {
+        padding-top: var(--space-4);
+        padding-left: 0;
+        border-top: 1px solid var(--border-color);
+        border-left: 0;
     }
 }
 </style>

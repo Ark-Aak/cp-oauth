@@ -110,17 +110,16 @@
                     {{ $t('common.retry') }}
                 </el-button>
             </div>
-            <el-form-item>
+            <div class="task-actions">
                 <el-button
                     type="primary"
                     native-type="submit"
                     :loading="pending"
                     :disabled="!hydrationReady || pending || !captchaReady"
-                    class="auth-card__button"
                 >
                     {{ pending ? $t('auth.register.loading') : $t('auth.register.submit') }}
                 </el-button>
-            </el-form-item>
+            </div>
         </el-form>
         <p class="auth-card__footer">
             <span>{{ $t('auth.register.footer') }}</span>

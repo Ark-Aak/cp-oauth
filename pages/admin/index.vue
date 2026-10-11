@@ -9,7 +9,7 @@
             <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
         </p>
 
-        <section class="admin-users__results ui-card" :aria-label="$t('admin.users.tab')">
+        <section class="admin-users__results" :aria-label="$t('admin.users.tab')">
             <div class="admin-users__toolbar">
                 <h2>{{ $t('admin.users.list_title') }}</h2>
                 <div class="admin-users__search">
@@ -487,10 +487,6 @@ await loadUsers();
 .admin-users {
     min-width: 0;
 
-    &__results {
-        padding: var(--panel-padding);
-    }
-
     &__toolbar {
         display: flex;
         align-items: flex-end;
@@ -575,14 +571,6 @@ await loadUsers();
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-2);
-    }
-
-    &__actions :deep(.el-button) {
-        margin: 0;
-        max-width: 100%;
-        min-height: 44px;
-        height: auto;
-        white-space: normal;
     }
 
     &__error {

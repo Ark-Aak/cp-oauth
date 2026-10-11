@@ -1,6 +1,6 @@
 <template>
     <div ref="container" class="rating-history">
-        <div class="rating-history__chart ui-card">
+        <div class="rating-history__chart">
             <canvas ref="canvas" :aria-label="$t('user.rating_history')" role="img" />
             <p v-if="pending" role="status" class="rating-history__status">
                 {{ $t('user.loading') }}
@@ -278,6 +278,8 @@ onBeforeUnmount(() => {
         width: 100%;
         min-width: 0;
         padding: var(--space-3);
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
     }
 
     &__status {
@@ -299,7 +301,6 @@ onBeforeUnmount(() => {
         margin-top: var(--space-3);
 
         summary {
-            min-height: 44px;
             cursor: pointer;
             padding: var(--space-2) 0;
             color: var(--accent);

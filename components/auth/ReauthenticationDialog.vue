@@ -15,10 +15,18 @@
     >
         <div class="reauth" :aria-busy="pending">
             <p>{{ t('reauth.description') }}</p>
-            <p v-if="error" ref="errorElement" role="alert" tabindex="-1" class="reauth__error">
+            <p
+                v-if="error"
+                ref="errorElement"
+                role="alert"
+                tabindex="-1"
+                class="reauth__error ui-note ui-note--danger"
+            >
                 {{ error }}
             </p>
-            <p v-if="notice" class="reauth__notice" role="status">{{ notice }}</p>
+            <p v-if="notice" class="reauth__notice ui-note ui-note--accent" role="status">
+                {{ notice }}
+            </p>
             <form v-if="challenge" method="post" @submit.prevent="verifyMfa">
                 <p>
                     {{
@@ -529,16 +537,6 @@ onBeforeUnmount(cancel);
     }
 
     p.reauth__error {
-        padding: var(--space-3);
-        border-left: 3px solid var(--el-color-danger);
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-    }
-
-    p.reauth__notice {
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
         color: var(--text-primary);
     }
 
@@ -553,14 +551,9 @@ onBeforeUnmount(cancel);
         margin-top: var(--space-1);
     }
 
-    &__password-toggle {
-        min-width: 44px;
-        padding: 0;
-    }
-
     &__actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        display: flex;
+        flex-wrap: wrap;
         gap: var(--space-2);
         margin-top: var(--space-2);
     }
@@ -588,12 +581,10 @@ onBeforeUnmount(cancel);
 
     &__actions > .el-button,
     &__alternatives > .el-button,
+    &__platform > .el-button,
     form > .el-button {
+        justify-self: start;
         margin: 0;
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
     }
 
     &__footer {
@@ -601,12 +592,6 @@ onBeforeUnmount(cancel);
         justify-content: flex-end;
         padding-top: var(--space-3);
         border-top: 1px solid var(--card-border);
-    }
-}
-
-@media (max-width: 479px) {
-    .reauth__actions {
-        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

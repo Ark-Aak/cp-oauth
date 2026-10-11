@@ -13,7 +13,12 @@
         >
             {{ mutationError }}
         </p>
-        <p v-if="notice" role="status" aria-live="polite" class="profile-apps__notice">
+        <p
+            v-if="notice"
+            role="status"
+            aria-live="polite"
+            class="profile-apps__notice ui-note ui-note--accent"
+        >
             {{ notice }}
         </p>
         <AppAsyncState
@@ -77,7 +82,7 @@
                         <td class="profile-apps__action-cell">
                             <el-button
                                 type="danger"
-                                plain
+                                text
                                 :loading="pendingClientId === app.clientId"
                                 :disabled="busy"
                                 :aria-label="
@@ -94,14 +99,14 @@
                 <article
                     v-for="app in apps"
                     :key="app.clientId"
-                    class="profile-apps__card"
+                    class="profile-apps__card ui-section"
                     :aria-label="app.name"
                 >
                     <header class="profile-apps__card-header">
                         <h3>{{ app.name }}</h3>
                         <el-button
                             type="danger"
-                            plain
+                            text
                             :loading="pendingClientId === app.clientId"
                             :disabled="busy"
                             :aria-label="t('profile.workbench.revoke_named', { name: app.name })"
@@ -220,9 +225,6 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
     }
     &__notice {
         margin-bottom: var(--space-4);
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
         overflow-wrap: anywhere;
     }
     &__table {
@@ -266,12 +268,6 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
     &__scopes li + li {
         margin-top: var(--space-2);
     }
-    &__action-cell :deep(.el-button) {
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
-    }
     &__cards {
         display: none;
     }
@@ -283,13 +279,7 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
             display: grid;
         }
         &__card {
-            padding: var(--space-5) 0;
-            border-top: 1px solid var(--border-color);
             overflow-wrap: anywhere;
-        }
-        &__card:first-child {
-            padding-top: 0;
-            border-top: 0;
         }
         &__card-header {
             display: flex;
@@ -311,12 +301,6 @@ async function confirmRevoke(app: AuthorizedApp, event: Event) {
         }
         &__card dd {
             margin: var(--space-1) 0 0;
-        }
-        &__card :deep(.el-button) {
-            max-width: 100%;
-            height: auto;
-            min-height: 44px;
-            white-space: normal;
         }
     }
 }

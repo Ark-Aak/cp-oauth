@@ -20,13 +20,11 @@
             <p class="auth-card__desc" role="status">
                 {{ $t('auth.flow.luogu_challenge_restart') }}
             </p>
-            <el-button
-                class="auth-card__button"
-                :disabled="operation !== null"
-                @click="restartChallenge"
-            >
-                {{ $t('auth.flow.restart_login') }}
-            </el-button>
+            <div class="task-actions">
+                <el-button :disabled="operation !== null" @click="restartChallenge">
+                    {{ $t('auth.flow.restart_login') }}
+                </el-button>
+            </div>
         </template>
         <template v-else-if="challenge">
             <h2 class="luogu-auth__step">{{ $t('auth.flow.luogu_step_publish') }}</h2>
@@ -75,9 +73,8 @@
                         :disabled="!hydrationReady || operation !== null"
                     />
                 </el-form-item>
-                <el-form-item>
+                <div class="task-actions">
                     <el-button
-                        class="auth-card__button"
                         type="primary"
                         native-type="submit"
                         :loading="operation === 'verify'"
@@ -85,16 +82,11 @@
                     >
                         {{ $t('auth.login.luogu_login_by_challenge') }}
                     </el-button>
-                </el-form-item>
+                    <el-button text :disabled="operation !== null" @click="restartChallenge">
+                        {{ $t('auth.flow.restart_login') }}
+                    </el-button>
+                </div>
             </el-form>
-            <el-button
-                class="auth-card__button"
-                text
-                :disabled="operation !== null"
-                @click="restartChallenge"
-            >
-                {{ $t('auth.flow.restart_login') }}
-            </el-button>
         </template>
         <template v-else>
             <div v-if="configError" class="auth-card__alert">
@@ -141,9 +133,8 @@
                         {{ $t('common.retry') }}
                     </el-button>
                 </div>
-                <el-form-item>
+                <div class="task-actions">
                     <el-button
-                        class="auth-card__button"
                         type="primary"
                         native-type="submit"
                         :loading="operation === 'request'"
@@ -153,7 +144,7 @@
                     >
                         {{ $t('binding.get_code') }}
                     </el-button>
-                </el-form-item>
+                </div>
             </el-form>
         </template>
         <p class="auth-card__footer">
@@ -425,9 +416,8 @@ async function copyChallengeCode() {
     &__setup {
         margin: var(--space-2) 0 0;
         color: var(--text-secondary);
-        font-size: var(--font-size-meta);
+        font-size: var(--font-size-control);
         line-height: 1.5;
-        text-align: center;
         overflow-wrap: anywhere;
     }
 }

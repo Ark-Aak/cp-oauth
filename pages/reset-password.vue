@@ -11,14 +11,18 @@
         </p>
         <template v-if="success">
             <p class="auth-card__status" role="status">{{ $t('auth.password.reset_success') }}</p>
-            <NuxtLink :to="loginPath" class="el-button el-button--primary auth-card__button">
-                {{ $t('auth.password.back_login') }}
-            </NuxtLink>
+            <div class="task-actions">
+                <NuxtLink :to="loginPath" class="el-button el-button--primary">
+                    {{ $t('auth.password.back_login') }}
+                </NuxtLink>
+            </div>
         </template>
         <template v-else-if="!token || tokenInvalid">
-            <NuxtLink :to="forgotPath" class="el-button el-button--primary auth-card__button">
-                {{ $t('auth.flow.reset_request_again') }}
-            </NuxtLink>
+            <div class="task-actions">
+                <NuxtLink :to="forgotPath" class="el-button el-button--primary">
+                    {{ $t('auth.flow.reset_request_again') }}
+                </NuxtLink>
+            </div>
         </template>
         <el-form
             v-else
@@ -72,17 +76,16 @@
             <p id="reset-password-hint" class="auth-card__field-hint">
                 {{ $t('auth.flow.password_rule') }}
             </p>
-            <el-form-item>
+            <div class="task-actions">
                 <el-button
                     type="primary"
                     native-type="submit"
                     :loading="pending"
                     :disabled="!hydrationReady || pending"
-                    class="auth-card__button"
                 >
                     {{ $t('auth.password.reset_now') }}
                 </el-button>
-            </el-form-item>
+            </div>
         </el-form>
         <p v-if="!success" class="auth-card__footer">
             <NuxtLink :to="loginPath">{{ $t('auth.password.back_login') }}</NuxtLink>

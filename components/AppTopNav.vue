@@ -1,57 +1,66 @@
 <template>
-    <div class="app-sidebar">
-        <NuxtLink to="/" class="app-sidebar__brand ui-navigation-link" @click="$emit('navigate')">
-            <img src="/favicon.svg" alt="" width="26" height="26" />
-            <span>{{ $t('app.name') }}</span>
+    <nav v-if="orientation === 'horizontal'" :aria-label="$t('nav.navigation')" class="app-top-nav">
+        <NuxtLink
+            v-for="item in navigation"
+            :key="item.path"
+            :to="item.path"
+            class="app-top-nav__link"
+            :class="{ 'is-active': active(item.path) }"
+            :aria-current="active(item.path) ? 'page' : undefined"
+            @click="$emit('navigate')"
+        >
+            {{ $t(item.label) }}
         </NuxtLink>
-        <nav class="app-sidebar__nav" :aria-label="$t('app.name')">
+    </nav>
+    <div v-else class="app-top-nav-panel">
+        <nav :aria-label="$t('nav.navigation')" class="app-top-nav-panel__nav">
             <NuxtLink
                 v-for="item in navigation"
                 :key="item.path"
                 :to="item.path"
-                class="app-sidebar__link ui-menu-link"
+                class="ui-menu-link"
                 :class="{ 'is-active': active(item.path) }"
                 :aria-current="active(item.path) ? 'page' : undefined"
                 @click="$emit('navigate')"
             >
-                <component :is="item.icon" :size="19" :stroke-width="1.6" aria-hidden="true" />
+                <component :is="item.icon" :size="18" :stroke-width="1.6" aria-hidden="true" />
                 <span>{{ $t(item.label) }}</span>
             </NuxtLink>
         </nav>
-        <div class="app-sidebar__account">
+        <div class="app-top-nav-panel__account">
             <template v-if="user">
                 <NuxtLink
                     to="/profile"
-                    class="app-sidebar__link app-sidebar__identity ui-menu-link"
+                    class="app-top-nav-panel__identity ui-menu-link"
                     @click="$emit('navigate')"
                 >
                     <AppUserAvatar
-                        :size="38"
+                        :size="28"
                         :src="user.avatarUrl"
                         :name="user.displayName || user.username"
                         :seed="user.id"
                     />
-                    <span class="app-sidebar__identity-text"
+                    <span class="app-top-nav-panel__identity-text"
                         ><strong>{{ user.displayName || user.username }}</strong
                         ><span>@{{ user.username }}</span></span
                     >
                 </NuxtLink>
                 <button
                     type="button"
-                    class="app-sidebar__link app-sidebar__logout ui-menu-link"
+                    class="app-top-nav-panel__logout ui-menu-link"
                     :disabled="logoutPending"
                     :aria-busy="logoutPending"
                     @click="$emit('logout')"
                 >
-                    <LogOut :size="19" aria-hidden="true" /><span>{{ $t('nav.logout') }}</span>
+                    <LogOut :size="18" aria-hidden="true" /><span>{{ $t('nav.logout') }}</span>
                 </button>
             </template>
             <NuxtLink
                 v-else-if="anonymous"
                 to="/login"
-                class="app-sidebar__link ui-menu-link"
+                class="ui-menu-link"
                 @click="$emit('navigate')"
-                ><LogIn :size="19" aria-hidden="true" />{{ $t('nav.login') }}</NuxtLink
+                ><LogIn :size="18" aria-hidden="true" />{{ $t('nav.login') }}</NuxtLink
             >
         </div>
     </div>
@@ -60,11 +69,15 @@
 <script setup lang="ts">
 import { Home, LogOut, LogIn, Code, BookOpen, UserCircle, Shield, Globe } from 'lucide-vue-next';
 import type { MeResponse } from '~/types/api';
-const props = defineProps<{
-    user: MeResponse | null;
-    anonymous: boolean;
-    logoutPending: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        user: MeResponse | null;
+        anonymous: boolean;
+        logoutPending: boolean;
+        orientation?: 'horizontal' | 'vertical';
+    }>(),
+    { orientation: 'horizontal' }
+);
 defineEmits<{ logout: []; navigate: [] }>();
 const route = useRoute();
 const navigation = computed(() => {
@@ -85,59 +98,74 @@ function active(path: string) {
 </script>
 
 <style scoped lang="scss">
-.app-sidebar {
+.app-top-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.app-top-nav::-webkit-scrollbar {
+    display: none;
+}
+.app-top-nav__link {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 var(--space-3);
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: var(--font-size-control);
+    white-space: nowrap;
+    transition: color 140ms ease;
+}
+.app-top-nav__link:hover {
+    color: var(--accent);
+}
+.app-top-nav__link.is-active {
+    color: var(--accent);
+    font-weight: 600;
+    border-bottom-color: var(--accent);
+}
+.app-top-nav-panel {
     display: flex;
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    padding: var(--space-3) var(--space-3) var(--space-4);
+    padding: var(--space-3);
     background: var(--bg-primary);
 }
-.app-sidebar__brand {
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
-    padding: 0 var(--space-3) var(--space-4);
-    min-height: 52px;
-    font-size: var(--font-size-section);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-}
-.app-sidebar__nav {
+.app-top-nav-panel__nav {
     display: grid;
     gap: var(--space-1);
 }
-
-.app-sidebar__account {
+.app-top-nav-panel__account {
+    display: grid;
+    gap: var(--space-1);
     margin-top: auto;
     padding-top: var(--space-2);
     border-top: 1px solid var(--divider-subtle);
 }
-.app-sidebar__identity {
-    padding: var(--space-1) var(--space-3);
-    min-height: 44px;
-}
-.app-sidebar__identity-text {
+.app-top-nav-panel__identity-text {
     min-width: 0;
     display: grid;
+    line-height: 1.4;
 }
-.app-sidebar__identity-text strong {
+.app-top-nav-panel__identity-text strong {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: var(--font-size-body);
+    color: var(--text-primary);
     font-weight: 600;
 }
-.app-sidebar__identity-text > span {
+.app-top-nav-panel__identity-text > span {
     color: var(--text-muted);
     font-size: var(--font-size-meta);
     overflow-wrap: anywhere;
 }
-.app-sidebar__logout {
-    width: 100%;
-}
-.app-sidebar__logout:disabled {
+.app-top-nav-panel__logout:disabled {
     cursor: wait;
 }
 </style>

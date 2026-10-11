@@ -66,7 +66,7 @@
                     <p v-if="codeAlreadySubmitted" class="auth-card__status" role="status">
                         {{ $t('auth.flow.code_already_submitted') }}
                     </p>
-                    <el-form-item>
+                    <div class="task-actions">
                         <el-button
                             type="primary"
                             native-type="submit"
@@ -77,23 +77,23 @@
                                 !validCode ||
                                 codeAlreadySubmitted
                             "
-                            class="auth-card__button"
                         >
                             {{ $t('auth.login.verify_2fa') }}
                         </el-button>
-                    </el-form-item>
+                        <el-button text :disabled="operation !== null" @click="restartLogin">
+                            {{ $t('auth.flow.restart_login') }}
+                        </el-button>
+                    </div>
                 </el-form>
             </template>
             <p v-else class="auth-card__desc" role="status">
                 {{ $t('auth.flow.challenge_restart') }}
             </p>
-            <el-button
-                class="auth-card__button"
-                :disabled="operation !== null"
-                @click="restartLogin"
-            >
-                {{ $t('auth.flow.restart_login') }}
-            </el-button>
+            <div v-if="!challengeActive" class="task-actions">
+                <el-button :disabled="operation !== null" @click="restartLogin">
+                    {{ $t('auth.flow.restart_login') }}
+                </el-button>
+            </div>
         </template>
 
         <template v-else>
@@ -124,12 +124,11 @@
                         type="email"
                         name="email"
                         :aria-label="$t('auth.login.email')"
-                        autocomplete="username email"
+                        autocomplete="username"
                         :disabled="!hydrationReady || operation !== null"
                     />
                 </el-form-item>
                 <el-form-item
-                    class="auth-card__field--with-help"
                     prop="password"
                     :label="$t('auth.login.password')"
                     for="login-password"
@@ -165,9 +164,6 @@
                         </template>
                     </el-input>
                 </el-form-item>
-                <NuxtLink :to="forgotPath" class="auth-card__link auth-card__recovery">
-                    {{ $t('auth.login.forgot_password') }}
-                </NuxtLink>
                 <div v-if="turnstileEnabled" class="auth-card__captcha">
                     <div ref="turnstileEl" class="auth-card__captcha-widget" />
                     <p class="auth-card__status" role="status">
@@ -181,7 +177,7 @@
                         {{ $t('common.retry') }}
                     </el-button>
                 </div>
-                <el-form-item>
+                <div class="task-actions">
                     <el-button
                         type="primary"
                         native-type="submit"
@@ -189,7 +185,6 @@
                         :disabled="
                             !hydrationReady || operation !== null || !configReady || !captchaReady
                         "
-                        class="auth-card__button"
                     >
                         {{
                             operation === 'password'
@@ -197,23 +192,26 @@
                                 : $t('auth.login.submit')
                         }}
                     </el-button>
-                </el-form-item>
+                    <NuxtLink :to="forgotPath" class="auth-card__link">
+                        {{ $t('auth.login.forgot_password') }}
+                    </NuxtLink>
+                </div>
             </el-form>
 
             <section class="login__alternatives" aria-labelledby="login-alternatives-title">
                 <h2 id="login-alternatives-title" class="auth-card__divider">
                     {{ $t('auth.login.oauth_divider') }}
                 </h2>
-                <el-button
-                    class="auth-card__button login__method"
-                    :loading="operation === 'passkey'"
-                    :disabled="!hydrationReady || operation !== null || !configReady"
-                    @click="loginWithPasskey"
-                >
-                    <Fingerprint :size="18" :stroke-width="1.5" class="login__icon" />
-                    {{ $t('auth.login.with_passkey') }}
-                </el-button>
-                <div class="login__providers">
+                <div class="login__methods">
+                    <el-button
+                        class="login__method"
+                        :loading="operation === 'passkey'"
+                        :disabled="!hydrationReady || operation !== null || !configReady"
+                        @click="loginWithPasskey"
+                    >
+                        <Fingerprint :size="18" :stroke-width="1.5" class="login__icon" />
+                        {{ $t('auth.login.with_passkey') }}
+                    </el-button>
                     <el-button
                         v-for="provider in providers"
                         :key="provider.name"
@@ -555,38 +553,26 @@ async function loginWithLuogu() {
 
 <style scoped lang="scss">
 .login {
-    &__providers {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    &__methods {
+        display: flex;
+        flex-wrap: wrap;
         gap: var(--space-2);
-        margin-top: var(--space-2);
     }
 
     &__method {
         margin: 0;
     }
 
-    &__providers > &__method:last-child:nth-child(odd) {
-        grid-column: 1 / -1;
-    }
-
     &__icon {
-        margin-right: var(--space-2);
         flex-shrink: 0;
     }
 
     &__hint {
         margin: var(--space-2) 0 0;
         color: var(--text-secondary);
-        font-size: var(--font-size-meta);
+        font-size: var(--font-size-control);
         line-height: 1.5;
         overflow-wrap: anywhere;
-    }
-}
-
-@media (max-width: 359px) {
-    .login__providers {
-        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

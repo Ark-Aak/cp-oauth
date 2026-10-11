@@ -31,17 +31,16 @@
                     :disabled="!hydrationReady || pending"
                 />
             </el-form-item>
-            <el-form-item>
+            <div class="task-actions">
                 <el-button
                     type="primary"
                     native-type="submit"
                     :loading="pending"
                     :disabled="!hydrationReady || pending"
-                    class="auth-card__button"
                 >
                     {{ $t(sent ? 'auth.password.send_again' : 'auth.password.send_reset') }}
                 </el-button>
-            </el-form-item>
+            </div>
         </el-form>
         <p class="auth-card__footer">
             <NuxtLink :to="loginPath">{{ $t('auth.password.back_login') }}</NuxtLink>

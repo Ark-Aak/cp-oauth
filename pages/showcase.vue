@@ -17,7 +17,7 @@
                 <section
                     v-for="section in sections"
                     :key="section.id"
-                    class="showcase__section ui-card"
+                    class="showcase__section ui-section"
                     :aria-labelledby="`showcase-${section.id}`"
                 >
                     <h2 :id="`showcase-${section.id}`">{{ section.title }}</h2>
@@ -119,11 +119,7 @@ function getFavicon(url: string | null): string {
     min-width: 0;
 
     &__action {
-        min-width: 44px;
-        min-height: 44px;
         max-width: 100%;
-        height: auto;
-        white-space: normal;
     }
 
     &__content {
@@ -135,12 +131,19 @@ function getFavicon(url: string | null): string {
 
     &__section {
         min-width: 0;
-        padding: var(--panel-padding);
 
         h2 {
             margin-bottom: var(--space-3);
             overflow-wrap: anywhere;
         }
+    }
+
+    &__section + &__section {
+        margin-top: 0;
+        padding-top: 0;
+        padding-left: var(--space-5);
+        border-top: 0;
+        border-left: 1px solid var(--border-color);
     }
 
     &__list {
@@ -161,10 +164,8 @@ function getFavicon(url: string | null): string {
         display: flex;
         align-items: flex-start;
         gap: var(--space-3);
-        padding: var(--space-4) 0;
-        min-height: 72px;
+        padding: var(--space-3) 0;
         text-decoration: none;
-        min-width: 44px;
         border-radius: var(--card-radius);
     }
 
@@ -211,6 +212,13 @@ function getFavicon(url: string | null): string {
 @media (max-width: 767px) {
     .showcase__content {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .showcase__section + .showcase__section {
+        padding-top: var(--space-4);
+        padding-left: 0;
+        border-top: 1px solid var(--border-color);
+        border-left: 0;
     }
 }
 </style>

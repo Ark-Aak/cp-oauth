@@ -48,7 +48,7 @@ defineProps<{ promotionSource?: 'oauth' }>();
 <style scoped lang="scss">
 .app-footer {
     margin-top: var(--space-4);
-    padding: var(--space-2) 0 var(--space-1);
+    padding: var(--space-3) 0;
     border-top: 1px solid var(--border-color);
     color: var(--text-muted);
     font-size: var(--font-size-meta);
@@ -67,10 +67,7 @@ defineProps<{ promotionSource?: 'oauth' }>();
 
     &__link,
     &__link:hover {
-        display: inline-flex;
-        align-items: center;
-        min-width: 44px;
-        min-height: 44px;
+        display: inline;
         max-width: 100%;
         color: var(--text-primary);
         text-decoration: none;

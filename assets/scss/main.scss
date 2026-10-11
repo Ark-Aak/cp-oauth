@@ -20,7 +20,6 @@
     --space-4: 16px;
     --space-5: 24px;
     --space-6: 32px;
-    --sidebar-width: 220px;
     --panel-padding: 20px;
     --font-size-body: 15px;
     --font-size-control: 14px;
@@ -29,14 +28,15 @@
     --font-size-title-mobile: 22px;
     --font-size-section: 18px;
     --font-size-subheading: 16px;
-    --font-body:
-        'Lato', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'Microsoft YaHei', sans-serif;
+    --font-body: 'Lato', 'Noto Sans CJK SC', 'Noto Sans CJK JP', 'Microsoft YaHei', sans-serif;
     --font-code: 'Fira Code', 'SFMono-Regular', Consolas, monospace;
     --el-font-family: var(--font-body);
     --el-font-size-base: var(--font-size-control);
-    --el-component-size: 44px;
-    --el-component-size-large: 44px;
-    --el-component-size-small: 44px;
+    --el-component-size: 36px;
+    --el-component-size-large: 36px;
+    --el-component-size-small: 36px;
+    --control-height: 36px;
+    --topbar-height: 48px;
     --el-border-radius-base: 4px;
     --el-border-radius-small: 2px;
 }
@@ -66,16 +66,6 @@ textarea,
 select {
     font: inherit;
 }
-button,
-[role='button'],
-input:not([type='checkbox']):not([type='radio']),
-select {
-    min-height: 44px;
-}
-button,
-[role='button'] {
-    min-width: 44px;
-}
 a {
     color: var(--accent);
     text-decoration: none;
@@ -97,8 +87,8 @@ a:where(.el-button, .ui-navigation-link):hover,
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    min-height: 44px;
-    padding: var(--space-2) var(--space-3);
+    min-height: 32px;
+    padding: var(--space-1) var(--space-3);
     border: 0;
     border-radius: var(--el-border-radius-base);
     background: transparent;
@@ -166,26 +156,36 @@ pre {
     white-space: nowrap;
     border: 0;
 }
-.ui-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--card-radius);
-}
-.ui-quote-block {
-    padding-left: var(--space-4);
-    border-left: 3px solid var(--accent);
-}
-.ui-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.task-panel {
-    max-width: 680px;
+.ui-section {
     min-width: 0;
-    padding: var(--panel-padding);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--card-radius);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border-color);
+}
+.ui-section:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+.ui-section + .ui-section {
+    margin-top: var(--space-5);
+}
+.ui-section > h2 {
+    margin-bottom: var(--space-3);
+}
+.ui-note {
+    padding: var(--space-2) var(--space-3);
+    border-left: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: var(--font-size-control);
+}
+.ui-note--accent {
+    border-left-color: var(--accent);
+}
+.ui-note--warning {
+    border-left-color: var(--el-color-warning);
+}
+.ui-note--danger {
+    border-left-color: var(--el-color-danger);
+    color: var(--text-primary);
 }
 .task-section {
     padding: var(--space-5) 0;
@@ -210,7 +210,7 @@ pre {
     flex-wrap: wrap;
     gap: var(--space-2);
     align-items: center;
-    margin-top: var(--space-5);
+    margin-top: var(--space-4);
 }
 .shiki,
 .shiki span {

@@ -50,7 +50,7 @@
         >
             <div v-if="user" class="profile-workbench__layout">
                 <ProfileTaskNav :model-value="activeTask" @update:model-value="selectTask" />
-                <div id="profile-active-panel" class="profile-workbench__panel task-panel">
+                <div id="profile-active-panel" class="profile-workbench__panel">
                     <ProfileIdentityPanel v-if="activeTask === 'basic'" />
                     <ProfileBindingsPanel v-else-if="activeTask === 'bindings'" />
                     <ProfileSecurityPanel v-else-if="activeTask === 'security'" />
@@ -205,10 +205,6 @@ onBeforeUnmount(() => {
     min-width: 0;
     &__header-action {
         gap: var(--space-2);
-        max-width: 100%;
-        height: auto;
-        min-height: 44px;
-        white-space: normal;
     }
     &__layout {
         display: grid;
@@ -246,7 +242,8 @@ onBeforeUnmount(() => {
             grid-template-columns: 180px minmax(0, 1fr);
         }
         &__panel {
-            min-height: 240px;
+            border-left: 1px solid var(--border-color);
+            padding-left: var(--space-5);
         }
     }
 }

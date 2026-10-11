@@ -5,14 +5,21 @@
             <p>{{ t('profile.security.description') }}</p>
         </header>
 
-        <div v-if="refreshError" class="profile-security__notice" role="alert">
+        <div
+            v-if="refreshError"
+            class="profile-security__notice ui-note ui-note--accent"
+            role="alert"
+        >
             <p>{{ refreshError }}</p>
             <el-button :loading="refreshPending" :disabled="actionPending" @click="refreshSession">
                 {{ t('common.retry') }}
             </el-button>
         </div>
 
-        <section class="profile-security__section" aria-labelledby="profile-password-title">
+        <section
+            class="profile-security__section ui-section"
+            aria-labelledby="profile-password-title"
+        >
             <h3 id="profile-password-title">{{ t('profile.security.change_password') }}</h3>
             <form
                 method="post"
@@ -41,7 +48,7 @@
                     >
                         <template #suffix>
                             <el-button
-                                class="profile-security__password-toggle"
+                                class="profile-security__password-toggle is-icon-only"
                                 text
                                 native-type="button"
                                 :aria-label="
@@ -97,7 +104,7 @@
                     >
                         <template #suffix>
                             <el-button
-                                class="profile-security__password-toggle"
+                                class="profile-security__password-toggle is-icon-only"
                                 text
                                 native-type="button"
                                 :aria-label="
@@ -137,10 +144,14 @@
                 >
                     {{ passwordError }}
                 </p>
-                <p v-if="passwordNotice" class="profile-security__status" role="status">
+                <p
+                    v-if="passwordNotice"
+                    class="profile-security__status ui-note ui-note--accent"
+                    role="status"
+                >
                     {{ passwordNotice }}
                 </p>
-                <div class="profile-security__actions">
+                <div class="profile-security__actions task-actions">
                     <el-button
                         type="primary"
                         native-type="submit"
@@ -161,7 +172,10 @@
             </form>
         </section>
 
-        <section class="profile-security__section" aria-labelledby="profile-twofactor-title">
+        <section
+            class="profile-security__section ui-section"
+            aria-labelledby="profile-twofactor-title"
+        >
             <h3 id="profile-twofactor-title">{{ t('profile.security.twofactor') }}</h3>
             <AppAsyncState
                 :pending="twoFactorStatus === 'pending' || twoFactorStatus === 'idle'"
@@ -185,7 +199,7 @@
                     >
                         {{ t('profile.security.email_verified_required') }}
                     </p>
-                    <div class="profile-security__actions">
+                    <div class="profile-security__actions task-actions">
                         <el-button
                             :loading="setupPending && requestedMethod === 'email_otp'"
                             :disabled="locked || !emailVerified"
@@ -224,7 +238,7 @@
                         <el-button
                             v-if="twoFactor.twoFactorEnabled"
                             type="danger"
-                            plain
+                            text
                             :loading="disablePending"
                             :disabled="locked"
                             :aria-describedby="disableError ? 'profile-disable-error' : undefined"
@@ -243,7 +257,11 @@
             >
                 {{ setupError }}
             </p>
-            <p v-if="setupNotice" class="profile-security__status" role="status">
+            <p
+                v-if="setupNotice"
+                class="profile-security__status ui-note ui-note--accent"
+                role="status"
+            >
                 {{ setupNotice }}
             </p>
             <p
@@ -254,12 +272,16 @@
             >
                 {{ disableError }}
             </p>
-            <p v-if="disableNotice" class="profile-security__status" role="status">
+            <p
+                v-if="disableNotice"
+                class="profile-security__status ui-note ui-note--accent"
+                role="status"
+            >
                 {{ disableNotice }}
             </p>
             <div
                 v-if="setupActive"
-                class="profile-security__setup"
+                class="profile-security__setup ui-section"
                 role="group"
                 aria-labelledby="profile-setup-title"
             >
@@ -329,7 +351,7 @@
                     >
                         {{ confirmError }}
                     </p>
-                    <div class="profile-security__actions">
+                    <div class="profile-security__actions task-actions">
                         <el-button
                             type="primary"
                             native-type="submit"
@@ -350,7 +372,7 @@
             </div>
             <div
                 v-if="setupNeedsCancellation && !setupActive && !setupPending"
-                class="profile-security__notice"
+                class="profile-security__notice ui-note ui-note--accent"
             >
                 <p>{{ t('profile.security.setup_pending_cleanup') }}</p>
                 <el-button
@@ -373,7 +395,10 @@
             </p>
         </section>
 
-        <section class="profile-security__section" aria-labelledby="profile-passkeys-title">
+        <section
+            class="profile-security__section ui-section"
+            aria-labelledby="profile-passkeys-title"
+        >
             <h3 id="profile-passkeys-title">{{ t('profile.security.passkeys') }}</h3>
             <p class="profile-security__hint">{{ t('profile.security.passkey_hint') }}</p>
             <AppAsyncState
@@ -410,7 +435,7 @@
                                 <td>
                                     <el-button
                                         type="danger"
-                                        plain
+                                        text
                                         :loading="removingPasskeyId === key.id"
                                         :disabled="locked"
                                         :aria-label="
@@ -442,7 +467,7 @@
                             </dl>
                             <el-button
                                 type="danger"
-                                plain
+                                text
                                 :loading="removingPasskeyId === key.id"
                                 :disabled="locked"
                                 :aria-label="
@@ -467,7 +492,11 @@
             >
                 {{ removeError }}
             </p>
-            <p v-if="removeNotice" class="profile-security__status" role="status">
+            <p
+                v-if="removeNotice"
+                class="profile-security__status ui-note ui-note--accent"
+                role="status"
+            >
                 {{ removeNotice }}
             </p>
             <form
@@ -516,10 +545,14 @@
                 >
                     {{ passkeyError }}
                 </p>
-                <p v-if="passkeyNotice" class="profile-security__status" role="status">
+                <p
+                    v-if="passkeyNotice"
+                    class="profile-security__status ui-note ui-note--accent"
+                    role="status"
+                >
                     {{ passkeyNotice }}
                 </p>
-                <div class="profile-security__actions">
+                <div class="profile-security__actions task-actions">
                     <el-button
                         ref="addPasskeyButton"
                         type="primary"
@@ -769,8 +802,6 @@ onBeforeUnmount(() => {
 
     &__section {
         min-width: 0;
-        padding-block: var(--space-5);
-        border-top: 1px solid var(--border-color);
 
         > h3 {
             margin-bottom: var(--space-4);
@@ -778,15 +809,6 @@ onBeforeUnmount(() => {
         > p {
             margin-block: var(--space-3);
         }
-    }
-
-    &__section:last-child {
-        padding-bottom: 0;
-    }
-
-    &__header + &__section {
-        border-top: 0;
-        padding-top: 0;
     }
 
     &__form {
@@ -807,13 +829,6 @@ onBeforeUnmount(() => {
         }
     }
 
-    &__actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-        margin-top: var(--space-3);
-    }
-
     &__hint {
         color: var(--text-secondary);
         font-size: var(--font-size-control);
@@ -823,9 +838,6 @@ onBeforeUnmount(() => {
         font-weight: 600;
     }
     &__status {
-        padding: var(--space-2) var(--space-3);
-        border-left: 2px solid var(--accent);
-        background: var(--accent-subtle);
         overflow-wrap: anywhere;
     }
     &__empty {
@@ -842,15 +854,9 @@ onBeforeUnmount(() => {
         color: var(--el-color-danger);
         overflow-wrap: anywhere;
     }
-    &__password-toggle {
-        min-width: 44px;
-        padding: 0;
-    }
 
     &__notice {
-        padding: var(--space-3) var(--space-4);
         margin-block: var(--space-4);
-        border-left: 2px solid var(--border-color);
 
         p {
             margin-bottom: var(--space-3);
@@ -861,8 +867,8 @@ onBeforeUnmount(() => {
         max-width: 680px;
         margin-top: var(--space-4);
         padding: var(--space-4);
-        border-left: 2px solid var(--accent);
-        background: var(--bg-secondary);
+        border: 0 solid var(--accent);
+        border-left-width: 2px;
 
         h3 {
             margin-bottom: var(--space-3);
@@ -934,10 +940,6 @@ onBeforeUnmount(() => {
         }
     }
 
-    :deep(.el-button),
-    :deep(.el-input__wrapper) {
-        min-height: 44px;
-    }
     :deep(.el-button + .el-button) {
         margin-left: 0;
     }
@@ -963,10 +965,6 @@ onBeforeUnmount(() => {
         }
         &__passkey-cards {
             display: block;
-        }
-        &__actions > .el-button {
-            max-width: 100%;
-            white-space: normal;
         }
     }
 }

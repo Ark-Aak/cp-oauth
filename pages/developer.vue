@@ -23,10 +23,7 @@
             {{ $t('nav.login') }}
         </NuxtLink>
 
-        <section
-            class="developer__applications ui-card"
-            aria-labelledby="developer-applications-title"
-        >
+        <section class="developer__applications" aria-labelledby="developer-applications-title">
             <h2 id="developer-applications-title">{{ $t('developer.your_apps') }}</h2>
             <AppAsyncState
                 :pending="pending"
@@ -82,6 +79,7 @@
                                         </span>
                                         <code>{{ client.clientId }}</code>
                                         <el-button
+                                            class="is-icon-only"
                                             native-type="button"
                                             text
                                             :disabled="rowPending(client.id) || !!copyingId"
@@ -112,6 +110,7 @@
                                     <div class="developer__row-actions">
                                         <el-button
                                             native-type="button"
+                                            text
                                             :disabled="rowPending(client.id)"
                                             :aria-label="$t('developer.edit') + ': ' + client.name"
                                             @click="openEdit(client, $event)"
@@ -161,6 +160,7 @@
                             <span class="sr-only">{{ $t('developer.client_id') }}: </span>
                             <code>{{ client.clientId }}</code>
                             <el-button
+                                class="is-icon-only"
                                 native-type="button"
                                 text
                                 :disabled="rowPending(client.id) || !!copyingId"
@@ -183,6 +183,7 @@
                         <div class="developer__row-actions">
                             <el-button
                                 native-type="button"
+                                text
                                 :disabled="rowPending(client.id)"
                                 :aria-label="$t('developer.edit') + ': ' + client.name"
                                 @click="openEdit(client, $event)"
@@ -205,7 +206,7 @@
                 </ul>
             </AppAsyncState>
 
-            <aside class="developer__help" aria-labelledby="developer-guide-title">
+            <aside class="developer__help ui-section" aria-labelledby="developer-guide-title">
                 <h3 id="developer-guide-title">{{ $t('developer.integration_guide') }}</h3>
                 <p>{{ $t('developer.integration_hint') }}</p>
                 <NuxtLink to="/about" class="developer__help-link">
@@ -287,6 +288,7 @@
                     </el-button>
                     <el-button
                         type="danger"
+                        text
                         native-type="button"
                         :disabled="!!deletingId"
                         :loading="!!deletingId"
@@ -559,7 +561,6 @@ async function copyClientId(client: OAuthClient) {
     }
 
     &__applications {
-        padding: var(--panel-padding);
         min-width: 0;
     }
 
@@ -639,8 +640,6 @@ async function copyClientId(client: OAuthClient) {
 
         :deep(.el-button) {
             flex-shrink: 0;
-            min-width: 44px;
-            padding: 0;
         }
     }
 
@@ -688,13 +687,6 @@ async function copyClientId(client: OAuthClient) {
         gap: var(--space-2);
     }
 
-    &__row-actions :deep(.el-button) {
-        max-width: 100%;
-        min-height: 44px;
-        height: auto;
-        white-space: normal;
-    }
-
     &__row-actions :deep(.el-button),
     &__dialog-actions :deep(.el-button) {
         margin: 0;
@@ -730,8 +722,6 @@ async function copyClientId(client: OAuthClient) {
 
     &__help {
         margin-top: var(--space-5);
-        padding-top: var(--space-4);
-        border-top: 1px solid var(--border-color);
         color: var(--text-secondary);
         font-size: var(--font-size-control);
 
@@ -744,7 +734,6 @@ async function copyClientId(client: OAuthClient) {
         display: inline-flex;
         align-items: center;
         gap: var(--space-2);
-        min-height: 44px;
         margin-top: var(--space-2);
         overflow-wrap: anywhere;
     }
@@ -785,12 +774,8 @@ async function copyClientId(client: OAuthClient) {
         }
 
         &__row-actions {
-            justify-content: stretch;
+            justify-content: flex-start;
             margin-top: var(--space-4);
-        }
-
-        &__row-actions :deep(.el-button) {
-            flex: 1;
         }
     }
 }

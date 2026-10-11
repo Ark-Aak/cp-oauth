@@ -24,10 +24,8 @@ defineProps<{ format: 'markdown' | 'html' }>();
     margin: var(--space-2) 0 var(--space-3);
     padding: var(--space-3);
     border-left: 3px solid var(--accent);
-    border-radius: 4px;
-    background: var(--accent-subtle);
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: var(--font-size-control);
     line-height: 1.6;
     overflow-wrap: anywhere;
 

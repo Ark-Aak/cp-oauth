@@ -72,9 +72,10 @@
                     </template>
                 </el-form-item>
                 <el-button
-                    class="oauth-client-form__remove"
+                    class="oauth-client-form__remove is-icon-only"
+                    type="danger"
                     native-type="button"
-                    plain
+                    text
                     :disabled="controlsDisabled || redirectRows.length === 1"
                     :aria-label="$t('developer.remove_redirect_uri') + ' ' + (index + 1)"
                     @click="removeUri(index)"
@@ -99,10 +100,7 @@
             </el-checkbox>
         </el-form-item>
         <p v-if="formError" class="oauth-client-form__error" role="alert">{{ formError }}</p>
-        <div class="oauth-client-form__actions">
-            <el-button native-type="button" :disabled="controlsDisabled" @click="$emit('cancel')">
-                {{ $t('developer.cancel') }}
-            </el-button>
+        <div class="oauth-client-form__actions task-actions">
             <el-button
                 type="primary"
                 native-type="submit"
@@ -110,6 +108,9 @@
                 :loading="pending"
             >
                 {{ submitLabel }}
+            </el-button>
+            <el-button native-type="button" :disabled="controlsDisabled" @click="$emit('cancel')">
+                {{ $t('developer.cancel') }}
             </el-button>
         </div>
     </el-form>
@@ -253,32 +254,21 @@ defineExpose({ setFieldErrors, focusFirstField });
 
     &__uri-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 44px;
+        grid-template-columns: minmax(0, 1fr) var(--control-height);
         gap: var(--space-2);
-        align-items: start;
+        align-items: end;
+        margin-bottom: var(--space-4);
     }
 
     &__uri-field {
         min-width: 0;
-    }
-
-    &__remove {
-        margin-top: 30px;
-        min-width: 44px;
-        padding: 0;
+        margin-bottom: 0;
     }
 
     &__error {
         margin-bottom: var(--space-4);
         color: var(--text-primary);
         overflow-wrap: anywhere;
-    }
-
-    &__actions {
-        display: flex;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: var(--space-2);
     }
 
     &__actions :deep(.el-button) {
@@ -294,9 +284,7 @@ defineExpose({ setFieldErrors, focusFirstField });
 
     :deep(.el-checkbox) {
         height: auto;
-        min-height: 44px;
         align-items: flex-start;
-        padding-block: var(--space-3);
     }
 
     :deep(.el-checkbox__input) {
@@ -315,16 +303,6 @@ defineExpose({ setFieldErrors, focusFirstField });
         font-size: var(--font-size-control);
         line-height: 1.5;
         overflow-wrap: anywhere;
-    }
-
-    @media (max-width: 480px) {
-        &__actions {
-            flex-direction: column-reverse;
-        }
-
-        &__actions :deep(.el-button) {
-            width: 100%;
-        }
     }
 }
 </style>
