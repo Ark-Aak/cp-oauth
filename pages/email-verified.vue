@@ -26,6 +26,10 @@ const status = computed<Status>(() => {
     const value = route.query.status;
     return value === 'success' || value === 'expired' || value === 'conflict' ? value : 'error';
 });
+
+/** A conflicting confirmation is a failed request: the server-rendered page answers 409. */
+if (status.value === 'conflict') setResponseStatus(409);
+
 const redirect = computed(() =>
     getSafeRedirectTarget(route.query.redirect as string | undefined, '/profile')
 );
