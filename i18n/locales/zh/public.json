@@ -1,0 +1,97 @@
+{
+    "public": {
+        "home": {
+            "title": "一次登录，证明你的每个平台身份",
+            "statement": "CP OAuth 是面向算法竞赛选手的 OAuth 2.0 身份提供方。关联并验证你的洛谷、AtCoder、力扣、Codeforces 等账号，再由你决定应用能读取哪些身份。",
+            "openProfile": "打开个人资料",
+            "openDeveloper": "管理 OAuth 应用",
+            "howItWorks": "工作原理",
+            "figures": "站点数据",
+            "figuresUnavailable": "站点数据暂时不可用。",
+            "stats": {
+                "users": "账号",
+                "linkedAccounts": "关联账号",
+                "oauthClients": "OAuth 应用",
+                "signInsToday": "今日授权请求"
+            },
+            "notices": "公告",
+            "noNotices": "还没有发布公告。",
+            "pinned": "置顶",
+            "members": "最新成员",
+            "noMembers": "还没有成员。",
+            "joined": "{date} 加入"
+        },
+        "about": {
+            "title": "关于 CP OAuth",
+            "description": "账号如何验证，应用如何完成登录。",
+            "toDeveloper": "创建 OAuth 应用",
+            "platformsTitle": "支持的平台",
+            "platformsText": "每个关联账号在保存前都会经过验证。",
+            "providerSignIn": "通过在该平台登录完成验证。",
+            "proof": {
+                "luogu": "通过放在洛谷公开剪贴板中的验证码验证。",
+                "atcoder": "通过放在 AtCoder 个人资料 Affiliation 字段中的验证码验证。",
+                "leetcode": "通过放在力扣（leetcode.cn）个人简介中的验证码验证。"
+            },
+            "flowTitle": "授权码流程",
+            "flowText": "标准 OAuth 2.0，可选 PKCE（S256 或 plain）。",
+            "steps": {
+                "register": "在开发者控制台注册应用，并添加完全匹配的回调地址。",
+                "redirect": "将用户引导到授权端点，携带 client_id、redirect_uri、response_type=code、scope、state；公开客户端还需携带 PKCE code_challenge。",
+                "consent": "用户登录并同意所请求的权限，浏览器带着 10 分钟内有效的 code 返回回调地址。",
+                "exchange": "在令牌端点用 code 换取访问令牌（1 小时）和刷新令牌（30 天）。",
+                "userinfo": "携带 Bearer 访问令牌调用 userinfo 端点，返回的字段仅限已授权的权限范围。",
+                "refresh": "使用刷新令牌获取新令牌。每个刷新令牌只能使用一次，使用后即被替换。"
+            },
+            "endpointsTitle": "端点",
+            "endpoints": {
+                "issuer": "签发者",
+                "authorization": "授权",
+                "token": "令牌",
+                "userinfo": "用户信息",
+                "revocation": "撤销"
+            },
+            "scopesTitle": "权限范围",
+            "scopesText": "应用申请权限范围，用户会在授权页逐项看到。"
+        },
+        "showcase": {
+            "title": "应用展示",
+            "description": "使用 CP OAuth 的站点和项目。",
+            "sites": "站点",
+            "sitesText": "支持使用 CP OAuth 登录的服务。",
+            "noSites": "还没有收录站点。",
+            "projects": "项目",
+            "projectsText": "围绕 CP OAuth 构建的库和工具。",
+            "noProjects": "还没有收录项目。"
+        },
+        "user": {
+            "kicker": "公开主页",
+            "joined": "{date} 加入",
+            "editProfile": "编辑公开资料",
+            "homepage": "介绍",
+            "linkedAccounts": "关联账号",
+            "noLinkedAccounts": "没有公开的关联账号。",
+            "contestStats": "比赛统计",
+            "highestRating": "最高 Rating",
+            "totalContests": "比赛场次",
+            "contests": "场次",
+            "rank": "排名",
+            "lastActivity": "最近活跃",
+            "noStats": "公开的关联账号没有比赛数据。",
+            "statsUnavailable": "来自 Clist.by 的比赛数据暂时不可用。",
+            "ratingHistory": "Rating 记录",
+            "noRatingHistory": "公开的关联账号没有计分比赛。",
+            "recentChanges": "最近的 Rating 变化",
+            "chartLabel": "Rating 变化曲线",
+            "chartResource": "平台",
+            "chartTooltip": "{date} · {rating}（{change}）",
+            "columns": {
+                "contest": "比赛",
+                "date": "日期",
+                "place": "名次",
+                "rating": "Rating",
+                "change": "变化"
+            }
+        }
+    }
+}

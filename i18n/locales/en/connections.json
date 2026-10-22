@@ -1,0 +1,38 @@
+{
+    "connections": {
+        "description": "Accounts on other platforms that you have proven you own.",
+        "footnote": "Apps can read linked accounts only with the link and cp scopes you approve. Choose which ones appear publicly in",
+        "uid": "UID {uid}",
+        "verifiedAt": "Verified {date}",
+        "notLinked": "Not linked",
+        "notConfigured": "The administrator hasn't enabled this provider.",
+        "refreshName": "Refresh name",
+        "refreshed": "Name updated to {name}.",
+        "unlink": "Unlink",
+        "unlinkTitle": "Unlink account",
+        "unlinkConfirm": "Apps will no longer receive your {platform} identity, and you can no longer sign in with it.",
+        "unlinked": "{platform} unlinked.",
+        "linked": "{platform} linked.",
+        "link": {
+            "action": "Link",
+            "title": "Link {platform}",
+            "getCode": "Get verification code",
+            "intro": {
+                "luogu": "Enter your Luogu UID. You'll prove ownership with a public clipboard.",
+                "atcoder": "Enter your AtCoder username. You'll prove ownership through your profile's Affiliation field.",
+                "leetcode": "Enter your LeetCode (leetcode.cn) username as it appears in your profile URL. You'll prove ownership through your bio."
+            },
+            "uidLabel": {
+                "luogu": "Luogu UID",
+                "atcoder": "AtCoder username",
+                "leetcode": "LeetCode username"
+            },
+            "uidPlaceholder": {
+                "luogu": "123456",
+                "atcoder": "tourist",
+                "leetcode": "your-slug"
+            },
+            "luoguUidRule": "A Luogu UID contains digits only."
+        }
+    }
+}

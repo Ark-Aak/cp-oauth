@@ -1,0 +1,36 @@
+{
+    "oauth": {
+        "authorize": {
+            "pageTitle": "Authorize app",
+            "title": "Allow {app} to use your account?",
+            "description": "Review what the app will receive before you continue.",
+            "app": "App",
+            "returnsTo": "Returns to",
+            "account": "Signed in as",
+            "switch": "Use another account",
+            "permissions": "The app will be able to read",
+            "pkce": "This request is protected with PKCE ({method}).",
+            "noPkce": "This request doesn't use PKCE.",
+            "verifyTitle": "Verified email required",
+            "verifyText": "{app} only accepts accounts with a verified email address.",
+            "verifyAction": "Verify email",
+            "deny": "Deny",
+            "approve": "Allow",
+            "revokeHint": "You can revoke access at any time from Authorized apps.",
+            "errorTitle": "This authorization request can't be completed",
+            "errorHint": "Return to the app and start signing in again. If it keeps failing, contact the app's developer.",
+            "invalid": "The request is invalid or the app is no longer registered."
+        },
+        "callback": {
+            "pageTitle": "Signing in with {provider}",
+            "workingTitle": "Signing in with {provider}",
+            "workingText": "Finishing the sign-in. This takes a moment.",
+            "failedTitle": "Sign-in with {provider} didn't finish",
+            "denied": "You declined the request on {provider}.",
+            "providerError": "{code} was returned by the provider.",
+            "incomplete": "The response from the provider is incomplete. Start again.",
+            "mfaCancelled": "Two-step verification was cancelled. Start again to sign in.",
+            "return": "Go back"
+        }
+    }
+}

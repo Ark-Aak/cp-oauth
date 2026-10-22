@@ -1,584 +1,345 @@
 <template>
-    <div class="admin-showcase">
-        <AppPageHeader
-            :title="$t('admin.showcase.tab')"
-            :description="$t('admin.workbench.showcase_description')"
+    <div>
+        <CpPageHeader
+            :kicker="t('common.nav.admin')"
+            :title="t('common.nav.adminShowcase')"
+            :description="t('admin.showcase.description')"
         >
             <template #actions>
-                <el-button type="primary" native-type="button" @click="createOpen = true">
-                    {{ $t('admin.showcase.create_title') }}
-                </el-button>
+                <el-button @click="navigateTo('/showcase')">{{
+                    t('admin.showcase.viewPublic')
+                }}</el-button>
             </template>
-        </AppPageHeader>
-        <div class="ui-stack">
-            <AdminSectionNav current="showcase" />
-            <p v-if="sessionExpired" class="admin-showcase__help">
-                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-            </p>
+        </CpPageHeader>
 
-            <section class="admin-showcase__results ui-card" aria-labelledby="showcase-list-title">
-                <div class="ui-card__header">
-                    <h2 id="showcase-list-title" class="ui-card__title">
-                        <Globe :size="18" aria-hidden="true" />
-                        {{ $t('admin.showcase.list_title') }}
-                    </h2>
-                </div>
-                <AppAsyncState
-                    :pending="loading"
-                    :error="loadError"
-                    :empty="items.length === 0"
-                    :empty-text="$t('admin.showcase.empty')"
-                    :empty-icon="Globe"
-                    @retry="loadItems"
-                >
-                    <div class="admin-showcase__list">
-                        <article
-                            v-for="item in items"
-                            :key="item.id"
-                            class="admin-showcase__item"
-                            :aria-busy="!!deleting[item.id]"
-                        >
-                            <div class="admin-showcase__item-info">
-                                <h3>{{ item.name }}</h3>
-                                <p class="admin-showcase__category">
-                                    {{
-                                        $t(
-                                            item.category === 'site'
-                                                ? 'admin.showcase.category_site'
-                                                : 'admin.showcase.category_project'
-                                        )
-                                    }}
-                                    · {{ $t('admin.showcase.sort_order') }}: {{ item.sortOrder }}
-                                </p>
-                                <a
-                                    v-if="item.url"
-                                    :href="item.url"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="admin-showcase__url"
-                                    >{{ item.url }}</a
-                                >
-                                <p v-if="item.iconUrl" class="admin-showcase__icon-url">
-                                    {{ $t('admin.showcase.icon_url') }}: {{ item.iconUrl }}
-                                </p>
-                                <p
-                                    v-if="item.invalidUrls?.length"
-                                    class="admin-showcase__warning ui-note ui-note--accent"
-                                    role="status"
-                                >
-                                    {{ $t('admin.showcase.invalid_url_warning') }}
-                                    ({{
-                                        item.invalidUrls
-                                            .map(field =>
-                                                $t(
-                                                    field === 'url'
-                                                        ? 'admin.showcase.url'
-                                                        : 'admin.showcase.icon_url'
-                                                )
-                                            )
-                                            .join(', ')
-                                    }})
-                                </p>
-                                <p v-if="item.description" class="admin-showcase__description">
-                                    {{ item.description }}
-                                </p>
-                                <p
-                                    v-if="deleteErrors[item.id]"
-                                    class="admin-showcase__error"
-                                    role="alert"
-                                >
-                                    {{ deleteErrors[item.id] }}
-                                </p>
-                            </div>
-                            <el-button
-                                type="danger"
-                                link
-                                native-type="button"
-                                :loading="!!deleting[item.id]"
-                                :disabled="!!deleting[item.id]"
-                                :aria-label="`${$t('admin.showcase.delete')}: ${item.name}`"
-                                @click="handleDelete(item)"
-                            >
-                                {{ $t('admin.showcase.delete') }}
-                            </el-button>
-                        </article>
+        <div class="cp-stack">
+            <CpSheet :title="t('admin.showcase.createTitle')">
+                <form class="entry-form" method="post" novalidate @submit.prevent="create">
+                    <div class="entry-form__grid">
+                        <div class="entry-form__field">
+                            <span :id="ids.category" class="entry-form__label">{{
+                                t('admin.showcase.fields.category')
+                            }}</span>
+                            <el-segmented
+                                v-model="form.category"
+                                :options="categoryOptions"
+                                :aria-labelledby="ids.category"
+                                :disabled="busy"
+                            />
+                        </div>
+                        <div class="entry-form__field">
+                            <label class="entry-form__label" :for="ids.sortOrder">{{
+                                t('admin.showcase.fields.sortOrder')
+                            }}</label>
+                            <el-input-number
+                                :id="ids.sortOrder"
+                                v-model="form.sortOrder"
+                                :step="1"
+                                :step-strictly="true"
+                                controls-position="right"
+                                :disabled="busy"
+                            />
+                            <p class="cp-help">{{ t('admin.showcase.sortHint') }}</p>
+                        </div>
+                        <div class="entry-form__field">
+                            <label class="entry-form__label" :for="ids.name">{{
+                                t('admin.showcase.fields.name')
+                            }}</label>
+                            <el-input
+                                :id="ids.name"
+                                v-model="form.name"
+                                maxlength="120"
+                                :disabled="busy"
+                            />
+                            <p v-if="fieldErrors.name" class="entry-form__error">
+                                {{ fieldErrors.name }}
+                            </p>
+                        </div>
+                        <div class="entry-form__field">
+                            <label class="entry-form__label" :for="ids.url">{{
+                                t('admin.showcase.fields.url')
+                            }}</label>
+                            <el-input
+                                :id="ids.url"
+                                v-model="form.url"
+                                type="url"
+                                inputmode="url"
+                                spellcheck="false"
+                                placeholder="https://"
+                                :disabled="busy"
+                            />
+                            <p v-if="fieldErrors.url" class="entry-form__error">
+                                {{ fieldErrors.url }}
+                            </p>
+                        </div>
+                        <div class="entry-form__field entry-form__field--wide">
+                            <label class="entry-form__label" :for="ids.iconUrl">{{
+                                t('admin.showcase.fields.iconUrl')
+                            }}</label>
+                            <el-input
+                                :id="ids.iconUrl"
+                                v-model="form.iconUrl"
+                                type="url"
+                                inputmode="url"
+                                spellcheck="false"
+                                placeholder="https://"
+                                :disabled="busy"
+                            />
+                            <p v-if="fieldErrors.iconUrl" class="entry-form__error">
+                                {{ fieldErrors.iconUrl }}
+                            </p>
+                            <p v-else class="cp-help">{{ t('admin.showcase.iconHint') }}</p>
+                        </div>
+                        <div class="entry-form__field entry-form__field--wide">
+                            <label class="entry-form__label" :for="ids.description">{{
+                                t('admin.showcase.fields.description')
+                            }}</label>
+                            <el-input
+                                :id="ids.description"
+                                v-model="form.description"
+                                type="textarea"
+                                maxlength="2000"
+                                show-word-limit
+                                :autosize="{ minRows: 2, maxRows: 6 }"
+                                :disabled="busy"
+                            />
+                        </div>
                     </div>
-                </AppAsyncState>
-            </section>
-        </div>
+                    <CpNote v-if="createError" tone="danger">{{ createError }}</CpNote>
+                    <div class="entry-form__actions">
+                        <el-button
+                            type="primary"
+                            native-type="submit"
+                            :loading="busy"
+                            :disabled="!form.name.trim() || !form.url.trim()"
+                        >
+                            {{ t('admin.showcase.add') }}
+                        </el-button>
+                    </div>
+                </form>
+            </CpSheet>
 
-        <el-dialog
-            v-model="createOpen"
-            :title="$t('admin.showcase.create_title')"
-            width="min(680px, calc(100vw - 32px))"
-            destroy-on-close
-            :close-on-click-modal="false"
-            :close-on-press-escape="!creating"
-            :show-close="!creating"
-            :before-close="beforeClose"
-            @closed="resetForm"
-        >
-            <p
-                v-if="createError"
-                id="showcase-create-error"
-                class="admin-showcase__error"
-                tabindex="-1"
-                role="alert"
+            <CpDataState
+                :pending="pending"
+                :error="error ? describe(error) : null"
+                :rows="4"
+                @retry="refresh"
             >
-                {{ createError }}
-            </p>
-            <p v-if="sessionExpired" class="admin-showcase__help">
-                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-            </p>
-            <el-form
-                method="post"
-                label-position="top"
-                :disabled="creating"
-                @submit.prevent="handleCreate"
-            >
-                <el-form-item
-                    for="showcase-category"
-                    :label="$t('admin.showcase.category')"
-                    :error="fieldErrors.category"
-                >
-                    <el-select
-                        id="showcase-category"
-                        v-model="form.category"
-                        :aria-invalid="!!fieldErrors.category"
-                        :aria-describedby="
-                            fieldErrors.category ? 'showcase-category-error' : undefined
-                        "
-                        @change="touch('category')"
+                <div class="cp-stack">
+                    <CpSheet
+                        v-for="group in groups"
+                        :key="group.category"
+                        :title="group.title"
+                        flush
                     >
-                        <el-option value="site" :label="$t('admin.showcase.category_site')" />
-                        <el-option value="project" :label="$t('admin.showcase.category_project')" />
-                    </el-select>
-                    <template #error="{ error }"
-                        ><span id="showcase-category-error">{{ error }}</span></template
-                    >
-                </el-form-item>
-                <el-form-item
-                    v-for="field in textFields"
-                    :key="field.key"
-                    :for="`showcase-${field.key}`"
-                    :label="$t(field.label)"
-                    :error="fieldErrors[field.key]"
-                >
-                    <el-input
-                        :id="`showcase-${field.key}`"
-                        v-model="form[field.key]"
-                        :type="field.key === 'description' ? 'textarea' : 'text'"
-                        :autosize="
-                            field.key === 'description' ? { minRows: 3, maxRows: 8 } : undefined
-                        "
-                        :aria-invalid="!!fieldErrors[field.key]"
-                        :aria-describedby="describedBy(field.key)"
-                        @input="touch(field.key)"
-                        @blur="touch(field.key)"
-                    />
-                    <p
-                        v-if="field.key === 'url' || field.key === 'iconUrl'"
-                        :id="`showcase-${field.key}-help`"
-                        class="admin-showcase__help"
-                    >
-                        {{
-                            $t(
-                                field.key === 'iconUrl'
-                                    ? 'admin.showcase.icon_url_hint'
-                                    : 'admin.workbench.http_url_hint'
-                            )
-                        }}
-                    </p>
-                    <template #error="{ error }"
-                        ><span :id="`showcase-${field.key}-error`">{{ error }}</span></template
-                    >
-                </el-form-item>
-                <el-form-item
-                    for="showcase-sortOrder"
-                    :label="$t('admin.showcase.sort_order')"
-                    :error="fieldErrors.sortOrder"
-                >
-                    <el-input
-                        id="showcase-sortOrder"
-                        v-model="form.sortOrder"
-                        inputmode="numeric"
-                        :aria-invalid="!!fieldErrors.sortOrder"
-                        :aria-describedby="
-                            fieldErrors.sortOrder ? 'showcase-sortOrder-error' : undefined
-                        "
-                        @input="touch('sortOrder')"
-                        @blur="touch('sortOrder')"
-                    />
-                    <template #error="{ error }"
-                        ><span id="showcase-sortOrder-error">{{ error }}</span></template
-                    >
-                </el-form-item>
-                <div class="task-actions">
-                    <el-button
-                        type="primary"
-                        native-type="submit"
-                        :loading="creating"
-                        :disabled="creating"
-                    >
-                        {{ creating ? $t('admin.showcase.creating') : $t('admin.showcase.create') }}
-                    </el-button>
-                    <el-button native-type="button" :disabled="creating" @click="closeCreate">{{
-                        $t('common.cancel')
-                    }}</el-button>
+                        <ul v-if="group.items.length" class="cp-rows">
+                            <li v-for="item in group.items" :key="item.id">
+                                <PublicShowcaseIcon :src="item.iconUrl" :name="item.name" />
+                                <div class="cp-rows__main">
+                                    <span class="cp-rows__title">{{ item.name }}</span>
+                                    <span v-if="item.url" class="cp-rows__meta cp-mono">{{
+                                        item.url
+                                    }}</span>
+                                    <span v-if="item.description" class="cp-rows__meta">{{
+                                        item.description
+                                    }}</span>
+                                    <CpStatus
+                                        v-if="item.invalidUrls?.length"
+                                        tone="warning"
+                                        :label="
+                                            t('admin.showcase.invalidUrls', {
+                                                fields: item.invalidUrls.join(', ')
+                                            })
+                                        "
+                                    />
+                                </div>
+                                <span class="cp-rows__meta cp-num">{{
+                                    t('admin.showcase.order', { n: item.sortOrder })
+                                }}</span>
+                                <div class="cp-rows__end">
+                                    <el-button
+                                        type="danger"
+                                        plain
+                                        size="small"
+                                        :loading="deleting === item.id"
+                                        @click="remove(item)"
+                                    >
+                                        {{ t('common.actions.delete') }}
+                                    </el-button>
+                                </div>
+                            </li>
+                        </ul>
+                        <p v-else class="entry-list__empty">{{ t('admin.showcase.empty') }}</p>
+                    </CpSheet>
                 </div>
-            </el-form>
-        </el-dialog>
+            </CpDataState>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Globe } from 'lucide-vue-next';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import AdminSectionNav from '~/components/admin/AdminSectionNav.vue';
-import { adminRequestError } from '~/utils/admin-feedback';
-import { showcaseCreateSchema } from '~/utils/admin-validation';
-import { buildLoginPath } from '~/utils/auth-redirect';
 import type { ShowcaseItem } from '~/types/api';
 
 definePageMeta({ middleware: 'admin' });
-const { t } = useI18n();
-useHead({ title: () => `${t('admin.showcase.tab')} - CP OAuth` });
 
+const { t } = useI18n();
 const api = useApi();
-const route = useRoute();
-const loginPath = computed(() => buildLoginPath(route.fullPath));
-const sessionExpired = ref(false);
-const loading = ref(false);
-const creating = ref(false);
-const createOpen = ref(false);
-const loadError = ref('');
-const createError = ref('');
-const serverFields = ref<Record<string, string>>({});
-const touched = reactive<Record<string, boolean>>({});
-const submitted = ref(false);
-const deleting = reactive<Record<string, boolean>>({});
-const deleteErrors = reactive<Record<string, string>>({});
-const items = ref<ShowcaseItem[]>([]);
-const form = reactive({
-    category: 'site',
+const { describe, read } = useApiError();
+
+useHead({ title: t('common.nav.adminShowcase') });
+
+const ids = {
+    category: useId(),
+    sortOrder: useId(),
+    name: useId(),
+    url: useId(),
+    iconUrl: useId(),
+    description: useId()
+};
+
+const { data, pending, error, refresh } = await useAsyncData('admin-showcase', () =>
+    api<{ items: ShowcaseItem[] }>('/api/admin/showcase')
+);
+
+const categoryOptions = computed(() => [
+    { label: t('admin.showcase.categories.site'), value: 'site' },
+    { label: t('admin.showcase.categories.project'), value: 'project' }
+]);
+
+const groups = computed(() =>
+    (['site', 'project'] as const).map(category => ({
+        category,
+        title: t(`admin.showcase.groups.${category}`),
+        items: (data.value?.items ?? []).filter(item => item.category === category)
+    }))
+);
+
+const blank = () => ({
+    category: 'site' as 'site' | 'project',
     name: '',
-    description: '',
     url: '',
     iconUrl: '',
-    sortOrder: '0'
+    description: '',
+    sortOrder: 0
 });
-const textFields = [
-    { key: 'name', label: 'admin.showcase.name' },
-    { key: 'url', label: 'admin.showcase.url' },
-    { key: 'description', label: 'admin.showcase.description' },
-    { key: 'iconUrl', label: 'admin.showcase.icon_url' }
-] as const;
-const parsedForm = computed(() =>
-    showcaseCreateSchema.safeParse({
-        ...form,
-        sortOrder: /^-?\d+$/.test(form.sortOrder) ? Number(form.sortOrder) : Number.NaN
-    })
-);
-const fieldErrors = computed(() => {
-    const errors: Record<string, string> = {};
-    if (!parsedForm.value.success) {
-        for (const issue of parsedForm.value.error.issues) {
-            const field = String(issue.path[0]);
-            if ((!submitted.value && !touched[field]) || errors[field]) continue;
-            errors[field] =
-                field === 'sortOrder'
-                    ? t('admin.workbench.sort_range')
-                    : issue.code === 'too_big'
-                      ? t('admin.workbench.max_characters', { max: issue.maximum })
-                      : field === 'url' || field === 'iconUrl'
-                        ? t('admin.workbench.http_url_hint')
-                        : field === 'category'
-                          ? t('admin.workbench.choose_valid')
-                          : t('admin.workbench.required');
-        }
-    }
-    return { ...errors, ...serverFields.value };
-});
-const hasDraft = computed(
-    () =>
-        !!(
-            form.name ||
-            form.description ||
-            form.url ||
-            form.iconUrl ||
-            form.category !== 'site' ||
-            form.sortOrder !== '0'
-        )
-);
+const form = reactive(blank());
+const busy = ref(false);
+const createError = ref('');
+const fieldErrors = ref<Record<string, string>>({});
 
-function describedBy(field: string) {
-    return (
-        [
-            fieldErrors.value[field] ? `showcase-${field}-error` : '',
-            field === 'url' || field === 'iconUrl' ? `showcase-${field}-help` : ''
-        ]
-            .filter(Boolean)
-            .join(' ') || undefined
-    );
-}
-
-function touch(field: string) {
-    touched[field] = true;
-    Reflect.deleteProperty(serverFields.value, field);
+async function create() {
+    busy.value = true;
     createError.value = '';
-}
-
-function resetForm() {
-    Object.assign(form, {
-        category: 'site',
-        name: '',
-        description: '',
-        url: '',
-        iconUrl: '',
-        sortOrder: '0'
-    });
-    serverFields.value = {};
-    for (const field of Object.keys(touched)) Reflect.deleteProperty(touched, field);
-    submitted.value = false;
-    createError.value = '';
-}
-
-async function beforeClose(done: () => void) {
-    if (creating.value) return;
-    if (hasDraft.value) {
-        try {
-            await ElMessageBox.confirm(t('admin.workbench.discard_changes'), t('common.confirm'), {
-                confirmButtonText: t('admin.workbench.discard'),
-                cancelButtonText: t('common.cancel'),
-                type: 'warning'
-            });
-        } catch {
-            return;
-        }
-    }
-    done();
-}
-
-function closeCreate() {
-    void beforeClose(() => {
-        createOpen.value = false;
-    });
-}
-
-function requestError(error: unknown) {
-    const failure = adminRequestError(
-        error,
-        t('identity.network_error'),
-        t('identity.permission_denied')
-    );
-    const response = error as {
-        response?: { status?: number };
-        statusCode?: number;
-        status?: number;
-    };
-    if ((response.response?.status ?? response.statusCode ?? response.status) === 401) {
-        failure.message = t('admin.workbench.session_expired');
-        sessionExpired.value = true;
-    }
-    return failure;
-}
-
-let controller: AbortController | undefined;
-let sequence = 0;
-onBeforeUnmount(() => {
-    sequence++;
-    controller?.abort();
-});
-
-async function loadItems() {
-    controller?.abort();
-    controller = new AbortController();
-    const current = ++sequence;
-    loading.value = true;
-    loadError.value = '';
+    fieldErrors.value = {};
     try {
-        const data = await api<{ items: ShowcaseItem[] }>('/api/admin/showcase', {
-            signal: controller.signal
+        await api('/api/admin/showcase', {
+            method: 'POST',
+            body: {
+                category: form.category,
+                name: form.name.trim(),
+                url: form.url.trim(),
+                iconUrl: form.iconUrl.trim() || null,
+                description: form.description.trim(),
+                sortOrder: Math.trunc(form.sortOrder ?? 0)
+            }
         });
-        if (current === sequence) {
-            items.value = data.items;
-            sessionExpired.value = false;
-        }
-    } catch (error) {
-        if (current === sequence) loadError.value = requestError(error).message;
+        Object.assign(form, blank());
+        await refresh();
+        ElMessage.success(t('admin.showcase.added'));
+    } catch (cause) {
+        const info = read(cause);
+        fieldErrors.value = info.fields;
+        if (!Object.keys(info.fields).length) createError.value = describe(cause);
     } finally {
-        if (current === sequence) loading.value = false;
+        busy.value = false;
     }
 }
 
-async function focusError() {
-    await nextTick();
-    const firstField = ['category', 'name', 'url', 'description', 'iconUrl', 'sortOrder'].find(
-        field => fieldErrors.value[field]
-    );
-    const target =
-        document.getElementById(`showcase-${firstField}`) ||
-        document.getElementById('showcase-create-error');
-    target?.focus();
-}
+const deleting = ref<string | null>(null);
 
-async function handleCreate() {
-    if (creating.value) return;
-    submitted.value = true;
-    serverFields.value = {};
-    createError.value = '';
-    const parsed = parsedForm.value;
-    if (!parsed.success) {
-        createError.value = t('admin.workbench.validation_error');
-        await focusError();
+async function remove(item: ShowcaseItem) {
+    try {
+        await ElMessageBox.confirm(
+            t('admin.showcase.deleteConfirm', { name: item.name }),
+            t('admin.showcase.deleteTitle'),
+            {
+                type: 'warning',
+                confirmButtonText: t('common.actions.delete'),
+                cancelButtonText: t('common.actions.cancel'),
+                confirmButtonClass: 'el-button--danger'
+            }
+        );
+    } catch {
         return;
     }
-    creating.value = true;
+    deleting.value = item.id;
     try {
-        await api('/api/admin/showcase', { method: 'POST', body: parsed.data });
-        resetForm();
-        createOpen.value = false;
-        ElMessage.success(t('admin.showcase.created'));
-        await loadItems();
-    } catch (error) {
-        const failure = requestError(error);
-        createError.value = failure.message;
-        serverFields.value = failure.fields;
-        creating.value = false;
-        await focusError();
+        await api(`/api/admin/showcase/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+        await refresh();
+        ElMessage.success(t('common.states.deleted'));
+    } catch (cause) {
+        ElMessage.error(describe(cause));
     } finally {
-        creating.value = false;
+        deleting.value = null;
     }
 }
-
-async function handleDelete(item: ShowcaseItem) {
-    const id = item.id;
-    if (deleting[id]) return;
-    deleting[id] = true;
-    Reflect.deleteProperty(deleteErrors, id);
-    try {
-        try {
-            await ElMessageBox.confirm(
-                t('admin.showcase.delete_confirm', { name: item.name }),
-                t('admin.showcase.delete'),
-                {
-                    confirmButtonText: t('admin.showcase.delete'),
-                    confirmButtonClass: 'el-button--danger',
-                    cancelButtonText: t('common.cancel'),
-                    type: 'warning'
-                }
-            );
-        } catch {
-            return;
-        }
-        await api(`/api/admin/showcase/${id}`, { method: 'DELETE' });
-        ElMessage.success(t('admin.showcase.deleted'));
-        await loadItems();
-    } catch (error) {
-        deleteErrors[id] = requestError(error).message;
-    } finally {
-        Reflect.deleteProperty(deleting, id);
-    }
-}
-
-await loadItems();
 </script>
 
 <style scoped lang="scss">
-.admin-showcase {
+.entry-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-4);
+}
+
+.entry-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--cp-space-4) var(--cp-space-5);
+}
+
+.entry-form__field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cp-space-1);
     min-width: 0;
 
-    &__item {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: var(--space-4);
-        padding: var(--space-3) 0;
-
-        & + & {
-            border-top: 1px solid var(--divider-subtle);
-        }
-    }
-
-    &__item-info {
-        min-width: 0;
-        flex: 1;
-
-        h3 {
-            margin: 0 0 var(--space-2);
-            overflow-wrap: anywhere;
-        }
-    }
-
-    &__category,
-    &__help,
-    &__icon-url {
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        overflow-wrap: anywhere;
-    }
-
-    &__category {
-        margin-bottom: var(--space-2);
-        font-size: var(--font-size-meta);
-    }
-
-    &__url {
-        display: block;
-        align-content: center;
-        font-family: var(--font-code);
-        font-size: var(--font-size-control);
-        overflow-wrap: anywhere;
-    }
-
-    &__icon-url,
-    &__help,
-    &__warning {
-        margin-top: var(--space-2);
-    }
-
-    &__icon-url {
-        font-family: var(--font-code);
-    }
-
-    &__warning {
-        overflow-wrap: anywhere;
-    }
-
-    &__description {
-        margin-top: var(--space-3);
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-    }
-
-    &__error {
-        color: var(--el-color-danger);
-        overflow-wrap: anywhere;
-        margin-bottom: var(--space-3);
-    }
-
-    @media (max-width: 767px) {
-        &__list {
-            display: grid;
-            gap: var(--space-3);
-        }
-
-        &__item {
-            padding: var(--space-4);
-            border: 1px solid var(--divider-subtle);
-            border-radius: var(--card-radius);
-        }
+    > .el-input,
+    > .el-textarea {
+        width: 100%;
     }
 }
 
-@media (max-width: 479px) {
-    .admin-showcase__item {
-        flex-direction: column;
-        gap: var(--space-3);
+.entry-form__field--wide {
+    grid-column: 1 / -1;
+}
 
-        > .el-button {
-            align-self: flex-end;
-        }
+.entry-form__label {
+    font-size: var(--cp-text-sm);
+    font-weight: var(--cp-weight-medium);
+    color: var(--cp-text);
+}
+
+.entry-form__error {
+    font-size: var(--cp-text-sm);
+    color: var(--cp-danger);
+}
+
+.entry-form__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.entry-list__empty {
+    padding: var(--cp-space-4) var(--cp-space-5);
+    font-size: var(--cp-text-sm);
+    color: var(--cp-text-3);
+}
+
+@media (max-width: 767px) {
+    .entry-form__grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

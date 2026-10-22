@@ -1,0 +1,69 @@
+{
+    "account": {
+        "fields": {
+            "username": "Username",
+            "displayName": "Display name",
+            "avatarUrl": "Avatar URL",
+            "bio": "Bio",
+            "email": "Email"
+        },
+        "basic": {
+            "description": "How you appear to other people and to apps you authorize.",
+            "identityTitle": "Identity",
+            "identityText": "Apps with the profile scope can read these fields.",
+            "avatarHint": "Use an absolute HTTP or HTTPS image URL. Leave it empty to show your initial.",
+            "usernameRule": "3–24 characters: lowercase letters, digits and underscores.",
+            "usernameTaken": "This username is already taken.",
+            "homepageTitle": "Profile page",
+            "homepageText": "Markdown shown on your public profile.",
+            "homepagePlaceholder": "## About me\n\nWrite in Markdown.",
+            "homepageSize": "{used} KiB of {limit} KiB",
+            "homepageEmpty": "Nothing to preview yet.",
+            "edit": "Edit",
+            "preview": "Preview",
+            "emailTitle": "Email address",
+            "emailText": "Used for sign-in, password resets and verification codes.",
+            "verified": "Verified",
+            "unverified": "Not verified",
+            "pendingEmail": "Pending address",
+            "pendingUntil": "Link valid until {time}",
+            "accountId": "Account ID",
+            "resendVerification": "Resend verification email",
+            "resendPending": "Resend confirmation link",
+            "changeEmail": "Change email",
+            "newEmail": "New email address",
+            "newEmailHint": "We'll send a confirmation link. Your current address stays active until you open it.",
+            "sendConfirmation": "Send confirmation link",
+            "emailSent": "A confirmation link was sent to {email}.",
+            "emailNotSent": "The email couldn't be sent. Try again later.",
+            "alreadyVerified": "Your email address is already verified."
+        },
+        "privacy": {
+            "description": "Choose what your public profile and profile card show.",
+            "visibilityTitle": "Visibility",
+            "visibilityText": "Anyone can open your public profile. Only the items you select are shown.",
+            "platformsLegend": "Linked accounts shown publicly",
+            "noBindings": "You haven't linked any accounts yet.",
+            "cpStats": "Contest statistics",
+            "cpStatsText": "Ratings and contest counts from Clist.by for the public linked accounts.",
+            "ratingHistory": "Rating history",
+            "ratingHistoryText": "Recent rating changes from Clist.by for the public linked accounts.",
+            "cardTitle": "Profile card",
+            "cardText": "An SVG card with your public linked accounts, for READMEs and websites.",
+            "cardWidth": "Width: {width} px",
+            "cardAlt": "Profile card of {username}",
+            "markdownSnippet": "Markdown",
+            "htmlSnippet": "HTML"
+        },
+        "apps": {
+            "description": "Apps you have allowed to use your CP OAuth account.",
+            "empty": "No apps yet. An app appears here after you approve its request.",
+            "lastAuthorized": "Last authorized",
+            "activeTokens": "Active tokens",
+            "revoke": "Revoke access",
+            "revokeTitle": "Revoke access",
+            "revokeConfirm": "{name} will lose access to your account immediately. It can ask for permission again later.",
+            "revoked": "Access for {name} revoked: {tokens} tokens and {codes} pending codes removed."
+        }
+    }
+}

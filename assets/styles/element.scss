@@ -1,0 +1,141 @@
+/* Element Plus adjustments that make components follow the ledger look. */
+:root {
+    --el-font-family: var(--cp-font-sans);
+    --el-font-size-base: var(--cp-text-md);
+    --el-border-radius-base: var(--cp-radius-sm);
+    --el-border-radius-small: var(--cp-radius-sm);
+    --el-border-radius-round: var(--cp-radius-md);
+    --el-component-size: 34px;
+    --el-component-size-small: 28px;
+    --el-component-size-large: 40px;
+    --el-transition-duration: var(--cp-duration);
+    --el-transition-duration-fast: var(--cp-duration);
+}
+
+.el-button {
+    font-weight: var(--cp-weight-medium);
+    letter-spacing: 0;
+}
+
+.el-button:focus-visible {
+    outline: 2px solid var(--cp-accent);
+    outline-offset: 2px;
+}
+
+.el-button + .el-button {
+    margin-left: var(--cp-space-2);
+}
+
+/* The dark primary (#5fb3c8) is light; white text on it falls below 4.5:1. */
+html.dark .el-button--primary,
+html.dark .el-segmented {
+    --el-button-text-color: var(--cp-canvas);
+    --el-button-hover-text-color: var(--cp-canvas);
+    --el-button-active-text-color: var(--cp-canvas);
+    --el-button-disabled-text-color: var(--cp-canvas);
+    --el-segmented-item-selected-color: var(--cp-canvas);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+    box-shadow: 0 0 0 1px var(--cp-line-strong) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus,
+.el-select__wrapper.is-focused {
+    box-shadow: 0 0 0 1px var(--cp-accent) inset;
+}
+
+.el-form-item__label {
+    font-size: var(--cp-text-sm);
+    font-weight: var(--cp-weight-medium);
+    color: var(--cp-text);
+    line-height: var(--cp-leading-sm);
+}
+
+.el-form--label-top .el-form-item__label {
+    margin-bottom: var(--cp-space-1);
+    padding: 0;
+}
+
+.el-form-item {
+    margin-bottom: var(--cp-space-4);
+}
+
+.el-form-item__error {
+    position: static;
+    padding-top: var(--cp-space-1);
+    font-size: var(--cp-text-xs);
+    line-height: var(--cp-leading-xs);
+}
+
+.el-table {
+    --el-table-header-bg-color: var(--cp-sunken);
+    --el-table-header-text-color: var(--cp-text-3);
+    --el-table-row-hover-bg-color: var(--cp-sunken);
+    --el-table-border-color: var(--cp-line);
+    --el-table-bg-color: transparent;
+    --el-table-tr-bg-color: transparent;
+    font-size: var(--cp-text-sm);
+}
+
+.el-table th.el-table__cell > .cell {
+    font-family: var(--cp-font-mono);
+    font-size: var(--cp-text-xs);
+    font-weight: var(--cp-weight-medium);
+    letter-spacing: var(--cp-tracking-kicker);
+    text-transform: uppercase;
+}
+
+.el-table .el-table__inner-wrapper::before {
+    display: none;
+}
+
+.el-dialog {
+    --el-dialog-border-radius: var(--cp-radius-md);
+    --el-dialog-padding-primary: var(--cp-space-6);
+    border: 1px solid var(--cp-line);
+}
+
+.el-dialog__title {
+    font-size: var(--cp-text-lg);
+    line-height: var(--cp-leading-lg);
+    font-weight: var(--cp-weight-strong);
+}
+
+.el-message-box {
+    border: 1px solid var(--cp-line);
+    border-radius: var(--cp-radius-md);
+}
+
+.el-message {
+    border-radius: var(--cp-radius-sm);
+}
+
+.el-switch {
+    --el-switch-off-color: var(--el-text-color-placeholder);
+}
+
+.el-switch__label {
+    font-size: var(--cp-text-sm);
+}
+
+.el-checkbox__label {
+    font-size: var(--cp-text-sm);
+}
+
+.el-pagination {
+    --el-pagination-font-size: var(--cp-text-sm);
+    font-family: var(--cp-font-mono);
+}
+
+.el-dropdown-menu__item {
+    font-size: var(--cp-text-sm);
+}
+
+.el-segmented {
+    --el-segmented-item-selected-bg-color: var(--cp-accent);
+    font-size: var(--cp-text-sm);
+}

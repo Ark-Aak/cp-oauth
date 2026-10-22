@@ -41,15 +41,17 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 
 ### Frontend
 
-- **UI**: Element Plus (via `@element-plus/nuxt`), icons from `lucide-vue-next`
-- **State**: Pinia (`@pinia/nuxt`)
-- **i18n**: `@nuxtjs/i18n` with `no_prefix` strategy — three locales: `en`, `zh`, `ja` in `i18n/locales/`
-- **Color mode**: `@nuxtjs/color-mode` with system preference, dark fallback, stored in `cp-oauth-color-mode`
-- **Layouts**: `default` (fixed `AppSidebar` + card-based main content; no top bar — top-right language/theme icons and the full-width footer match `auth`) and `auth` (no sidebar; language/theme icon buttons, centered `auth-card` surface and full-width footer — used for login, register, password reset, email verification, OAuth consent and third-party callbacks)
-- **Components**: `AppSidebar.vue` (navigation sidebar in default layout), `AppPlatformIcon.vue` (competitive programming platform icons)
-- **Pages**: Nuxt 4 file-based routing under `pages/` — admin pages under `pages/admin/`, OAuth flow under `pages/oauth/`, third-party callbacks under `pages/oauth/thirdparty/`
-- **Styling**: SCSS — global styles in `assets/scss/main.scss`, Element Plus overrides in `assets/scss/element-overrides.scss`
-- **Markdown**: `utils/markdown.ts` renders Markdown with remark/rehype pipeline and Shiki syntax highlighting (light/dark themes)
+- **Design rules**: `design.md` is the presentation contract (page types, tokens, primitives, anti-patterns); read it before changing any page.
+- **UI**: Element Plus (via `@element-plus/nuxt`, styles imported once), icons from `lucide-vue-next`, IBM Plex Sans / IBM Plex Mono via Fontsource
+- **State**: request-scoped `useState` composables — `useSession` (signed-in user), `usePublicConfig`, `useReauth`; loaded once per request by `plugins/session.ts`
+- **API access**: `useApi()` (same-origin, CSRF header `X-CP-OAuth-CSRF: 1`, cookie forwarding during SSR, optional reauth header); errors normalized by `utils/api-error.ts` and localized by `useApiError()`
+- **i18n**: `@nuxtjs/i18n` with `no_prefix` strategy — locales `en`, `zh`, `ja`, one file per namespace in `i18n/locales/<locale>/<namespace>.json` (namespaces listed in `nuxt.config.ts`)
+- **Color mode**: `@nuxtjs/color-mode` with system preference, light fallback, stored in `cp-oauth-color-mode`; a signed-in user's saved theme and locale override local values after hydration (`usePreferences`)
+- **Layouts**: `default` (fixed left rail `CpSidebar` at ≥1024px, off-canvas drawer with a top bar below; hosts `CpReauthDialog`) and `auth` (brand panel + form column; login, register, password reset, email verification, OAuth consent and third-party callbacks)
+- **Components**: shared primitives in `components/Cp*.vue` (listed in `design.md` §5); page-specific parts in `components/<area>/` (`auth`, `profile`, `developer`, `public`), auto-imported with the area as prefix (`components/auth/Field.vue` → `<AuthField>`)
+- **Pages**: Nuxt 4 file-based routing under `pages/` — `/profile?tab=basic|security|bindings|apps|privacy` switches profile sections, admin pages under `pages/admin/`, OAuth consent under `pages/oauth/authorize.vue`, provider callbacks under `pages/oauth/thirdparty/[provider].vue`
+- **Styling**: SCSS — `assets/styles/` loads in order `vendor.css`, `theme.scss` (Element Plus palette), `tokens.scss` (`--cp-*` semantic tokens), `base.scss`, `element.scss`
+- **Markdown**: `utils/markdown.ts` renders Markdown with remark/rehype pipeline and Shiki syntax highlighting (light/dark themes); `CpMarkdown` renders it in pages
 
 ### Backend (server/)
 
@@ -58,7 +60,7 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 - **Auth**: JWT-based — `server/utils/auth.ts` (`getUserIdFromEvent`) and `server/utils/admin.ts` (`requireAdmin`). Tokens passed as `Bearer` in Authorization header, also stored client-side in `auth_token` cookie.
 - **System config**: Key-value pairs in `system_config` table with Redis caching (60s TTL) — managed via `server/utils/config.ts`
 - **Email**: Nodemailer with SMTP settings pulled from system config — `server/utils/mailer.ts`
-- **CAPTCHA**: Optional Cloudflare Turnstile — `composables/useTurnstile.ts` handles client-side widget
+- **CAPTCHA**: Optional Cloudflare Turnstile — `components/CpTurnstile.vue` renders the client-side widget
 
 ### OAuth 2.0 Implementation
 

@@ -1,0 +1,55 @@
+{
+    "developer": {
+        "description": "CP OAuth でユーザーをログインさせるアプリを登録します。",
+        "newClient": "新しいクライアント",
+        "clientsTitle": "あなたのクライアント",
+        "empty": "クライアントはまだありません。作成するとアプリ用のクライアント ID とシークレットが発行されます。",
+        "moreUris": "ほか {n} 件",
+        "verifiedOnly": "確認済みメール必須",
+        "anyEmail": "メール制限なし",
+        "created": "{date} に作成",
+        "deleteTitle": "クライアントの削除",
+        "deleteConfirm": "{name} を削除します。すべてのトークンと保留中の認可はただちに無効になります。",
+        "form": {
+            "createTitle": "新しい OAuth クライアント",
+            "editTitle": "OAuth クライアントを編集",
+            "name": "名前",
+            "redirectUris": "リダイレクト URI",
+            "redirectRule": "完全一致。HTTPS を使用し、HTTP は localhost、127.0.0.1、[::1] のみ。フラグメント（#）は使えません。",
+            "redirectUriN": "リダイレクト URI {n}",
+            "removeUri": "リダイレクト URI {n} を削除",
+            "addUri": "リダイレクト URI を追加",
+            "uriInvalid": "HTTPS の URL、またはループバックアドレスの HTTP URL を、フラグメントなしで入力してください。",
+            "requireVerified": "確認済みメールを必須にする",
+            "requireVerifiedText": "メール未確認のユーザーはこのクライアントを承認できません。",
+            "create": "クライアントを作成"
+        },
+        "secret": {
+            "title": "クライアントシークレットを保存",
+            "warning": "クライアントシークレットはこの一度しか表示されません。閉じる前に安全な場所へコピーしてください。",
+            "clientId": "クライアント ID",
+            "clientSecret": "クライアントシークレット",
+            "stored": "シークレットを保存しました"
+        },
+        "reference": {
+            "title": "連携リファレンス",
+            "text": "ディスカバリードキュメントの値です。",
+            "authorization": "認可エンドポイント",
+            "token": "トークンエンドポイント",
+            "userinfo": "ユーザー情報エンドポイント",
+            "revocation": "失効エンドポイント",
+            "pkce": "PKCE 方式",
+            "clientAuth": "クライアント認証",
+            "lifetimes": "有効期間",
+            "lifetimesValue": "認可コード 10 分 · アクセストークン 1 時間 · リフレッシュトークン 30 日（使用ごとに置き換え）",
+            "scopes": "スコープ"
+        },
+        "example": {
+            "title": "リクエスト例",
+            "text": "{name} の最初のリダイレクト URI を使った例です。一覧で別のクライアントを選ぶと切り替わります。",
+            "authorize": "ユーザーの送り先",
+            "exchange": "返された code を交換",
+            "placeholders": "STATE は戻ってきたときに検証するランダム値に、CODE_CHALLENGE は code verifier の S256 ハッシュに置き換えてください。機密クライアントは code_verifier の代わりに client_secret を送ります。"
+        }
+    }
+}

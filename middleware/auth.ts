@@ -1,23 +1,12 @@
-import { buildLoginPath } from '~/utils/auth-redirect';
-
-export default defineNuxtRouteMiddleware(async to => {
-    const auth = useAuth();
-    const i18n = useNuxtApp().$i18n;
-    try {
-        await auth.load();
-    } catch (cause) {
-        const failure = cause as { statusCode?: number; status?: number };
-        const statusCode = (failure.statusCode ?? failure.status) === 403 ? 403 : 503;
-        return abortNavigation(
-            createError({
-                statusCode,
-                statusMessage: i18n.t(
-                    statusCode === 403
-                        ? 'identity.permission_denied'
-                        : 'identity.identity_unavailable'
-                )
-            })
-        );
+/** Pages that need a signed-in user send guests to sign-in with a return target. */
+export default defineNuxtRouteMiddleware(to => {
+    const { user, unavailable } = useSession();
+    if (user.value) return;
+    if (unavailable.value) {
+        throw createError({
+            statusCode: 503,
+            statusMessage: 'Authentication is temporarily unavailable'
+        });
     }
-    if (auth.status.value === 'anonymous') return navigateTo(buildLoginPath(to.fullPath));
+    return navigateTo(buildLoginPath(to.fullPath));
 });

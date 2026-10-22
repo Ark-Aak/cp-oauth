@@ -1,564 +1,340 @@
 <template>
-    <div class="consent">
-        <section class="auth-card consent__card" aria-labelledby="oauth-authorize-title">
-            <h1 id="oauth-authorize-title" class="auth-card__title consent__title">
-                <ShieldCheck :size="22" :stroke-width="1.75" aria-hidden="true" />
-                <span>{{ $t('oauth.consent.title') }}</span>
-            </h1>
-            <AppAsyncState
-                :pending="authorizationPending"
-                :error="loadError"
-                @retry="refreshAuthorization()"
+    <CpAuthScreen
+        v-if="failure"
+        :title="t('oauth.authorize.errorTitle')"
+        :description="failure"
+        :icon="CircleAlert"
+        tone="danger"
+    >
+        <p class="cp-help">{{ t('oauth.authorize.errorHint') }}</p>
+        <template #footer>
+            <NuxtLink to="/">{{ t('common.errorPage.home') }}</NuxtLink>
+        </template>
+    </CpAuthScreen>
+
+    <CpAuthScreen
+        v-else-if="request && me"
+        :title="t('oauth.authorize.title', { app: request.client.name })"
+        :description="t('oauth.authorize.description')"
+    >
+        <div class="consent">
+            <dl class="consent__facts">
+                <CpField :label="t('oauth.authorize.app')">
+                    <span class="consent__app">
+                        <span class="consent__app-name">{{ request.client.name }}</span>
+                        <span class="cp-mono cp-muted" :title="request.client.clientId">{{
+                            request.client.clientId
+                        }}</span>
+                    </span>
+                </CpField>
+                <CpField :label="t('oauth.authorize.returnsTo')">
+                    <span class="consent__target">
+                        <span class="consent__host cp-mono">{{ target.host }}</span>
+                        <span class="cp-mono cp-muted consent__uri">{{ request.redirectUri }}</span>
+                    </span>
+                </CpField>
+                <CpField :label="t('oauth.authorize.account')">
+                    <span class="consent__account">
+                        <CpAvatar
+                            :src="me.avatarUrl"
+                            :name="me.displayName || me.username"
+                            :size="24"
+                        />
+                        <span>{{ me.displayName || me.username }}</span>
+                        <span class="cp-mono cp-muted">@{{ me.username }}</span>
+                        <button
+                            type="button"
+                            class="consent__switch"
+                            :disabled="busy !== null"
+                            @click="switchAccount"
+                        >
+                            {{ t('oauth.authorize.switch') }}
+                        </button>
+                    </span>
+                </CpField>
+            </dl>
+
+            <section class="consent__scopes" :aria-labelledby="scopesId">
+                <h2 :id="scopesId" class="consent__heading">
+                    {{ t('oauth.authorize.permissions') }}
+                </h2>
+                <ul>
+                    <li v-for="scope in request.scopes" :key="scope">
+                        <Check
+                            :size="16"
+                            :stroke-width="2"
+                            class="consent__check"
+                            aria-hidden="true"
+                        />
+                        <div class="consent__scope">
+                            <span class="consent__scope-title">{{ scopeText.title(scope) }}</span>
+                            <span class="cp-help">{{ scopeText.detail(scope) }}</span>
+                        </div>
+                        <code class="cp-mono consent__scope-id">{{ scope }}</code>
+                    </li>
+                </ul>
+            </section>
+
+            <p class="cp-help">
+                {{
+                    request.codeChallenge
+                        ? t('oauth.authorize.pkce', {
+                              method: request.codeChallengeMethod ?? 'plain'
+                          })
+                        : t('oauth.authorize.noPkce')
+                }}
+            </p>
+
+            <CpNote
+                v-if="needsVerifiedEmail"
+                tone="warning"
+                :title="t('oauth.authorize.verifyTitle')"
             >
-                <template v-if="clientData">
-                    <div class="consent__app">
-                        <span class="consent__app-mark" aria-hidden="true">{{ appInitial }}</span>
-                        <p class="consent__request">
-                            <i18n-t keypath="oauth.consent.wants_access" scope="global">
-                                <template #app>
-                                    <strong>{{ clientData.client.name }}</strong>
-                                </template>
-                            </i18n-t>
-                        </p>
-                    </div>
-
-                    <section
-                        class="consent__permissions"
-                        aria-labelledby="consent-permissions-title"
-                    >
-                        <h2 id="consent-permissions-title">
-                            {{ $t('oauth.consent.permissions') }}
-                        </h2>
-                        <ul class="consent__scope-list">
-                            <li
-                                v-for="scope in clientData.scopes"
-                                :key="scope"
-                                class="consent__scope"
-                            >
-                                <span class="consent__scope-icon" aria-hidden="true">
-                                    <Check :size="16" :stroke-width="2.25" />
-                                </span>
-                                <span>{{ $t(`oauth.scopes.${scope.replace(':', '_')}`) }}</span>
-                            </li>
-                        </ul>
-                    </section>
-
-                    <section class="consent__account" aria-labelledby="consent-account-title">
-                        <h2 id="consent-account-title">
-                            {{ $t('oauth.consent.current_account') }}
-                        </h2>
-                        <div v-if="user && status === 'authenticated'" class="consent__account-row">
-                            <AppUserAvatar
-                                :size="44"
-                                :src="user.avatarUrl || undefined"
-                                :name="user.displayName || user.username"
-                                :seed="user.id"
-                            />
-                            <p class="consent__account-name">
-                                <strong>{{ user.displayName || user.username }}</strong>
-                                <span>{{ '@' + user.username }}</span>
-                            </p>
-                            <el-button
-                                native-type="button"
-                                text
-                                :disabled="controlsPending || identityPending"
-                                :loading="switchPending"
-                                @click="switchAccount"
-                            >
-                                {{ $t('oauth.consent.switch_account') }}
-                            </el-button>
-                        </div>
-                        <p v-else-if="status === 'anonymous'" class="consent__account-hint">
-                            {{ $t('oauth.consent.signed_out_hint') }}
-                        </p>
-                        <div
-                            v-if="authError"
-                            class="consent__notice ui-note ui-note--danger"
-                            role="alert"
-                        >
-                            <p>{{ $t('identity.identity_unavailable') }}</p>
-                            <el-button
-                                native-type="button"
-                                :disabled="controlsPending || identityPending"
-                                :loading="identityPending"
-                                @click="loadIdentity(true)"
-                            >
-                                {{ $t('identity.retry') }}
-                            </el-button>
-                        </div>
-                    </section>
-
-                    <div
-                        v-if="needsEmailVerification"
-                        class="consent__notice ui-note ui-note--warning"
-                        role="status"
-                    >
-                        <p>{{ $t('oauth.consent.email_verification_required') }}</p>
-                        <NuxtLink :to="verificationPath" class="consent__task-link">
-                            {{ $t('oauth.consent.go_verify_email') }}
-                        </NuxtLink>
-                        <p class="consent__account-hint">
-                            {{ $t('oauth.consent.verification_return_hint') }}
-                        </p>
-                    </div>
-                    <p
-                        v-if="decisionError"
-                        ref="decisionErrorElement"
-                        tabindex="-1"
-                        class="consent__notice ui-note ui-note--danger"
-                        role="alert"
-                    >
-                        {{ decisionError }}
-                    </p>
-
-                    <div class="consent__actions">
-                        <el-button
-                            native-type="button"
-                            :disabled="controlsPending"
-                            :loading="decisionPending && decisionApproved === false"
-                            @click="handleDecision(false)"
-                        >
-                            {{ $t('oauth.consent.deny') }}
-                        </el-button>
-                        <el-button
-                            type="primary"
-                            native-type="button"
-                            :disabled="
-                                controlsPending ||
-                                identityPending ||
-                                needsEmailVerification ||
-                                status === 'error'
-                            "
-                            :loading="decisionPending && decisionApproved === true"
-                            @click="handleDecision(true)"
-                        >
-                            {{
-                                $t(
-                                    status === 'anonymous'
-                                        ? 'oauth.consent.sign_in_authorize'
-                                        : 'oauth.consent.authorize'
-                                )
-                            }}
-                        </el-button>
-                    </div>
+                {{ t('oauth.authorize.verifyText', { app: request.client.name }) }}
+                <template #actions>
+                    <el-button size="small" @click="navigateTo('/profile?tab=basic')">{{
+                        t('oauth.authorize.verifyAction')
+                    }}</el-button>
                 </template>
-            </AppAsyncState>
-        </section>
-    </div>
+            </CpNote>
+            <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
+
+            <div class="consent__decision">
+                <el-button
+                    :loading="busy === 'deny'"
+                    :disabled="!hydrated || busy !== null"
+                    @click="decide(false)"
+                >
+                    {{ t('oauth.authorize.deny') }}
+                </el-button>
+                <el-button
+                    type="primary"
+                    :loading="busy === 'approve'"
+                    :disabled="!hydrated || busy !== null || needsVerifiedEmail"
+                    @click="decide(true)"
+                >
+                    {{ t('oauth.authorize.approve') }}
+                </el-button>
+            </div>
+            <p class="cp-help consent__fineprint">{{ t('oauth.authorize.revokeHint') }}</p>
+        </div>
+    </CpAuthScreen>
 </template>
 
 <script setup lang="ts">
-import { Check, LogOut, ShieldCheck } from 'lucide-vue-next';
-import { getCurrentInstance, markRaw } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { Check, CircleAlert } from 'lucide-vue-next';
 import type { OAuthAuthorizationResponse } from '~/types/api';
-import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
 
 definePageMeta({ layout: 'auth' });
+
 const { t } = useI18n();
-const messageBoxContext = getCurrentInstance()?.appContext;
-const route = useRoute();
 const api = useApi();
-const { user, status, error: authError, load, logout } = useAuth();
-useHead({ title: () => t('oauth.consent.title') });
-const identityPending = ref(false);
-const switchConfirming = ref(false);
-const switchPending = ref(false);
-const decisionPending = ref(false);
-const decisionApproved = ref<boolean | null>(null);
-const decisionError = ref('');
-const decisionErrorElement = ref<HTMLElement | null>(null);
-const emailVerificationRequired = ref(false);
-const controlsPending = computed(
-    () => decisionPending.value || switchConfirming.value || switchPending.value
-);
-const authorizationPath = computed(() => getSafeRedirectTarget(route.fullPath));
-const verificationPath = computed(() => ({
-    path: '/profile',
-    query: { tab: 'basic', redirect: authorizationPath.value }
-}));
+const route = useRoute();
+const { describe, read } = useApiError();
+const session = useSession();
+const hydrated = useHydrated();
+const scopeText = useScopeText();
+const scopesId = useId();
 
-type RequestFailure = {
-    status?: number;
-    statusCode?: number;
-    response?: { status?: number };
-    data?: {
-        message?: string;
-        error_description?: string;
-        reason?: string;
-        data?: { reason?: string };
-    };
-};
+useHead({ title: t('oauth.authorize.pageTitle') });
 
-function errorMessage(cause: unknown, fallback: string) {
-    const failure = cause as RequestFailure | null;
-    const code = failure?.response?.status ?? failure?.statusCode ?? failure?.status;
-    if (code === 403) return t('identity.permission_denied');
-    if (code && code >= 500) return t('identity.network_error');
-    return failure?.data?.error_description || failure?.data?.message || fallback;
+const me = computed(() => session.user.value);
+
+if (!me.value) {
+    if (session.unavailable.value) {
+        throw createError({
+            statusCode: 503,
+            statusMessage: 'Authentication is temporarily unavailable'
+        });
+    }
+    await navigateTo(buildLoginPath(route.fullPath), { replace: true });
 }
 
-async function loadIdentity(force = false) {
-    if (identityPending.value) return;
-    identityPending.value = true;
+/** Forward the consumer's query verbatim; repeated parameters are rejected by the server. */
+function originalQuery(): string {
+    const index = route.fullPath.indexOf('?');
+    if (index < 0) return '';
+    const hash = route.fullPath.indexOf('#', index);
+    return route.fullPath.slice(index + 1, hash < 0 ? undefined : hash);
+}
+
+const { data: request, error: loadError } = await useAsyncData(
+    'oauth-authorize',
+    () => api<OAuthAuthorizationResponse>(`/api/oauth/authorize?${originalQuery()}`),
+    { immediate: Boolean(me.value) }
+);
+
+const failure = computed(() =>
+    loadError.value ? describe(loadError.value, 'oauth.authorize.invalid') : ''
+);
+
+const target = computed(() => {
     try {
-        await load(force);
-        emailVerificationRequired.value = false;
+        return new URL(request.value?.redirectUri ?? '');
     } catch {
-        // Identity failures do not prevent a server-validated anonymous denial.
-    } finally {
-        identityPending.value = false;
+        return { host: '' };
     }
-}
+});
 
-const authorization = useAsyncData(
-    () => `oauth:authorization:${route.fullPath}`,
-    () =>
-        api<OAuthAuthorizationResponse>('/api/oauth/authorize', {
-            params: {
-                client_id: route.query.client_id,
-                redirect_uri: route.query.redirect_uri,
-                response_type: route.query.response_type,
-                scope: route.query.scope,
-                state: route.query.state,
-                code_challenge: route.query.code_challenge,
-                code_challenge_method: route.query.code_challenge_method
+const needsVerifiedEmail = ref(
+    Boolean(request.value?.client.requireEmailVerified && me.value && !me.value.emailVerified)
+);
+const busy = ref<'approve' | 'deny' | null>(null);
+const error = ref('');
+
+async function decide(approved: boolean) {
+    if (!request.value) return;
+    busy.value = approved ? 'approve' : 'deny';
+    error.value = '';
+    try {
+        const { redirect } = await api<{ redirect: string }>('/api/oauth/authorize', {
+            method: 'POST',
+            body: {
+                response_type: 'code',
+                client_id: request.value.client.clientId,
+                redirect_uri: request.value.redirectUri,
+                scopes: request.value.scopes,
+                approved,
+                state: request.value.state,
+                code_challenge: request.value.codeChallenge,
+                code_challenge_method: request.value.codeChallengeMethod
             }
-        }),
-    { deep: false }
-);
-await Promise.all([loadIdentity(), authorization]);
-const {
-    data: clientData,
-    pending: authorizationPending,
-    error: authorizationError,
-    refresh: refreshAuthorization
-} = authorization;
-const loadError = computed(() =>
-    authorizationError.value
-        ? errorMessage(authorizationError.value, t('oauth.consent.error'))
-        : null
-);
-const needsEmailVerification = computed(
-    () =>
-        emailVerificationRequired.value ||
-        (!!clientData.value?.client.requireEmailVerified &&
-            !!user.value &&
-            !user.value.emailVerified)
-);
-const appInitial = computed(
-    () => Array.from(clientData.value?.client.name.trim() || '?')[0]?.toUpperCase() || '?'
-);
-
-watch(
-    () => route.fullPath,
-    () => {
-        decisionError.value = '';
-        emailVerificationRequired.value = false;
+        });
+        window.location.assign(redirect);
+    } catch (cause) {
+        const info = read(cause);
+        if (info.data.reason === 'email_not_verified') needsVerifiedEmail.value = true;
+        else error.value = describe(cause);
+        busy.value = null;
     }
-);
-
-async function showDecisionError(message: string) {
-    decisionError.value = message;
-    await nextTick();
-    decisionErrorElement.value?.focus();
 }
 
 async function switchAccount() {
-    if (controlsPending.value || identityPending.value) return;
-    const loginPath = buildLoginPath(authorizationPath.value);
-    switchConfirming.value = true;
+    error.value = '';
     try {
-        await ElMessageBox.confirm(
-            t('oauth.consent.switch_account_confirm'),
-            t('oauth.consent.switch_account'),
-            {
-                type: 'warning',
-                icon: markRaw(LogOut),
-                confirmButtonText: t('oauth.consent.switch_account'),
-                cancelButtonText: t('common.cancel')
-            },
-            messageBoxContext
-        );
+        await session.signOut(buildLoginPath(route.fullPath));
     } catch (cause) {
-        if (cause !== 'cancel' && cause !== 'close') {
-            await showDecisionError(errorMessage(cause, t('identity.network_error')));
-        }
-        return;
-    } finally {
-        switchConfirming.value = false;
-    }
-    switchPending.value = true;
-    decisionError.value = '';
-    try {
-        await logout(loginPath);
-    } catch (cause) {
-        await showDecisionError(errorMessage(cause, t('identity.network_error')));
-    } finally {
-        switchPending.value = false;
-    }
-}
-
-async function handleDecision(approved: boolean) {
-    const request = clientData.value;
-    if (!request || authorizationPending.value || authorizationError.value || controlsPending.value)
-        return;
-    if (
-        approved &&
-        (needsEmailVerification.value || identityPending.value || status.value === 'error')
-    )
-        return;
-    const returnPath = authorizationPath.value;
-    decisionPending.value = true;
-    decisionApproved.value = approved;
-    decisionError.value = '';
-    try {
-        if (approved) {
-            await load();
-            if (status.value === 'anonymous') {
-                await navigateTo(buildLoginPath(returnPath));
-                return;
-            }
-            if (!user.value) {
-                await showDecisionError(t('identity.identity_unavailable'));
-                return;
-            }
-            if (request.client.requireEmailVerified && !user.value.emailVerified) {
-                emailVerificationRequired.value = true;
-                return;
-            }
-        }
-        const result = await api<{ redirect: string }>('/api/oauth/authorize', {
-            method: 'POST',
-            body: {
-                client_id: request.client.clientId,
-                redirect_uri: request.redirectUri,
-                scopes: request.scopes,
-                state: request.state,
-                code_challenge: request.codeChallenge,
-                code_challenge_method: request.codeChallengeMethod,
-                approved
-            }
-        });
-        await navigateTo(result.redirect, { external: true });
-    } catch (cause) {
-        const failure = cause as RequestFailure;
-        const reason = failure.data?.data?.reason ?? failure.data?.reason;
-        const code = failure.response?.status ?? failure.statusCode ?? failure.status;
-        if (approved && reason === 'email_not_verified') {
-            emailVerificationRequired.value = true;
-        } else if (approved && code === 401 && status.value === 'anonymous') {
-            await navigateTo(buildLoginPath(returnPath));
-        } else {
-            await showDecisionError(errorMessage(cause, t('identity.network_error')));
-        }
-    } finally {
-        decisionPending.value = false;
-        decisionApproved.value = null;
+        error.value = describe(cause);
     }
 }
 </script>
 
 <style scoped lang="scss">
 .consent {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-5);
+}
+
+.consent__app,
+.consent__target {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     min-width: 0;
-    font-size: var(--font-size-body);
+}
 
-    &__title {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        margin-bottom: var(--space-5);
-        font-size: var(--font-size-title-mobile);
-        line-height: 1.35;
+.consent__app-name {
+    font-weight: var(--cp-weight-medium);
+}
 
-        svg {
-            flex-shrink: 0;
-            color: var(--accent);
-        }
+.consent__host {
+    font-weight: var(--cp-weight-medium);
+    color: var(--cp-text);
+}
+
+.consent__uri {
+    font-size: var(--cp-text-sm);
+    overflow-wrap: anywhere;
+}
+
+.consent__account {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--cp-space-2);
+}
+
+.consent__switch {
+    padding: 0;
+    font: inherit;
+    font-size: var(--cp-text-sm);
+    color: var(--cp-accent);
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
     }
+}
 
-    &__app {
+.consent__heading {
+    margin-bottom: var(--cp-space-2);
+    font-family: var(--cp-font-mono);
+    font-size: var(--cp-text-xs);
+    font-weight: var(--cp-weight-medium);
+    letter-spacing: var(--cp-tracking-kicker);
+    text-transform: uppercase;
+    color: var(--cp-text-3);
+}
+
+.consent__scopes ul {
+    border-top: 1px solid var(--cp-line);
+
+    > li {
         display: grid;
-        grid-template-columns: 56px minmax(0, 1fr);
-        align-items: center;
-        gap: var(--space-4);
-        margin-bottom: var(--space-5);
-        padding: var(--space-4);
-        border-radius: var(--card-radius);
-        background: var(--accent-subtle);
+        grid-template-columns: 16px minmax(0, 1fr) auto;
+        gap: var(--cp-space-3);
+        align-items: start;
+        padding: var(--cp-space-3) 0;
+        border-bottom: 1px solid var(--cp-line);
+    }
+}
+
+.consent__check {
+    margin-top: 3px;
+    color: var(--cp-success);
+}
+
+.consent__scope {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.consent__scope-title {
+    font-weight: var(--cp-weight-medium);
+    color: var(--cp-text);
+}
+
+.consent__scope-id {
+    font-size: var(--cp-text-xs);
+    color: var(--cp-text-3);
+}
+
+.consent__decision {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--cp-space-3);
+
+    .el-button {
+        flex: 1;
+        margin-left: 0;
+    }
+}
+
+.consent__fineprint {
+    text-align: center;
+}
+
+@media (max-width: 767px) {
+    .consent__scopes ul > li {
+        grid-template-columns: 16px minmax(0, 1fr);
     }
 
-    &__app-mark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 56px;
-        height: 56px;
-        border-radius: var(--card-radius);
-        background: var(--accent);
-        color: var(--el-bg-color);
-        font-size: 26px;
-        font-weight: 700;
-        line-height: 1;
-    }
-
-    &__request {
-        color: var(--text-secondary);
-        font-size: var(--font-size-subheading);
-        line-height: 1.5;
-        overflow-wrap: anywhere;
-
-        strong {
-            display: block;
-            color: var(--text-primary);
-            font-size: var(--font-size-section);
-            line-height: 1.35;
-        }
-    }
-
-    h2 {
-        margin-bottom: var(--space-3);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        font-weight: 600;
-        line-height: 1.4;
-    }
-
-    &__permissions {
-        margin-bottom: var(--space-5);
-    }
-
-    &__scope-list {
-        display: grid;
-        gap: var(--space-2);
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    &__scope {
-        display: grid;
-        grid-template-columns: 28px minmax(0, 1fr);
-        align-items: center;
-        gap: var(--space-3);
-        padding: var(--space-3) var(--space-4);
-        border: 1px solid var(--divider-subtle);
-        border-radius: var(--card-radius);
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        font-size: var(--font-size-body);
-        line-height: 1.5;
-        overflow-wrap: anywhere;
-    }
-
-    &__scope-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: var(--accent-subtle);
-        color: var(--accent);
-    }
-
-    &__account {
-        margin-bottom: var(--space-5);
-    }
-
-    &__account-row {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        align-items: center;
-        gap: var(--space-3);
-        min-width: 0;
-        padding: var(--space-3) var(--space-4);
-        border: 1px solid var(--divider-subtle);
-        border-radius: var(--card-radius);
-    }
-
-    &__account-name {
-        display: grid;
-        min-width: 0;
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-
-        strong {
-            color: var(--text-primary);
-            font-size: var(--font-size-subheading);
-        }
-
-        span {
-            color: var(--text-secondary);
-            font-size: var(--font-size-control);
-        }
-    }
-
-    &__account-hint {
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        overflow-wrap: anywhere;
-    }
-
-    &__notice {
-        margin-bottom: var(--space-4);
-        overflow-wrap: anywhere;
-    }
-
-    &__notice .el-button {
-        margin-top: var(--space-3);
-    }
-
-    &__task-link {
-        display: inline-block;
-        margin-block: var(--space-1);
-        overflow-wrap: anywhere;
-    }
-
-    &__actions {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-        gap: var(--space-3);
-        padding-top: var(--space-5);
-        border-top: 1px solid var(--divider-subtle);
-
-        > .el-button {
-            height: 42px;
-            margin: 0;
-            font-size: var(--font-size-body);
-            font-weight: 600;
-        }
-    }
-
-    @media (max-width: 479px) {
-        &__app {
-            grid-template-columns: 44px minmax(0, 1fr);
-            gap: var(--space-3);
-            padding: var(--space-3);
-        }
-
-        &__app-mark {
-            width: 44px;
-            height: 44px;
-            font-size: 20px;
-        }
-
-        &__scope {
-            padding: var(--space-2) var(--space-3);
-        }
-    }
-
-    @media (max-width: 359px) {
-        &__account-row {
-            grid-template-columns: auto minmax(0, 1fr);
-        }
-
-        &__account-row :deep(.el-button) {
-            grid-column: 1 / -1;
-            justify-self: start;
-        }
+    .consent__scope-id {
+        grid-column: 2;
     }
 }
 </style>

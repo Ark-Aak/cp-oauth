@@ -1,0 +1,97 @@
+{
+    "public": {
+        "home": {
+            "title": "一度のログインで、すべてのプラットフォームを証明",
+            "statement": "CP OAuth は競技プログラマー向けの OAuth 2.0 プロバイダーです。Luogu、AtCoder、LeetCode、Codeforces などのアカウントを連携・検証し、アプリが読み取れる情報をあなたが決めます。",
+            "openProfile": "プロフィールを開く",
+            "openDeveloper": "OAuth クライアントを管理",
+            "howItWorks": "仕組み",
+            "figures": "サイトの数値",
+            "figuresUnavailable": "サイトの数値は一時的に利用できません。",
+            "stats": {
+                "users": "アカウント",
+                "linkedAccounts": "連携アカウント",
+                "oauthClients": "OAuth クライアント",
+                "signInsToday": "本日の認可リクエスト"
+            },
+            "notices": "お知らせ",
+            "noNotices": "お知らせはまだありません。",
+            "pinned": "固定",
+            "members": "新しいメンバー",
+            "noMembers": "メンバーはまだいません。",
+            "joined": "{date} に登録"
+        },
+        "about": {
+            "title": "CP OAuth について",
+            "description": "アカウントの検証方法と、アプリがログインする仕組み。",
+            "toDeveloper": "OAuth クライアントを作成",
+            "platformsTitle": "対応プラットフォーム",
+            "platformsText": "連携アカウントは保存前にすべて検証されます。",
+            "providerSignIn": "プロバイダーへのログインで検証します。",
+            "proof": {
+                "luogu": "Luogu の公開クリップボードに置いたコードで検証します。",
+                "atcoder": "AtCoder プロフィールの所属（Affiliation）欄に置いたコードで検証します。",
+                "leetcode": "leetcode.cn プロフィールの自己紹介に置いたコードで検証します。"
+            },
+            "flowTitle": "認可コードフロー",
+            "flowText": "標準の OAuth 2.0。PKCE（S256 または plain）に任意で対応。",
+            "steps": {
+                "register": "開発者コンソールでクライアントを登録し、完全一致するリダイレクト URI を追加します。",
+                "redirect": "client_id、redirect_uri、response_type=code、scope、state を付けてユーザーを認可エンドポイントへ送ります。公開クライアントは PKCE の code_challenge も付けます。",
+                "consent": "ユーザーがログインして権限を承認すると、10 分間有効な code とともにリダイレクト URI に戻ります。",
+                "exchange": "トークンエンドポイントで code をアクセストークン（1 時間）とリフレッシュトークン（30 日）に交換します。",
+                "userinfo": "Bearer アクセストークンで userinfo エンドポイントを呼び出します。返る情報は許可されたスコープに限られます。",
+                "refresh": "リフレッシュトークンで新しいトークンを取得します。各リフレッシュトークンは一度だけ使え、使用時に置き換えられます。"
+            },
+            "endpointsTitle": "エンドポイント",
+            "endpoints": {
+                "issuer": "発行者",
+                "authorization": "認可",
+                "token": "トークン",
+                "userinfo": "ユーザー情報",
+                "revocation": "失効"
+            },
+            "scopesTitle": "スコープ",
+            "scopesText": "アプリが要求したスコープは、同意画面で 1 つずつ表示されます。"
+        },
+        "showcase": {
+            "title": "ショーケース",
+            "description": "CP OAuth を利用しているサイトとプロジェクト。",
+            "sites": "サイト",
+            "sitesText": "CP OAuth でログインできるサービス。",
+            "noSites": "掲載されているサイトはまだありません。",
+            "projects": "プロジェクト",
+            "projectsText": "CP OAuth を中心に作られたライブラリやツール。",
+            "noProjects": "掲載されているプロジェクトはまだありません。"
+        },
+        "user": {
+            "kicker": "公開プロフィール",
+            "joined": "{date} に登録",
+            "editProfile": "公開プロフィールを編集",
+            "homepage": "自己紹介",
+            "linkedAccounts": "連携アカウント",
+            "noLinkedAccounts": "公開している連携アカウントはありません。",
+            "contestStats": "コンテスト統計",
+            "highestRating": "最高レーティング",
+            "totalContests": "参加コンテスト数",
+            "contests": "参加数",
+            "rank": "順位",
+            "lastActivity": "最終参加",
+            "noStats": "公開している連携アカウントのコンテストデータはありません。",
+            "statsUnavailable": "Clist.by のコンテストデータは一時的に利用できません。",
+            "ratingHistory": "レーティング履歴",
+            "noRatingHistory": "公開している連携アカウントのレート変動はありません。",
+            "recentChanges": "最近のレーティング変動",
+            "chartLabel": "レーティングの推移",
+            "chartResource": "プラットフォーム",
+            "chartTooltip": "{date} · {rating}（{change}）",
+            "columns": {
+                "contest": "コンテスト",
+                "date": "日付",
+                "place": "順位",
+                "rating": "レーティング",
+                "change": "変動"
+            }
+        }
+    }
+}

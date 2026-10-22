@@ -1,0 +1,97 @@
+{
+    "public": {
+        "home": {
+            "title": "Sign in once, prove every platform",
+            "statement": "CP OAuth is an OAuth 2.0 provider for competitive programmers. Link and verify your Luogu, AtCoder, LeetCode, Codeforces and other accounts, then let apps read exactly the identities you approve.",
+            "openProfile": "Open your profile",
+            "openDeveloper": "Manage OAuth clients",
+            "howItWorks": "How it works",
+            "figures": "Site figures",
+            "figuresUnavailable": "Site figures are temporarily unavailable.",
+            "stats": {
+                "users": "Accounts",
+                "linkedAccounts": "Linked accounts",
+                "oauthClients": "OAuth clients",
+                "signInsToday": "Authorization requests today"
+            },
+            "notices": "Notices",
+            "noNotices": "No notices have been published.",
+            "pinned": "Pinned",
+            "members": "Newest members",
+            "noMembers": "No members yet.",
+            "joined": "Joined {date}"
+        },
+        "about": {
+            "title": "About CP OAuth",
+            "description": "How accounts are verified and how an app signs users in.",
+            "toDeveloper": "Create an OAuth client",
+            "platformsTitle": "Supported platforms",
+            "platformsText": "Every linked account is verified before it is saved.",
+            "providerSignIn": "Verified by signing in with the provider.",
+            "proof": {
+                "luogu": "Verified with a code placed in a public Luogu clipboard.",
+                "atcoder": "Verified with a code placed in the AtCoder profile Affiliation field.",
+                "leetcode": "Verified with a code placed in the leetcode.cn profile bio."
+            },
+            "flowTitle": "Authorization code flow",
+            "flowText": "Standard OAuth 2.0 with optional PKCE (S256 or plain).",
+            "steps": {
+                "register": "Register a client in the developer console and add its exact redirect URIs.",
+                "redirect": "Send the user to the authorization endpoint with client_id, redirect_uri, response_type=code, scope, state and, for public clients, a PKCE code_challenge.",
+                "consent": "The user signs in and approves the requested scopes. The browser returns to your redirect URI with a code valid for 10 minutes.",
+                "exchange": "Exchange the code at the token endpoint for an access token (1 hour) and a refresh token (30 days).",
+                "userinfo": "Call the userinfo endpoint with the bearer access token. Claims are limited to the granted scopes.",
+                "refresh": "Use the refresh token to get new tokens. Each refresh token works once and is replaced on use."
+            },
+            "endpointsTitle": "Endpoints",
+            "endpoints": {
+                "issuer": "Issuer",
+                "authorization": "Authorization",
+                "token": "Token",
+                "userinfo": "Userinfo",
+                "revocation": "Revocation"
+            },
+            "scopesTitle": "Scopes",
+            "scopesText": "Apps request scopes; users see each one on the consent screen."
+        },
+        "showcase": {
+            "title": "Showcase",
+            "description": "Sites and projects that use CP OAuth.",
+            "sites": "Sites",
+            "sitesText": "Services that offer sign-in with CP OAuth.",
+            "noSites": "No sites are listed yet.",
+            "projects": "Projects",
+            "projectsText": "Libraries and tools built around CP OAuth.",
+            "noProjects": "No projects are listed yet."
+        },
+        "user": {
+            "kicker": "Public profile",
+            "joined": "Joined {date}",
+            "editProfile": "Edit public profile",
+            "homepage": "About",
+            "linkedAccounts": "Linked accounts",
+            "noLinkedAccounts": "No linked accounts are public.",
+            "contestStats": "Contest statistics",
+            "highestRating": "Highest rating",
+            "totalContests": "Contests",
+            "contests": "Contests",
+            "rank": "Rank",
+            "lastActivity": "Last active",
+            "noStats": "No contest data for the public linked accounts.",
+            "statsUnavailable": "Contest data from Clist.by is temporarily unavailable.",
+            "ratingHistory": "Rating history",
+            "noRatingHistory": "No rated contests for the public linked accounts.",
+            "recentChanges": "Recent rating changes",
+            "chartLabel": "Rating over time",
+            "chartResource": "Platform",
+            "chartTooltip": "{date} · {rating} ({change})",
+            "columns": {
+                "contest": "Contest",
+                "date": "Date",
+                "place": "Place",
+                "rating": "Rating",
+                "change": "Change"
+            }
+        }
+    }
+}

@@ -1,11 +1,6 @@
 <template>
     <div>
-        <NuxtLoadingIndicator
-            :color="loadingIndicatorColor"
-            :error-color="loadingIndicatorColor"
-            :height="2"
-            :throttle="0"
-        />
+        <NuxtLoadingIndicator color="var(--cp-accent)" :height="2" :throttle="0" />
         <NuxtLayout>
             <NuxtPage />
         </NuxtLayout>
@@ -13,19 +8,16 @@
 </template>
 
 <script setup lang="ts">
-const colorMode = useColorMode();
-const { locale } = useI18n();
-const config = useRuntimeConfig();
-const analyticsToken = config.public.cloudflareAnalyticsToken.trim();
-
-const loadingIndicatorColor = computed(() =>
-    colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(0, 0, 0, 0.92)'
-);
+const { config } = usePublicConfig();
+const runtime = useRuntimeConfig();
+const { localeProperties } = useI18n();
+const analyticsToken = runtime.public.cloudflareAnalyticsToken.trim();
 
 useHead(() => ({
-    htmlAttrs: {
-        lang: locale.value === 'zh' ? 'zh-CN' : locale.value === 'ja' ? 'ja' : 'en'
-    },
+    htmlAttrs: { lang: localeProperties.value.language ?? 'en' },
+    titleTemplate: title =>
+        title ? `${title} · ${config.value.siteTitle}` : config.value.siteTitle,
+    link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     script: [
         {
             key: 'website-json-ld',
@@ -33,8 +25,8 @@ useHead(() => ({
             innerHTML: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'WebSite',
-                name: 'CP OAuth',
-                url: new URL('/', config.public.siteOrigin).href
+                name: config.value.siteTitle,
+                url: new URL('/', runtime.public.siteOrigin || 'http://localhost').href
             })
         },
         ...(analyticsToken

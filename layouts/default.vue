@@ -1,265 +1,301 @@
 <template>
-    <div class="app-layout">
-        <a class="app-layout__skip ui-navigation-link" href="#main-content">{{
-            $t('nav.skip_content')
-        }}</a>
-        <aside class="app-layout__sidebar">
-            <AppSidebar
-                :user="user"
-                :anonymous="status === 'anonymous'"
-                :logout-pending="logoutPending"
-                @logout="handleLogout"
-            />
+    <div class="shell">
+        <a class="shell__skip" href="#main">{{ t('common.nav.skip') }}</a>
+
+        <aside class="shell__rail" :aria-label="t('common.nav.label')">
+            <CpSidebar />
         </aside>
-        <el-drawer
-            id="mobile-navigation"
-            v-model="sidebarOpen"
-            direction="ltr"
-            :title="$t('nav.navigation')"
-            size="min(300px, calc(100vw - 32px))"
-            class="app-layout__drawer"
-            @closed="menuButton?.focus()"
-        >
-            <AppSidebar
-                :user="user"
-                :anonymous="status === 'anonymous'"
-                :logout-pending="logoutPending"
-                @logout="handleLogout"
-                @navigate="sidebarOpen = false"
-            />
-        </el-drawer>
-        <div class="app-layout__workspace">
-            <div class="app-layout__corner">
-                <button
-                    ref="menuButton"
-                    type="button"
-                    class="app-layout__menu"
-                    :aria-label="$t('nav.toggle_menu')"
-                    :aria-expanded="sidebarOpen"
-                    aria-controls="mobile-navigation"
-                    @click="sidebarOpen = true"
+
+        <header class="shell__topbar">
+            <button
+                ref="menuButton"
+                type="button"
+                class="shell__menu"
+                :aria-expanded="drawerOpen"
+                aria-controls="cp-drawer"
+                :aria-label="t('common.nav.open')"
+                @click="openDrawer"
+            >
+                <Menu :size="18" :stroke-width="1.75" aria-hidden="true" />
+            </button>
+            <NuxtLink to="/" class="shell__wordmark">
+                <span class="shell__mark" aria-hidden="true">CP</span>
+                {{ config.siteTitle }}
+            </NuxtLink>
+        </header>
+
+        <Transition name="shell-drawer">
+            <div v-if="drawerOpen" class="shell__drawer-layer" @keydown.esc="closeDrawer">
+                <div class="shell__backdrop" aria-hidden="true" @click="closeDrawer" />
+                <div
+                    id="cp-drawer"
+                    ref="drawer"
+                    class="shell__drawer"
+                    role="dialog"
+                    aria-modal="true"
+                    :aria-label="t('common.nav.label')"
+                    @keydown.tab="trapFocus"
                 >
-                    <Menu :size="18" :stroke-width="1.5" aria-hidden="true" />
-                </button>
-                <AppPreferences mode="icons" class="app-layout__preferences" />
+                    <button
+                        type="button"
+                        class="shell__close"
+                        :aria-label="t('common.nav.close')"
+                        @click="closeDrawer"
+                    >
+                        <X :size="18" :stroke-width="1.75" aria-hidden="true" />
+                    </button>
+                    <CpSidebar @navigate="closeDrawer" />
+                </div>
             </div>
-            <main id="main-content" tabindex="-1" class="app-layout__main">
-                <div
-                    v-if="authError"
-                    role="alert"
-                    class="app-layout__notice ui-note ui-note--danger"
-                >
-                    <p>{{ $t('identity.identity_unavailable') }}</p>
-                    <el-button :loading="identityPending" @click="retryIdentity">{{
-                        $t('identity.retry')
-                    }}</el-button>
-                </div>
-                <p
-                    v-if="logoutError"
-                    role="alert"
-                    class="app-layout__notice ui-note ui-note--danger"
-                >
-                    {{ logoutError }}
-                </p>
-                <div
-                    v-if="verificationEmailFailed"
-                    role="status"
-                    class="app-layout__notice ui-note ui-note--warning"
-                >
-                    <p>{{ $t('identity.verification_delivery_failed') }}</p>
-                    <NuxtLink to="/profile?tab=basic">{{
-                        $t('identity.verification_resend')
-                    }}</NuxtLink>
-                </div>
-                <el-alert
-                    v-if="identityConfirmed"
-                    class="app-layout__notice"
-                    :title="$t('identity.identity_confirmed')"
-                    :closable="false"
-                    type="success"
-                    show-icon
-                    ><el-button text @click="identityConfirmed = false">{{
-                        $t('identity.dismiss_notice')
-                    }}</el-button></el-alert
-                >
+        </Transition>
+
+        <div class="shell__main">
+            <main id="main" class="shell__content" tabindex="-1">
                 <slot />
             </main>
-            <AppFooter class="app-layout__footer" />
+            <div class="shell__footer"><CpFooter /></div>
         </div>
-        <AuthReauthenticationDialog />
+
+        <CpReauthDialog />
     </div>
 </template>
 
 <script setup lang="ts">
-import { Menu } from 'lucide-vue-next';
-import { getCurrentInstance } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { Menu, X } from 'lucide-vue-next';
+
 const { t } = useI18n();
-const messageBoxContext = getCurrentInstance()?.appContext;
-const { user, status, error: authError, load, logout, verificationEmailFailed } = useAuth();
-const { confirmed: identityConfirmed } = useReauthentication();
-const sidebarOpen = ref(false);
+const route = useRoute();
+const { config } = usePublicConfig();
+const drawerOpen = ref(false);
+const drawer = ref<HTMLElement | null>(null);
 const menuButton = ref<HTMLButtonElement | null>(null);
-const identityPending = ref(false);
-const logoutPending = ref(false);
-const logoutError = ref('');
-async function retryIdentity() {
-    identityPending.value = true;
-    try {
-        await load(true);
-    } catch {
-        /* Shared error stays visible. */
-    } finally {
-        identityPending.value = false;
+
+function focusables(): HTMLElement[] {
+    return Array.from(
+        drawer.value?.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+    );
+}
+
+async function openDrawer() {
+    drawerOpen.value = true;
+    await nextTick();
+    focusables()[0]?.focus();
+}
+
+function closeDrawer() {
+    if (!drawerOpen.value) return;
+    drawerOpen.value = false;
+    void nextTick(() => menuButton.value?.focus());
+}
+
+function trapFocus(event: KeyboardEvent) {
+    const items = focusables();
+    if (!items.length) return;
+    const first = items[0]!;
+    const last = items[items.length - 1]!;
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
     }
 }
-try {
-    await load();
-} catch {
-    /* Network failure is not anonymous identity. */
-}
-const route = useRoute();
+
 watch(
     () => route.fullPath,
     () => {
-        sidebarOpen.value = false;
+        drawerOpen.value = false;
     }
 );
-async function handleLogout() {
-    if (logoutPending.value) return;
-    try {
-        await ElMessageBox.confirm(
-            t('nav.logout_confirm'),
-            t('nav.logout'),
-            {
-                type: 'warning',
-                confirmButtonText: t('nav.logout'),
-                cancelButtonText: t('common.cancel')
-            },
-            messageBoxContext
-        );
-    } catch (cause) {
-        if (cause !== 'cancel' && cause !== 'close') {
-            logoutError.value = t('common.error');
-        }
-        return;
-    }
-    logoutPending.value = true;
-    logoutError.value = '';
-    try {
-        await logout();
-        sidebarOpen.value = false;
-    } catch (error: unknown) {
-        logoutError.value =
-            (error as { data?: { message?: string } }).data?.message || t('identity.network_error');
-    } finally {
-        logoutPending.value = false;
-    }
-}
+
+watch(drawerOpen, open => {
+    if (import.meta.client) document.documentElement.style.overflow = open ? 'hidden' : '';
+});
 </script>
 
 <style scoped lang="scss">
-.app-layout {
-    min-height: 100dvh;
+.shell__skip {
+    position: fixed;
+    top: var(--cp-space-2);
+    left: var(--cp-space-2);
+    z-index: 100;
+    padding: var(--cp-space-2) var(--cp-space-3);
+    color: var(--cp-text);
+    background: var(--cp-surface);
+    border: 1px solid var(--cp-line-strong);
+    border-radius: var(--cp-radius-sm);
+    transform: translateY(-200%);
+
+    &:focus {
+        transform: none;
+    }
 }
-.app-layout__sidebar {
+
+.shell__rail {
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 20;
-    width: var(--sidebar-width);
-    overflow-y: auto;
-    border-right: 1px solid var(--border-color);
-    background: var(--bg-primary);
+    width: var(--cp-rail-width);
+    border-right: 1px solid var(--cp-rail-line);
 }
-.app-layout__workspace {
+
+.shell__topbar {
+    display: none;
+}
+
+.shell__main {
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    min-height: 100dvh;
-    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    padding: var(--cp-space-8) var(--cp-space-10) 0 calc(var(--cp-rail-width) + var(--cp-space-10));
 }
-.app-layout__corner {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--space-1);
-    padding: var(--space-2) var(--space-4) 0;
+
+.shell__content,
+.shell__footer {
+    width: 100%;
+    max-width: var(--cp-content-width);
+    margin: 0 auto;
 }
-.app-layout__menu {
-    display: none;
+
+.shell__content {
+    flex: 1;
+    outline: none;
+}
+
+.shell__drawer-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+}
+
+.shell__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--el-overlay-color-lighter);
+}
+
+.shell__drawer {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: min(var(--cp-rail-width), 86vw);
+    box-shadow: var(--el-box-shadow-dark);
+}
+
+.shell__close {
+    position: absolute;
+    top: 16px;
+    right: 12px;
+    z-index: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    width: var(--control-height);
-    height: var(--control-height);
-    margin-right: auto;
-    padding: 0;
-    border: 0;
-    border-radius: var(--card-radius);
+    width: 32px;
+    height: 32px;
+    color: var(--cp-rail-muted);
     background: transparent;
-    color: var(--text-secondary);
+    border: 0;
+    border-radius: var(--cp-radius-sm);
     cursor: pointer;
+
+    &:hover {
+        color: var(--cp-rail-fg-strong);
+        background: var(--cp-rail-hover);
+    }
 }
-.app-layout__menu:hover {
-    color: var(--accent);
+
+.shell-drawer-enter-active,
+.shell-drawer-leave-active {
+    transition: opacity var(--cp-duration-slide) var(--cp-ease);
+
+    .shell__drawer {
+        transition: transform var(--cp-duration-slide) var(--cp-ease);
+    }
 }
-.app-layout__main {
-    flex: 1;
-    width: 100%;
-    max-width: 1240px;
-    min-width: 0;
-    margin: 0 auto;
-    padding: var(--space-2) var(--space-6) var(--space-6);
+
+.shell-drawer-enter-from,
+.shell-drawer-leave-to {
+    opacity: 0;
+
+    .shell__drawer {
+        transform: translateX(-100%);
+    }
 }
-.app-layout__footer {
-    --footer-content-width: 1100px;
-    width: 100%;
-    min-width: 0;
-    margin: 0;
-    padding: var(--space-2) var(--space-4) var(--space-1);
-}
-.app-layout__notice {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-3);
-    margin-bottom: var(--space-5);
-}
-.app-layout__skip {
-    position: fixed;
-    left: -9999px;
-    top: 12px;
-    z-index: 3000;
-    padding: 12px;
-    background: var(--bg-primary);
-    color: var(--accent);
-}
-.app-layout__skip:focus {
-    left: calc(var(--sidebar-width) + 16px);
-}
-:deep(.app-layout__drawer .el-drawer__body) {
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-}
+
 @media (max-width: 1023px) {
-    .app-layout__sidebar {
+    .shell__rail {
         display: none;
     }
-    .app-layout__workspace {
-        margin-left: 0;
+
+    .shell__topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: var(--cp-space-3);
+        height: var(--cp-topbar-height);
+        padding: 0 var(--cp-space-4);
+        color: var(--cp-rail-fg-strong);
+        background: var(--cp-rail-bg);
+        border-bottom: 1px solid var(--cp-rail-line);
     }
-    .app-layout__corner {
-        padding: var(--space-2) var(--space-3) 0;
-    }
-    .app-layout__menu {
+
+    .shell__menu {
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        color: var(--cp-rail-fg-strong);
+        background: transparent;
+        border: 1px solid var(--cp-rail-line);
+        border-radius: var(--cp-radius-sm);
+        cursor: pointer;
+
+        &:focus-visible {
+            outline-color: var(--cp-rail-accent);
+        }
     }
-    .app-layout__main {
-        padding: var(--space-2) var(--space-4) var(--space-4);
+
+    .shell__wordmark {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--cp-space-2);
+        font-weight: var(--cp-weight-strong);
+        color: var(--cp-rail-fg-strong);
+
+        &:hover {
+            color: var(--cp-rail-fg-strong);
+            text-decoration: none;
+        }
     }
-    .app-layout__skip:focus {
-        left: 16px;
+
+    .shell__mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        font-family: var(--cp-font-mono);
+        font-size: 11px;
+        font-weight: var(--cp-weight-medium);
+        color: var(--cp-rail-bg);
+        background: var(--cp-rail-accent);
+        border-radius: var(--cp-radius-sm);
+    }
+
+    .shell__main {
+        min-height: calc(100vh - var(--cp-topbar-height));
+        padding: var(--cp-space-6) var(--cp-space-6) 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .shell__main {
+        padding: var(--cp-space-5) var(--cp-space-4) 0;
     }
 }
 </style>

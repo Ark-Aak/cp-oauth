@@ -1,0 +1,69 @@
+{
+    "account": {
+        "fields": {
+            "username": "ユーザー名",
+            "displayName": "表示名",
+            "avatarUrl": "アバター URL",
+            "bio": "自己紹介",
+            "email": "メールアドレス"
+        },
+        "basic": {
+            "description": "他の人や、許可したアプリに表示される情報です。",
+            "identityTitle": "基本情報",
+            "identityText": "profile スコープを持つアプリはこれらの項目を読み取れます。",
+            "avatarHint": "HTTP または HTTPS の画像 URL を入力してください。空欄の場合は頭文字を表示します。",
+            "usernameRule": "3〜24 文字。小文字の英字、数字、アンダースコアのみ使えます。",
+            "usernameTaken": "このユーザー名はすでに使われています。",
+            "homepageTitle": "プロフィールページ",
+            "homepageText": "公開プロフィールに表示される Markdown です。",
+            "homepagePlaceholder": "## 自己紹介\n\nMarkdown で記述します。",
+            "homepageSize": "{used} KiB / {limit} KiB",
+            "homepageEmpty": "プレビューする内容はまだありません。",
+            "edit": "編集",
+            "preview": "プレビュー",
+            "emailTitle": "メールアドレス",
+            "emailText": "ログイン、パスワードの再設定、確認コードに使います。",
+            "verified": "確認済み",
+            "unverified": "未確認",
+            "pendingEmail": "確認待ちのアドレス",
+            "pendingUntil": "リンクの有効期限：{time}",
+            "accountId": "アカウント ID",
+            "resendVerification": "確認メールを再送",
+            "resendPending": "確認リンクを再送",
+            "changeEmail": "メールアドレスを変更",
+            "newEmail": "新しいメールアドレス",
+            "newEmailHint": "確認リンクを送信します。リンクを開くまで現在のアドレスが有効です。",
+            "sendConfirmation": "確認リンクを送信",
+            "emailSent": "{email} に確認リンクを送信しました。",
+            "emailNotSent": "メールを送信できませんでした。しばらくしてから再度お試しください。",
+            "alreadyVerified": "メールアドレスはすでに確認済みです。"
+        },
+        "privacy": {
+            "description": "公開プロフィールとプロフィールカードに表示する内容を選びます。",
+            "visibilityTitle": "公開範囲",
+            "visibilityText": "公開プロフィールは誰でも閲覧できます。選択した項目だけが表示されます。",
+            "platformsLegend": "公開する連携アカウント",
+            "noBindings": "まだアカウントを連携していません。",
+            "cpStats": "コンテスト統計",
+            "cpStatsText": "公開している連携アカウントの Clist.by のレーティングと参加回数。",
+            "ratingHistory": "レーティング履歴",
+            "ratingHistoryText": "公開している連携アカウントの Clist.by の最近のレート変動。",
+            "cardTitle": "プロフィールカード",
+            "cardText": "公開している連携アカウントを表示する SVG カード。README やサイトに埋め込めます。",
+            "cardWidth": "幅：{width} px",
+            "cardAlt": "{username} のプロフィールカード",
+            "markdownSnippet": "Markdown",
+            "htmlSnippet": "HTML"
+        },
+        "apps": {
+            "description": "CP OAuth アカウントの利用を許可したアプリです。",
+            "empty": "アプリはまだありません。アプリのリクエストを承認するとここに表示されます。",
+            "lastAuthorized": "最終承認",
+            "activeTokens": "有効なトークン",
+            "revoke": "アクセスを取り消す",
+            "revokeTitle": "アクセスの取り消し",
+            "revokeConfirm": "{name} はすぐにアカウントへアクセスできなくなります。後で再度許可を求めることがあります。",
+            "revoked": "{name} のアクセスを取り消しました（トークン {tokens} 件、未使用のコード {codes} 件を削除）。"
+        }
+    }
+}

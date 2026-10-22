@@ -1,0 +1,38 @@
+{
+    "connections": {
+        "description": "所有を証明した他のプラットフォームのアカウントです。",
+        "footnote": "アプリが連携アカウントを読み取れるのは、承認した link / cp スコープの範囲だけです。公開するアカウントの設定：",
+        "uid": "UID {uid}",
+        "verifiedAt": "{date} に確認",
+        "notLinked": "未連携",
+        "notConfigured": "管理者がこのプロバイダーを有効にしていません。",
+        "refreshName": "名前を更新",
+        "refreshed": "名前を {name} に更新しました。",
+        "unlink": "連携を解除",
+        "unlinkTitle": "連携の解除",
+        "unlinkConfirm": "アプリは {platform} の情報を受け取れなくなり、このアカウントでログインすることもできなくなります。",
+        "unlinked": "{platform} の連携を解除しました。",
+        "linked": "{platform} を連携しました。",
+        "link": {
+            "action": "連携",
+            "title": "{platform} を連携",
+            "getCode": "確認コードを取得",
+            "intro": {
+                "luogu": "Luogu の UID を入力してください。公開クリップボードで所有を証明します。",
+                "atcoder": "AtCoder のユーザー名を入力してください。プロフィールの所属欄で所有を証明します。",
+                "leetcode": "LeetCode（leetcode.cn）のユーザー名（プロフィール URL の部分）を入力してください。自己紹介で所有を証明します。"
+            },
+            "uidLabel": {
+                "luogu": "Luogu UID",
+                "atcoder": "AtCoder ユーザー名",
+                "leetcode": "LeetCode ユーザー名"
+            },
+            "uidPlaceholder": {
+                "luogu": "123456",
+                "atcoder": "tourist",
+                "leetcode": "your-slug"
+            },
+            "luoguUidRule": "Luogu の UID は数字のみです。"
+        }
+    }
+}

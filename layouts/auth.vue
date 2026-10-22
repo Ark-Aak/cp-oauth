@@ -1,300 +1,206 @@
 <template>
-    <div class="auth-layout" :class="{ 'auth-layout--consent': authorizationPage }">
-        <a class="auth-layout__skip ui-navigation-link" href="#main-content">{{
-            $t('nav.skip_content')
-        }}</a>
-        <AppPreferences mode="icons" class="auth-layout__preferences" />
-        <main
-            id="main-content"
-            class="auth-layout__main"
-            :tabindex="authorizationPage ? 0 : -1"
-            :aria-labelledby="authorizationPage ? 'oauth-authorize-title' : undefined"
-        >
-            <div class="auth-layout__content">
-                <NuxtLink
-                    v-if="!authorizationPage"
-                    to="/"
-                    class="auth-layout__home ui-navigation-link"
-                    :aria-label="$t('auth.flow.home_link', { site: $t('app.name') })"
-                >
-                    <img src="/favicon.svg" alt="" width="24" height="24" />
-                    <span>{{ $t('app.name') }}</span>
-                </NuxtLink>
-                <aside
-                    v-if="verificationEmailFailed"
-                    class="auth-layout__verification ui-note ui-note--warning"
-                    role="status"
-                >
-                    <p>{{ $t('identity.verification_delivery_failed') }}</p>
-                    <NuxtLink :to="verificationPath">
-                        {{ $t('identity.verification_resend') }}
-                    </NuxtLink>
-                </aside>
+    <div class="auth-shell">
+        <aside class="auth-shell__panel">
+            <NuxtLink to="/" class="auth-shell__brand">
+                <span class="auth-shell__mark" aria-hidden="true">CP</span>
+                <span>{{ config.siteTitle }}</span>
+            </NuxtLink>
+
+            <div class="auth-shell__statement">
+                <p class="auth-shell__lead">{{ t('common.panel.lead') }}</p>
+                <dl class="auth-shell__facts">
+                    <div v-for="fact in facts" :key="fact.term">
+                        <dt>{{ fact.term }}</dt>
+                        <dd>{{ fact.detail }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="auth-shell__panel-foot">
+                <CpPreferences surface="rail" />
+                <NuxtLink to="/about" class="auth-shell__about">{{
+                    t('common.nav.about')
+                }}</NuxtLink>
+            </div>
+        </aside>
+
+        <main id="main" class="auth-shell__main">
+            <div class="auth-shell__content">
                 <slot />
             </div>
         </main>
-        <AppFooter
-            :promotion-source="authorizationPage ? 'oauth' : undefined"
-            class="auth-layout__footer"
-        />
     </div>
 </template>
-<script setup lang="ts">
-import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 
-const route = useRoute();
-const authorizationPage = computed(() => route.path.replace(/\/$/, '') === '/oauth/authorize');
-const { verificationEmailFailed, load } = useAuth();
-try {
-    await load();
-} catch {
-    /* Network failure is not anonymous identity. */
-}
-const verificationPath = computed(() => ({
-    path: '/profile',
-    query: {
-        tab: 'basic',
-        redirect: getSafeRedirectTarget(route.query.redirect, getSafeRedirectTarget(route.fullPath))
-    }
-}));
+<script setup lang="ts">
+const { t } = useI18n();
+const { config } = usePublicConfig();
+
+const facts = computed(() => [
+    { term: 'OAuth 2.0', detail: t('common.panel.oauth') },
+    { term: 'PKCE', detail: t('common.panel.pkce') },
+    { term: 'Luogu · AtCoder · Codeforces', detail: t('common.panel.identities') }
+]);
 </script>
 
 <style scoped lang="scss">
-.auth-layout {
+.auth-shell {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    width: 100%;
-    min-width: 0;
-    min-height: 100dvh;
-    background: var(--bg-secondary);
+    grid-template-columns: minmax(360px, 40%) minmax(0, 1fr);
+    min-height: 100vh;
+    background: linear-gradient(90deg, var(--cp-rail-bg) 0 max(360px, 40%), transparent 0);
+}
 
-    &--consent {
-        height: 100dvh;
-        min-height: 0;
+.auth-shell__panel {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: var(--cp-space-8) var(--cp-space-10);
+    color: var(--cp-rail-fg);
+    background: var(--cp-rail-bg);
+    border-right: 1px solid var(--cp-rail-line);
+}
+
+.auth-shell__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--cp-space-3);
+    font-size: var(--cp-text-lg);
+    font-weight: var(--cp-weight-strong);
+    color: var(--cp-rail-fg-strong);
+
+    &:hover {
+        color: var(--cp-rail-fg-strong);
+        text-decoration: none;
     }
 
-    &__skip {
-        position: fixed;
-        top: 12px;
-        left: -9999px;
-        z-index: 3000;
-        padding: var(--space-3);
-        background: var(--bg-primary);
-        color: var(--accent);
-    }
-
-    &__skip:focus {
-        left: var(--space-4);
-    }
-
-    &__preferences {
-        justify-self: end;
-        padding: var(--space-2) var(--space-4) 0;
-    }
-
-    &__home {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-2);
-        width: fit-content;
-        min-width: 0;
-        margin: 0 auto var(--space-4);
-        color: var(--text-primary);
-        font-size: var(--font-size-section);
-        font-weight: 700;
-        overflow-wrap: anywhere;
-
-        img {
-            flex-shrink: 0;
-        }
-    }
-
-    &__main {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-width: 0;
-        min-height: 0;
-        padding: var(--space-4) var(--space-4) var(--space-6);
-    }
-
-    &--consent &__main {
-        margin: var(--space-1);
-        padding: var(--space-3) var(--space-3) var(--space-4);
-        overflow-y: auto;
-    }
-
-    &__content {
-        flex: 0 0 auto;
-        width: 100%;
-        min-width: 0;
-        max-width: 440px;
-        margin-block: auto;
-    }
-
-    &--consent &__content {
-        max-width: 520px;
-    }
-
-    &__footer {
-        --footer-content-width: 1100px;
-        width: 100%;
-        min-width: 0;
-        margin: 0;
-        padding: var(--space-2) var(--space-4) var(--space-1);
-    }
-
-    &__verification {
-        margin-bottom: var(--space-4);
-        overflow-wrap: anywhere;
+    &:focus-visible {
+        outline-color: var(--cp-rail-accent);
     }
 }
 
-@media (max-width: 767px) {
-    .auth-layout__main {
-        padding: var(--space-3) var(--space-3) var(--space-5);
+.auth-shell__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-family: var(--cp-font-mono);
+    font-size: var(--cp-text-xs);
+    font-weight: var(--cp-weight-medium);
+    color: var(--cp-rail-bg);
+    background: var(--cp-rail-accent);
+    border-radius: var(--cp-radius-sm);
+}
+
+.auth-shell__statement {
+    margin-top: auto;
+    margin-bottom: auto;
+    max-width: 440px;
+}
+
+.auth-shell__lead {
+    font-size: var(--cp-text-display);
+    line-height: var(--cp-leading-display);
+    font-weight: var(--cp-weight-strong);
+    color: var(--cp-rail-fg-strong);
+}
+
+.auth-shell__facts {
+    margin-top: var(--cp-space-8);
+    border-top: 1px solid var(--cp-rail-line);
+
+    div {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2px;
+        padding: var(--cp-space-3) 0;
+        border-bottom: 1px solid var(--cp-rail-line);
+    }
+
+    dt {
+        font-family: var(--cp-font-mono);
+        font-size: var(--cp-text-xs);
+        line-height: var(--cp-leading-xs);
+        font-weight: var(--cp-weight-medium);
+        letter-spacing: var(--cp-tracking-kicker);
+        text-transform: uppercase;
+        color: var(--cp-rail-accent);
+    }
+
+    dd {
+        font-size: var(--cp-text-sm);
+        line-height: var(--cp-leading-sm);
     }
 }
-</style>
 
-<style lang="scss">
-.auth-card {
-    width: 100%;
+.auth-shell__panel-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cp-space-3);
+}
+
+.auth-shell__about {
+    font-size: var(--cp-text-sm);
+    color: var(--cp-rail-muted);
+
+    &:hover {
+        color: var(--cp-rail-fg-strong);
+    }
+
+    &:focus-visible {
+        outline-color: var(--cp-rail-accent);
+    }
+}
+
+.auth-shell__main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
-    padding: var(--space-6);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--card-radius);
-    box-shadow: var(--el-box-shadow-light);
+    padding: var(--cp-space-10) var(--cp-space-6);
+    background: var(--cp-surface);
+    outline: none;
+}
 
-    > :last-child {
-        margin-bottom: 0;
+.auth-shell__content {
+    width: 100%;
+    max-width: var(--cp-auth-form-width);
+}
+
+@media (max-width: 899px) {
+    .auth-shell {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+        background: none;
     }
 
-    &__title {
-        margin-bottom: var(--space-2);
-        color: var(--text-primary);
-        font-size: var(--font-size-title-mobile);
-        font-weight: 700;
-        line-height: 1.35;
-        overflow-wrap: anywhere;
-    }
-
-    &__lead {
-        margin-bottom: var(--space-4);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        line-height: 1.65;
-        overflow-wrap: anywhere;
-    }
-
-    &__desc,
-    &__status {
-        margin-bottom: var(--space-4);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        line-height: 1.65;
-        overflow-wrap: anywhere;
-    }
-
-    &__alert {
-        margin-bottom: var(--space-4);
-    }
-
-    &__error {
-        margin-bottom: var(--space-4);
-        padding: var(--space-2) var(--space-3);
-        border-left: 3px solid var(--el-color-danger);
-        border-radius: 0 var(--card-radius) var(--card-radius) 0;
-        background: var(--el-color-danger-light-9);
-        color: var(--text-primary);
-        font-size: var(--font-size-control);
-        line-height: 1.65;
-        overflow-wrap: anywhere;
-    }
-
-    &__form {
-        margin-bottom: var(--space-4);
-
-        > :last-child {
-            margin-bottom: 0;
-        }
-    }
-
-    &__field--with-help {
-        margin-bottom: var(--space-1);
-    }
-
-    &__field-hint {
-        margin: 0 0 var(--space-4);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        line-height: 1.5;
-        overflow-wrap: anywhere;
-    }
-
-    &__divider {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        margin: var(--space-4) 0 var(--space-3);
-        color: var(--text-secondary);
-        font-size: var(--font-size-meta);
-
-        &::before,
-        &::after {
-            content: '';
-            flex: 1;
-            border-top: 1px solid var(--border-color);
-        }
-    }
-
-    &__link,
-    &__footer a {
-        display: inline;
-        overflow-wrap: anywhere;
-    }
-
-    &__footer {
-        display: flex;
+    .auth-shell__panel {
+        position: static;
+        flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: center;
-        gap: 0 var(--space-2);
-        margin-top: var(--space-5);
-        padding-top: var(--space-4);
-        border-top: 1px solid var(--divider-subtle);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        line-height: 1.65;
-        overflow-wrap: anywhere;
+        justify-content: space-between;
+        gap: var(--cp-space-3);
+        height: auto;
+        min-height: 64px;
+        padding: var(--cp-space-3) var(--cp-space-4);
+        border-right: 0;
+        border-bottom: 1px solid var(--cp-rail-line);
     }
 
-    &__captcha {
-        min-width: 0;
-        margin-bottom: var(--space-4);
+    .auth-shell__statement,
+    .auth-shell__about {
+        display: none;
     }
 
-    &__captcha-widget {
-        display: flex;
-        justify-content: center;
-    }
-
-    &__captcha &__status {
-        margin: var(--space-2) 0;
-    }
-
-    &__password-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
-@media (max-width: 479px) {
-    .auth-card {
-        padding: var(--space-5) var(--space-4);
+    .auth-shell__main {
+        align-items: flex-start;
+        padding: var(--cp-space-8) var(--cp-space-4);
     }
 }
 </style>

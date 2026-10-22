@@ -1,206 +1,137 @@
 <template>
-    <section class="auth-card" aria-labelledby="reset-password-title" :aria-busy="pending">
-        <h1 id="reset-password-title" class="auth-card__title">
-            {{ $t('auth.password.reset_title') }}
-        </h1>
-        <p v-if="!success && token && !tokenInvalid" class="auth-card__lead">
-            {{ $t('auth.password.reset_lead') }}
-        </p>
-        <p v-if="visibleError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
-            {{ visibleError }}
-        </p>
-        <template v-if="success">
-            <p class="auth-card__status" role="status">{{ $t('auth.password.reset_success') }}</p>
-            <div class="task-actions">
-                <NuxtLink :to="loginPath" class="el-button el-button--primary">
-                    {{ $t('auth.password.back_login') }}
-                </NuxtLink>
-            </div>
-        </template>
-        <template v-else-if="!token || tokenInvalid">
-            <div class="task-actions">
-                <NuxtLink :to="forgotPath" class="el-button el-button--primary">
-                    {{ $t('auth.flow.reset_request_again') }}
-                </NuxtLink>
-            </div>
-        </template>
-        <el-form
-            v-else
-            ref="formRef"
-            class="auth-card__form"
-            method="post"
-            :disabled="!hydrationReady"
-            :model="form"
-            :rules="rules"
-            label-position="top"
-            @submit.prevent="resetPassword"
-        >
-            <el-form-item
-                class="auth-card__field--with-help"
-                prop="newPassword"
-                :label="$t('auth.password.new_password')"
-                for="reset-password"
+    <CpAuthScreen
+        v-if="state === 'done'"
+        :title="t('auth.reset.doneTitle')"
+        :description="t('auth.reset.doneText')"
+        :icon="CircleCheck"
+        tone="success"
+    >
+        <el-button type="primary" @click="navigateTo(loginLink)">{{
+            t('common.actions.signIn')
+        }}</el-button>
+    </CpAuthScreen>
+
+    <CpAuthScreen
+        v-else-if="state === 'invalid'"
+        :title="t('auth.reset.invalidTitle')"
+        :description="t('auth.reset.invalidText')"
+        :icon="CircleAlert"
+        tone="danger"
+    >
+        <el-button type="primary" @click="navigateTo(forgotLink)">{{
+            t('auth.reset.requestNew')
+        }}</el-button>
+    </CpAuthScreen>
+
+    <CpAuthScreen v-else :title="t('auth.reset.title')" :description="t('auth.reset.description')">
+        <form class="reset" method="post" novalidate @submit.prevent="submit">
+            <input type="text" name="username" autocomplete="username" hidden />
+            <AuthField
+                v-slot="{ id }"
+                :label="t('auth.fields.newPassword')"
+                :hint="t('auth.passwordRule')"
+                :error="password && !passwordValid ? t('auth.passwordRule') : ''"
             >
                 <el-input
-                    id="reset-password"
-                    v-model="form.newPassword"
-                    :aria-label="$t('auth.password.new_password')"
-                    aria-describedby="reset-password-hint"
-                    :type="passwordVisible ? 'text' : 'password'"
+                    :id="id"
+                    v-model="password"
                     name="new-password"
+                    type="password"
                     autocomplete="new-password"
-                    :disabled="!hydrationReady || pending"
-                >
-                    <template #suffix>
-                        <el-button
-                            class="auth-card__password-toggle"
-                            text
-                            native-type="button"
-                            :aria-label="
-                                $t(
-                                    passwordVisible
-                                        ? 'auth.flow.hide_password'
-                                        : 'auth.flow.show_password'
-                                )
-                            "
-                            :aria-pressed="passwordVisible"
-                            :disabled="!hydrationReady || pending"
-                            @click="passwordVisible = !passwordVisible"
-                        >
-                            <EyeOff v-if="passwordVisible" :size="18" aria-hidden="true" />
-                            <Eye v-else :size="18" aria-hidden="true" />
-                        </el-button>
-                    </template>
-                </el-input>
-            </el-form-item>
-            <p id="reset-password-hint" class="auth-card__field-hint">
-                {{ $t('auth.flow.password_rule') }}
-            </p>
-            <div class="task-actions">
-                <el-button
-                    type="primary"
-                    native-type="submit"
-                    :loading="pending"
-                    :disabled="!hydrationReady || pending"
-                >
-                    {{ $t('auth.password.reset_now') }}
-                </el-button>
-            </div>
-        </el-form>
-        <p v-if="!success" class="auth-card__footer">
-            <NuxtLink :to="loginPath">{{ $t('auth.password.back_login') }}</NuxtLink>
-        </p>
-    </section>
+                    show-password
+                    :disabled="!hydrated || busy"
+                />
+            </AuthField>
+            <AuthField
+                v-slot="{ id }"
+                :label="t('auth.fields.confirmPassword')"
+                :error="confirm && confirm !== password ? t('auth.passwordMismatch') : ''"
+            >
+                <el-input
+                    :id="id"
+                    v-model="confirm"
+                    name="confirm-password"
+                    type="password"
+                    autocomplete="new-password"
+                    show-password
+                    :disabled="!hydrated || busy"
+                />
+            </AuthField>
+            <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
+            <el-button
+                class="reset__submit"
+                type="primary"
+                native-type="submit"
+                :loading="busy"
+                :disabled="!hydrated || !passwordValid || password !== confirm"
+            >
+                {{ t('auth.reset.submit') }}
+            </el-button>
+        </form>
+    </CpAuthScreen>
 </template>
 
 <script setup lang="ts">
-import type { FormInstance, FormRules } from 'element-plus';
-import { Eye, EyeOff } from 'lucide-vue-next';
-import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
-import { newPasswordSchema } from '~/utils/validation';
+import { CircleAlert, CircleCheck } from 'lucide-vue-next';
 
 definePageMeta({ layout: 'auth' });
 
 const { t } = useI18n();
-const route = useRoute();
 const api = useApi();
-const { load, clearPending } = useAuth();
-const passwordVisible = ref(false);
-const { data: publicConfig } = await usePublicConfig();
-const formRef = ref<FormInstance>();
-const form = reactive({ newPassword: '' });
-const pending = ref(false);
-const hydrationReady = useHydrationReady();
-const success = ref(false);
-const tokenInvalid = ref(false);
-const errorMessage = ref('');
-const errorEl = ref<HTMLElement | null>(null);
-const resultRedirect = ref<string | null>(null);
-const token = computed(() => {
-    const value = Array.isArray(route.query.token) ? route.query.token[0] : route.query.token;
-    return typeof value === 'string' ? value : '';
-});
-const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
-const redirectTarget = computed(
-    () => resultRedirect.value ?? getSafeRedirectTarget(route.query.redirect)
+const route = useRoute();
+const { describe, read } = useApiError();
+const hydrated = useHydrated();
+
+useHead({ title: t('auth.reset.title') });
+
+const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''));
+const redirect = ref(getSafeRedirectTarget(route.query.redirect as string | undefined, '/profile'));
+const loginLink = computed(() =>
+    redirect.value === '/profile' ? '/login' : buildLoginPath(redirect.value)
 );
-const loginPath = computed(() => buildLoginPath(redirectTarget.value));
-const forgotPath = computed(() => ({
-    path: '/forgot-password',
-    query: { redirect: redirectTarget.value }
-}));
-const visibleError = computed(() => {
-    if (!token.value) return t('auth.flow.reset_missing');
-    if (tokenInvalid.value) return t('auth.flow.reset_expired');
-    return errorMessage.value;
-});
-const rules = computed<FormRules>(() => ({
-    newPassword: [
-        { required: true, message: t('auth.flow.password_rule'), trigger: 'blur' },
-        {
-            validator: (_rule, value: string, callback) => {
-                callback(
-                    newPasswordSchema.safeParse(value).success
-                        ? undefined
-                        : new Error(t('auth.flow.password_rule'))
-                );
-            },
-            trigger: 'blur'
-        }
-    ]
-}));
+const forgotLink = computed(() =>
+    redirect.value === '/profile'
+        ? '/forgot-password'
+        : `/forgot-password?redirect=${encodeURIComponent(redirect.value)}`
+);
 
-useHead({ title: () => `${t('auth.password.reset_title')} - ${siteTitle.value}` });
-watch(visibleError, async message => {
-    if (!message) return;
-    await nextTick();
-    errorEl.value?.focus();
-});
-watch(token, () => {
-    tokenInvalid.value = false;
-    success.value = false;
-    errorMessage.value = '';
-    resultRedirect.value = null;
-    form.newPassword = '';
-});
-onMounted(() => {
-    if (visibleError.value) errorEl.value?.focus();
-});
+const state = ref<'form' | 'done' | 'invalid'>(token.value ? 'form' : 'invalid');
+const password = ref('');
+const confirm = ref('');
+const busy = ref(false);
+const error = ref('');
+const passwordValid = computed(
+    () => password.value.length >= 8 && new TextEncoder().encode(password.value).length <= 72
+);
 
-async function resetPassword() {
-    if (pending.value || success.value || !token.value || tokenInvalid.value || !formRef.value)
-        return;
-    pending.value = true;
-    errorMessage.value = '';
+async function submit() {
+    busy.value = true;
+    error.value = '';
     try {
-        const valid = await formRef.value.validate().catch(() => false);
-        if (!valid) return;
         const result = await api<{ success: true; redirect: string }>('/api/auth/password/reset', {
             method: 'POST',
-            body: {
-                token: token.value,
-                newPassword: form.newPassword,
-                redirect: redirectTarget.value
-            }
+            body: { token: token.value, newPassword: password.value, redirect: redirect.value }
         });
-        resultRedirect.value = getSafeRedirectTarget(result.redirect, redirectTarget.value);
-        success.value = true;
-        form.newPassword = '';
-        clearPending();
-        try {
-            await load(true);
-        } catch {
-            errorMessage.value = t('identity.identity_unavailable');
-        }
-    } catch (error) {
-        const err = error as { data?: { message?: string; data?: { code?: string } } };
-        if (err.data?.data?.code === 'RESET_TOKEN_INVALID_OR_EXPIRED') {
-            tokenInvalid.value = true;
-        } else {
-            errorMessage.value = err.data?.message || t('auth.password.reset_error');
-        }
+        redirect.value = getSafeRedirectTarget(result.redirect, '/profile');
+        useSession().setUser(null);
+        state.value = 'done';
+    } catch (cause) {
+        if (read(cause).code === 'RESET_TOKEN_INVALID_OR_EXPIRED') state.value = 'invalid';
+        else error.value = describe(cause);
     } finally {
-        pending.value = false;
+        busy.value = false;
     }
 }
 </script>
+
+<style scoped lang="scss">
+.reset {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-4);
+}
+
+.reset__submit {
+    width: 100%;
+}
+</style>

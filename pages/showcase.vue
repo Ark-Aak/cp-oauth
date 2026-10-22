@@ -1,118 +1,95 @@
 <template>
-    <div class="showcase">
-        <AppPageHeader :title="$t('showcase.title')" :description="$t('showcase.subtitle')">
-            <template #actions>
-                <NuxtLink to="/about" class="showcase__action el-button">
-                    {{ $t('showcase.integration_guide') }}
-                </NuxtLink>
-            </template>
-        </AppPageHeader>
+    <div>
+        <CpPageHeader
+            :kicker="t('common.nav.explore')"
+            :title="t('public.showcase.title')"
+            :description="t('public.showcase.description')"
+        />
 
-        <AppAsyncState
-            :class="{ 'ui-card': pending || !!error }"
+        <CpDataState
             :pending="pending"
-            :error="error ? $t('identity.network_error') : null"
-            @retry="refresh()"
+            :error="error ? describe(error) : null"
+            :rows="6"
+            @retry="refresh"
         >
-            <div class="showcase__content">
-                <section
-                    v-for="section in sections"
-                    :key="section.id"
-                    class="showcase__section ui-card"
-                    :aria-labelledby="`showcase-${section.id}`"
+            <div class="cp-stack">
+                <CpSheet
+                    v-for="group in groups"
+                    :key="group.key"
+                    :title="group.title"
+                    :description="group.description"
+                    flush
                 >
-                    <div class="ui-card__header">
-                        <h2 :id="`showcase-${section.id}`" class="ui-card__title">
-                            {{ section.title }}
-                        </h2>
-                    </div>
-                    <AppAsyncState
-                        :pending="false"
-                        :empty="!section.items.length"
-                        :empty-text="section.emptyText"
-                        :empty-icon="Globe"
-                    >
-                        <ul class="showcase__list">
-                            <li v-for="item in section.items" :key="item.id">
-                                <component
-                                    :is="item.url ? 'a' : 'div'"
-                                    :href="item.url || undefined"
-                                    :target="item.url ? '_blank' : undefined"
-                                    :rel="item.url ? 'noopener noreferrer' : undefined"
-                                    class="showcase__item ui-navigation-link"
+                    <ul v-if="group.items.length" class="cp-rows">
+                        <li v-for="item in group.items" :key="item.id">
+                            <PublicShowcaseIcon :src="item.iconUrl" :name="item.name" />
+                            <div class="cp-rows__main">
+                                <a
+                                    v-if="item.url"
+                                    :href="item.url"
+                                    class="cp-rows__title"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                 >
-                                    <img
-                                        v-if="!failedIcons[item.id] && (item.iconUrl || item.url)"
-                                        :src="item.iconUrl || getFavicon(item.url)"
-                                        alt=""
-                                        class="showcase__icon"
-                                        loading="lazy"
-                                        @error="failedIcons[item.id] = true"
-                                    />
-                                    <Code
-                                        v-else
-                                        class="showcase__icon showcase__icon--fallback"
-                                        aria-hidden="true"
-                                    />
-                                    <div class="showcase__item-body">
-                                        <h3 class="showcase__item-name">{{ item.name }}</h3>
-                                        <p
-                                            v-if="item.description"
-                                            class="showcase__item-description"
-                                        >
-                                            {{ item.description }}
-                                        </p>
-                                    </div>
-                                </component>
-                            </li>
-                        </ul>
-                    </AppAsyncState>
-                </section>
+                                    {{ item.name }}
+                                </a>
+                                <span v-else class="cp-rows__title">{{ item.name }}</span>
+                                <span v-if="item.description" class="cp-rows__meta">
+                                    {{ item.description }}
+                                </span>
+                            </div>
+                            <span v-if="item.url" class="showcase__host cp-mono">
+                                {{ hostOf(item.url) }}
+                            </span>
+                        </li>
+                    </ul>
+                    <p v-else class="showcase__empty">{{ group.empty }}</p>
+                </CpSheet>
             </div>
-        </AppAsyncState>
+        </CpDataState>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Code, Globe } from 'lucide-vue-next';
-import type { ShowcaseItem } from '~/types/api';
-
-const { t } = useI18n();
-
-useHead({ title: () => `${t('showcase.title')} - CP OAuth` });
-
-const failedIcons = ref<Record<string, boolean>>({});
-
-interface ShowcaseData {
-    sites: ShowcaseItem[];
-    projects: ShowcaseItem[];
+interface PublicShowcaseItem {
+    id: string;
+    category: 'site' | 'project';
+    name: string;
+    description: string;
+    url: string | null;
+    iconUrl: string | null;
 }
 
+const { t } = useI18n();
 const api = useApi();
-const { data, pending, error, refresh } = await useAsyncData('public:showcase', () =>
-    api<ShowcaseData>('/api/public/showcase')
+const { describe } = useApiError();
+
+useHead({ title: t('public.showcase.title') });
+
+const { data, pending, error, refresh } = await useAsyncData('public-showcase', () =>
+    api<{ sites: PublicShowcaseItem[]; projects: PublicShowcaseItem[] }>('/api/public/showcase')
 );
 
-const sections = computed(() => [
+const groups = computed(() => [
     {
-        id: 'projects',
-        title: t('showcase.projects_tab'),
-        emptyText: t('showcase.no_projects'),
-        items: data.value?.projects || []
+        key: 'sites',
+        title: t('public.showcase.sites'),
+        description: t('public.showcase.sitesText'),
+        empty: t('public.showcase.noSites'),
+        items: data.value?.sites ?? []
     },
     {
-        id: 'sites',
-        title: t('showcase.sites_tab'),
-        emptyText: t('showcase.no_sites'),
-        items: data.value?.sites || []
+        key: 'projects',
+        title: t('public.showcase.projects'),
+        description: t('public.showcase.projectsText'),
+        empty: t('public.showcase.noProjects'),
+        items: data.value?.projects ?? []
     }
 ]);
 
-function getFavicon(url: string | null): string {
-    if (!url) return '';
+function hostOf(url: string): string {
     try {
-        const target = new URL(url);
-        return `${target.protocol}//${target.host}/favicon.ico`;
+        return new URL(url).host;
     } catch {
         return '';
     }
@@ -120,94 +97,21 @@ function getFavicon(url: string | null): string {
 </script>
 
 <style scoped lang="scss">
-.showcase {
-    min-width: 0;
+.showcase__host {
+    flex: none;
+    font-size: var(--cp-text-sm);
+    color: var(--cp-text-3);
+}
 
-    &__action {
-        max-width: 100%;
-    }
-
-    &__content {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-5);
-        align-items: start;
-    }
-
-    &__section {
-        min-width: 0;
-
-        h2 {
-            overflow-wrap: anywhere;
-        }
-    }
-
-    &__list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-
-        li {
-            min-width: 0;
-        }
-
-        li + li {
-            border-top: 1px solid var(--divider-subtle);
-        }
-    }
-
-    &__item {
-        display: flex;
-        align-items: flex-start;
-        gap: var(--space-3);
-        padding: var(--space-3) 0;
-        text-decoration: none;
-        border-radius: var(--card-radius);
-    }
-
-    a.showcase__item:hover {
-        background: var(--bg-secondary);
-    }
-
-    a.showcase__item:hover .showcase__item-name {
-        color: var(--accent);
-        text-decoration: underline;
-        text-underline-offset: 3px;
-    }
-
-    &__icon {
-        width: 32px;
-        height: 32px;
-        flex-shrink: 0;
-        object-fit: contain;
-        border-radius: var(--card-radius);
-
-        &--fallback {
-            color: var(--accent);
-            border-radius: 0;
-        }
-    }
-
-    &__item-body {
-        min-width: 0;
-        flex: 1;
-        overflow-wrap: anywhere;
-    }
-
-    &__item-name {
-        color: var(--text-primary);
-    }
-
-    &__item-description {
-        margin-top: var(--space-1);
-        color: var(--text-secondary);
-        font-size: var(--font-size-body);
-    }
+.showcase__empty {
+    padding: var(--cp-space-4) var(--cp-space-5);
+    font-size: var(--cp-text-sm);
+    color: var(--cp-text-3);
 }
 
 @media (max-width: 767px) {
-    .showcase__content {
-        grid-template-columns: minmax(0, 1fr);
+    .showcase__host {
+        display: none;
     }
 }
 </style>

@@ -1,94 +1,156 @@
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
+import type { Element, Root as HastRoot } from 'hast';
+import type { Root as MdastRoot } from 'mdast';
+import type { HighlighterCore } from 'shiki/core';
+import rehypeShikiFromHighlighter, { type RehypeShikiCoreOptions } from '@shikijs/rehype/core';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import rehypeShiki from '@shikijs/rehype';
 import rehypeStringify from 'rehype-stringify';
+import remarkGfm from 'remark-gfm';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import { createHighlighterCore } from 'shiki/core';
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
+import { unified } from 'unified';
+import { visit } from 'unist-util-visit';
 
-type MarkdownNode = {
-    type: string;
-    depth?: number;
-    children?: MarkdownNode[];
-    position?: { start: { offset?: number } };
-};
-
-function demoteEmbeddedHeadings() {
-    return (tree: MarkdownNode) => {
-        const visit = (node: MarkdownNode) => {
-            if (node.type === 'heading' && typeof node.depth === 'number') {
-                node.depth = Math.min(6, node.depth + 1);
-            }
-            if (node.children) for (const child of node.children) visit(child);
-        };
-        visit(tree);
-    };
+export interface RenderMarkdownOptions {
+    /** Turn bare URLs and e-mail addresses into links (GFM literal autolinks). */
+    autolinkLiterals?: boolean;
 }
 
-/* GFM turns bare URLs into links; only `[text](url)` and `<url>` syntax should link here. */
-function unwrapLiteralAutolinks() {
-    return (tree: MarkdownNode, file: { value: unknown }) => {
-        const source = String(file.value);
-        const visit = (node: MarkdownNode) => {
-            if (!node.children) return;
-            node.children = node.children.flatMap(child => {
-                const offset = child.position?.start.offset;
-                if (
-                    child.type === 'link' &&
-                    offset !== undefined &&
-                    !'[<'.includes(source[offset]!)
-                ) {
-                    return child.children ?? [];
-                }
-                visit(child);
-                return [child];
-            });
-        };
-        visit(tree);
-    };
-}
+const LINK_PROTOCOLS = ['http', 'https', 'mailto'];
+const IMAGE_PROTOCOLS = ['http', 'https'];
 
-const forbiddenAttributes: Record<string, true> = { style: true, id: true, name: true };
-const sanitizeSchema = {
+/**
+ * GitHub-style allowlist without raw-HTML carriers. Relative URLs pass; any explicit
+ * protocol must be on the list, so `javascript:` and `data:` lose their attribute.
+ */
+const schema = {
     ...defaultSchema,
-    attributes: Object.fromEntries(
-        Object.entries(defaultSchema.attributes || {}).map(([tag, attributes]) => [
-            tag,
-            (attributes || []).filter(
-                attribute =>
-                    !Object.hasOwn(
-                        forbiddenAttributes,
-                        typeof attribute === 'string' ? attribute : attribute[0]
-                    )
-            )
-        ])
+    clobberPrefix: '',
+    clobber: [],
+    tagNames: (defaultSchema.tagNames ?? []).filter(
+        tag => !['span', 'iframe', 'script', 'style'].includes(tag)
     ),
+    attributes: {
+        ...defaultSchema.attributes,
+        '*': (defaultSchema.attributes?.['*'] ?? []).filter(
+            attribute =>
+                typeof attribute !== 'string' || !['id', 'name', 'style'].includes(attribute)
+        )
+    },
     protocols: {
         ...defaultSchema.protocols,
-        href: ['http', 'https', 'mailto'],
-        src: ['http', 'https']
+        href: LINK_PROTOCOLS,
+        src: IMAGE_PROTOCOLS,
+        cite: IMAGE_PROTOCOLS,
+        longDesc: IMAGE_PROTOCOLS
     }
 };
 
-function createProcessor(autolinkLiterals: boolean) {
-    const base = unified().use(remarkParse).use(remarkGfm).use(demoteEmbeddedHeadings);
-    return (autolinkLiterals ? base : base.use(unwrapLiteralAutolinks))
-        .use(remarkRehype, { allowDangerousHtml: false })
-        .use(rehypeSanitize, sanitizeSchema)
-        .use(rehypeShiki, {
-            themes: { light: 'vitesse-light', dark: 'vitesse-dark' },
-            defaultColor: false
-        })
-        .use(rehypeStringify);
+const LANGUAGE_ALIASES: Record<string, string> = {
+    js: 'javascript',
+    ts: 'typescript',
+    'c++': 'cpp',
+    cc: 'cpp',
+    py: 'python',
+    sh: 'bash',
+    shell: 'bash',
+    shellscript: 'bash',
+    yml: 'yaml'
+};
+
+let highlighter: Promise<HighlighterCore> | undefined;
+
+function getHighlighter(): Promise<HighlighterCore> {
+    highlighter ??= createHighlighterCore({
+        themes: [import('shiki/themes/github-light.mjs'), import('shiki/themes/github-dark.mjs')],
+        langs: [
+            import('shiki/langs/cpp.mjs'),
+            import('shiki/langs/c.mjs'),
+            import('shiki/langs/python.mjs'),
+            import('shiki/langs/java.mjs'),
+            import('shiki/langs/javascript.mjs'),
+            import('shiki/langs/typescript.mjs'),
+            import('shiki/langs/rust.mjs'),
+            import('shiki/langs/go.mjs'),
+            import('shiki/langs/json.mjs'),
+            import('shiki/langs/yaml.mjs'),
+            import('shiki/langs/bash.mjs'),
+            import('shiki/langs/diff.mjs')
+        ],
+        engine: createJavaScriptRegexEngine()
+    });
+    return highlighter;
 }
 
-const processors = { linked: createProcessor(true), plain: createProcessor(false) };
+/** Removes GFM literal autolinks, which carry no source brackets, while keeping their text. */
+function remarkDropLiteralAutolinks() {
+    return (tree: MdastRoot, file: { value: unknown }) => {
+        const source = String(file.value);
+        visit(tree, 'link', (node, index, parent) => {
+            if (!parent || index === undefined || !node.position) return;
+            const start = node.position.start.offset;
+            if (start === undefined) return;
+            const opener = source[start];
+            if (opener === '[' || opener === '<') return;
+            parent.children.splice(index, 1, ...node.children);
+            return index;
+        });
+    };
+}
+
+/** The page owns its h1: shift every embedded heading down one level. */
+function rehypeDemoteHeadings() {
+    return (tree: HastRoot) => {
+        visit(tree, 'element', (node: Element) => {
+            const match = /^h([1-6])$/.exec(node.tagName);
+            if (!match) return;
+            const level = Number(match[1]);
+            if (level < 6) node.tagName = `h${level + 1}`;
+        });
+    };
+}
+
+function normalizeLanguage(tree: HastRoot) {
+    visit(tree, 'element', (node: Element) => {
+        if (node.tagName !== 'code' || !Array.isArray(node.properties?.className)) return;
+        node.properties.className = node.properties.className.map(name => {
+            const value = String(name);
+            if (!value.startsWith('language-')) return value;
+            const language = value.slice('language-'.length).toLowerCase();
+            return `language-${LANGUAGE_ALIASES[language] ?? language}`;
+        });
+    });
+}
+
+const SHIKI_OPTIONS: RehypeShikiCoreOptions = {
+    themes: { light: 'github-light', dark: 'github-dark' },
+    defaultColor: false,
+    fallbackLanguage: 'text',
+    onError: () => {}
+};
 
 export async function renderMarkdown(
-    markdown: string,
-    options: { autolinkLiterals?: boolean } = {}
+    source: string,
+    options: RenderMarkdownOptions = {}
 ): Promise<string> {
-    const processor = options.autolinkLiterals === false ? processors.plain : processors.linked;
-    const result = await processor.process(markdown);
-    return String(result);
+    const autolinkLiterals = options.autolinkLiterals ?? true;
+    const highlighter = await getHighlighter();
+    const processor = unified().use(remarkParse).use(remarkGfm);
+    if (!autolinkLiterals) processor.use(remarkDropLiteralAutolinks);
+    const file = await processor
+        .use(remarkRehype)
+        .use(rehypeSanitize, schema)
+        .use(rehypeDemoteHeadings)
+        .use(() => normalizeLanguage)
+        .use(() =>
+            // HighlighterCore is HighlighterGeneric<never, never>; the plugin is typed for any language set.
+            rehypeShikiFromHighlighter(
+                highlighter as unknown as Parameters<typeof rehypeShikiFromHighlighter>[0],
+                SHIKI_OPTIONS
+            )
+        )
+        .use(rehypeStringify)
+        .process(source);
+    return String(file);
 }

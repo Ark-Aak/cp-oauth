@@ -1,0 +1,120 @@
+{
+    "admin": {
+        "users": {
+            "description": "Accounts, roles and email verification.",
+            "searchPlaceholder": "Username or email",
+            "total": "{n} accounts",
+            "empty": "No accounts yet.",
+            "noMatches": "No accounts match this search.",
+            "roles": {
+                "admin": "Administrator",
+                "user": "Member"
+            },
+            "verified": "Email verified",
+            "unverified": "Email not verified",
+            "actions": "Manage",
+            "makeAdmin": "Make administrator",
+            "removeAdmin": "Remove administrator",
+            "makeAdminConfirm": "{name} will be able to manage all accounts and site settings.",
+            "removeAdminConfirm": "{name} will lose access to administration.",
+            "selfDemote": "You will lose administrator access and be signed out.",
+            "markVerified": "Mark email verified",
+            "markUnverified": "Mark email not verified",
+            "delete": "Delete account",
+            "deleteConfirm": "{name} and all of their linked accounts, clients and tokens will be deleted. This can't be undone.",
+            "selfDelete": "Your own account will be deleted and you will be signed out. This can't be undone."
+        },
+        "config": {
+            "description": "Site settings, email delivery, CAPTCHA and sign-in providers.",
+            "callbackUrl": "Callback URL",
+            "callbackHint": "Register exactly this URL with the provider.",
+            "configured": "Set",
+            "notConfigured": "Not set",
+            "keepSecret": "Leave empty to keep the current value",
+            "willClear": "Will be cleared on save",
+            "clear": "Clear",
+            "undoClear": "Keep",
+            "unsaved": "You have unsaved changes.",
+            "fixFields": "Some values are invalid. Check the highlighted fields.",
+            "providerText": "OAuth credentials for signing in and linking with {name}.",
+            "groups": {
+                "site": "Site",
+                "siteText": "Name, registration and listing settings.",
+                "smtp": "Email delivery",
+                "smtpText": "SMTP server for verification, reset and sign-in code emails.",
+                "turnstile": "Cloudflare Turnstile",
+                "turnstileText": "CAPTCHA for registration and sign-in."
+            },
+            "fields": {
+                "siteTitle": "Site title",
+                "registration": "Allow registration",
+                "registrationHint": "When off, new accounts can't be created by any method.",
+                "recentUsers": "Newest members on overview",
+                "recentUsersHint": "1–20.",
+                "refreshCooldown": "Username refresh cooldown",
+                "refreshCooldownHint": "Minutes between refreshes of a linked account name, 1–43200.",
+                "smtpHost": "Host",
+                "smtpPort": "Port",
+                "smtpUser": "Username",
+                "smtpPass": "Password",
+                "smtpFrom": "From address",
+                "smtpFromHint": "For example: CP OAuth <no-reply{'@'}example.com>",
+                "turnstileEnabled": "Require Turnstile",
+                "turnstileHint": "Both keys must be set before turning this on.",
+                "siteKey": "Site key",
+                "secretKey": "Secret key",
+                "clientId": "Client ID",
+                "clientSecret": "Client secret"
+            }
+        },
+        "notices": {
+            "description": "Announcements shown on the overview page.",
+            "createTitle": "New notice",
+            "createText": "The newest three notices appear on the overview; pinned notices come first.",
+            "fields": {
+                "title": "Title",
+                "content": "Content (HTML)",
+                "pinned": "Pin to top"
+            },
+            "allowedTags": "Allowed: p, br, strong, em, b, i, u, s, code, pre, blockquote, ul, ol, li, a, h1–h6, span. Other markup is removed.",
+            "publish": "Publish",
+            "published": "Notice published.",
+            "listTitle": "Published notices",
+            "listText": "Shown as stored after sanitizing.",
+            "empty": "No notices yet.",
+            "pinned": "Pinned",
+            "deleteTitle": "Delete notice",
+            "deleteConfirm": "“{title}” will be removed from the site."
+        },
+        "showcase": {
+            "description": "Entries listed on the public showcase page.",
+            "viewPublic": "View showcase",
+            "createTitle": "New entry",
+            "fields": {
+                "category": "Category",
+                "sortOrder": "Order",
+                "name": "Name",
+                "url": "URL",
+                "iconUrl": "Icon URL",
+                "description": "Description"
+            },
+            "categories": {
+                "site": "Site",
+                "project": "Project"
+            },
+            "groups": {
+                "site": "Sites",
+                "project": "Projects"
+            },
+            "sortHint": "Lower numbers appear first.",
+            "iconHint": "Optional. Square image over HTTP or HTTPS.",
+            "add": "Add entry",
+            "added": "Entry added.",
+            "empty": "No entries in this category.",
+            "order": "#{n}",
+            "invalidUrls": "Stored URL rejected: {fields}",
+            "deleteTitle": "Delete entry",
+            "deleteConfirm": "{name} will be removed from the showcase."
+        }
+    }
+}

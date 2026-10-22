@@ -8,7 +8,7 @@ CP OAuth is an OAuth 2.0 provider built for competitive programming platforms. U
 - **Framework**: Nuxt 4 (SSR) with Nitro server engine
 - **Database**: PostgreSQL 16 (via Prisma ORM)
 - **Cache**: Redis 7 (via ioredis)
-- **UI**: Element Plus, Lucide icons, SCSS; locally bundled Lato and Fira Code fonts
+- **UI**: Element Plus, Lucide icons, SCSS; locally bundled IBM Plex Sans and IBM Plex Mono fonts
 - **Auth**: HttpOnly Redis-backed sessions, bcryptjs, TOTP 2FA, WebAuthn; JWT for external OAuth access tokens
 - **i18n**: English, Chinese, Japanese
 
@@ -539,9 +539,12 @@ For Luogu login, register a CP OAuth account first, link your Luogu account from
 ```
 cp-oauth/
 ├── pages/                 # Nuxt file-based routing
-│   ├── admin/             # Admin pages (config, users, notices)
-│   ├── oauth/             # OAuth flow & third-party callbacks
+│   ├── admin/             # Admin pages (users, config, notices, showcase)
+│   ├── oauth/             # OAuth consent & third-party callbacks
 │   └── ...
+├── components/            # Cp* shared primitives and per-area page parts
+├── composables/           # Session, API client, reauth, preferences, formatting
+├── layouts/               # default (left rail) and auth
 ├── server/
 │   ├── api/               # API routes
 │   │   ├── auth/          # Login, register, email verify
@@ -562,8 +565,9 @@ cp-oauth/
 │   ├── schema.prisma      # Current database schema
 │   ├── baseline.prisma    # Legacy schema drift reference
 │   └── migrations/        # Tracked baseline and security cutover
-├── i18n/locales/          # Translation files (en, zh, ja)
-├── assets/scss/           # Global styles
+├── i18n/locales/          # Translation files per locale and namespace (en, zh, ja)
+├── assets/styles/         # Element Plus theme, design tokens, base and component styles
+├── design.md              # UI presentation rules
 ├── requirements.txt       # Python dependencies
 ├── docker-compose.yml     # PostgreSQL + Redis
 ├── Dockerfile             # Production container
@@ -589,7 +593,7 @@ Schedule `npm run maintenance:oauth` daily at **00:15 UTC**, as a deployment job
 
 ## Task Workbench and Verification
 
-`design.md` binds the Luogu.me-inspired blue/gray hierarchy to the existing Element Plus tokens, self-hosted font, readable navigation and task layouts. Profile tasks remain query-addressable (`basic`, `bindings`, `security`, `authorized_apps`, `public`, `preferences`); only the active panel fetches its task data. Mobile navigation supports focus trapping, Escape and focus return. Forms retain labels, field errors, drafts on failure and explicit sensitive-action confirmation.
+`design.md` defines the interface: a left navigation rail, ruled sheets instead of card grids, IBM Plex type, and the existing Element Plus blue-gray palette (light primary `#2f6db5`, dark primary `#5fb3c8`) exposed as `--cp-*` tokens. Profile sections remain query-addressable (`/profile?tab=basic|security|bindings|apps|privacy`); only the active section fetches its data. The mobile navigation drawer traps focus, closes on Escape and returns focus. Sensitive changes ask for a fresh identity proof through one shared dialog (password, passkey or linked account).
 
 Theme and locale controls are available to guests and signed-in users. Account preferences override stale local storage after SSR hydration; guest preferences stay local. English, Chinese and Japanese share the same light/dark components. Luogu login is only for an already linked account, never automatic registration.
 

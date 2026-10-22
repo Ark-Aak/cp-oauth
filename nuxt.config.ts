@@ -1,8 +1,20 @@
 const cdnUrl = process.env.NODE_ENV === 'production' ? process.env.NUXT_APP_CDN_URL || '' : '';
+const localeNamespaces = [
+    'common',
+    'auth',
+    'oauth',
+    'account',
+    'connections',
+    'security',
+    'developer',
+    'admin',
+    'public'
+];
+const localeFiles = (code: string) => localeNamespaces.map(name => `${code}/${name}.json`);
 const locales = [
-    { code: 'en' as const, name: 'English', file: 'en.json' },
-    { code: 'zh' as const, name: '中文', file: 'zh.json' },
-    { code: 'ja' as const, name: '日本語', file: 'ja.json' }
+    { code: 'en' as const, language: 'en', name: 'English', files: localeFiles('en') },
+    { code: 'zh' as const, language: 'zh-CN', name: '中文', files: localeFiles('zh') },
+    { code: 'ja' as const, language: 'ja', name: '日本語', files: localeFiles('ja') }
 ];
 const i18nRoutePrefix = '/_i18n';
 
@@ -23,9 +35,11 @@ export default defineNuxtConfig({
         ['@element-plus/nuxt', { importStyle: false }]
     ],
     css: [
-        '~/assets/css/vendor.css',
-        '~/assets/scss/main.scss',
-        '~/assets/scss/element-overrides.scss'
+        '~/assets/styles/vendor.css',
+        '~/assets/styles/theme.scss',
+        '~/assets/styles/tokens.scss',
+        '~/assets/styles/base.scss',
+        '~/assets/styles/element.scss'
     ],
     i18n: {
         locales,
@@ -36,7 +50,7 @@ export default defineNuxtConfig({
     },
     colorMode: {
         preference: 'system',
-        fallback: 'dark',
+        fallback: 'light',
         classSuffix: '',
         storageKey: 'cp-oauth-color-mode'
     },
@@ -53,8 +67,12 @@ export default defineNuxtConfig({
                 'remark-parse',
                 'remark-gfm',
                 'remark-rehype',
+                'rehype-sanitize',
                 'rehype-stringify',
-                '@shikijs/rehype',
+                'unist-util-visit',
+                '@shikijs/rehype/core',
+                'shiki/core',
+                'shiki/engine/javascript',
                 'chart.js'
             ]
         },

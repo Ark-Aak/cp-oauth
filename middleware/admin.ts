@@ -1,28 +1,16 @@
-import { buildLoginPath } from '~/utils/auth-redirect';
-
-export default defineNuxtRouteMiddleware(async to => {
-    const auth = useAuth();
-    const i18n = useNuxtApp().$i18n;
-    try {
-        await auth.load();
-    } catch (cause) {
-        const failure = cause as { statusCode?: number; status?: number };
-        const statusCode = (failure.statusCode ?? failure.status) === 403 ? 403 : 503;
-        return abortNavigation(
-            createError({
-                statusCode,
-                statusMessage: i18n.t(
-                    statusCode === 403
-                        ? 'identity.permission_denied'
-                        : 'identity.identity_unavailable'
-                )
-            })
-        );
+/** Administration pages: guests sign in first; signed-in non-admins get a 403 page. */
+export default defineNuxtRouteMiddleware(to => {
+    const { user, unavailable } = useSession();
+    if (!user.value) {
+        if (unavailable.value) {
+            throw createError({
+                statusCode: 503,
+                statusMessage: 'Authentication is temporarily unavailable'
+            });
+        }
+        return navigateTo(buildLoginPath(to.fullPath));
     }
-    if (auth.status.value === 'anonymous') return navigateTo(buildLoginPath(to.fullPath));
-    if (auth.user.value?.role !== 'admin') {
-        return abortNavigation(
-            createError({ statusCode: 403, statusMessage: i18n.t('identity.permission_denied') })
-        );
+    if (user.value.role !== 'admin') {
+        throw createError({ statusCode: 403, statusMessage: 'Admin access required' });
     }
 });

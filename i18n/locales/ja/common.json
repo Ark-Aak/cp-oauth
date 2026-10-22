@@ -1,0 +1,236 @@
+{
+    "common": {
+        "nav": {
+            "label": "メインナビゲーション",
+            "skip": "本文へスキップ",
+            "open": "ナビゲーションを開く",
+            "close": "ナビゲーションを閉じる",
+            "explore": "閲覧",
+            "account": "アカウント",
+            "develop": "開発",
+            "admin": "管理",
+            "home": "概要",
+            "showcase": "ショーケース",
+            "about": "このサービスについて",
+            "profile": "プロフィール",
+            "security": "セキュリティ",
+            "bindings": "連携アカウント",
+            "apps": "許可したアプリ",
+            "privacy": "公開プロフィール",
+            "developer": "OAuth クライアント",
+            "adminUsers": "ユーザー",
+            "adminConfig": "システム設定",
+            "adminNotices": "お知らせ",
+            "adminShowcase": "ショーケース項目",
+            "publicProfile": "公開プロフィールを表示"
+        },
+        "actions": {
+            "signIn": "ログイン",
+            "signOut": "ログアウト",
+            "createAccount": "アカウント作成",
+            "save": "保存",
+            "saveChanges": "変更を保存",
+            "cancel": "キャンセル",
+            "confirm": "確認",
+            "continue": "続行",
+            "back": "戻る",
+            "retry": "再試行",
+            "delete": "削除",
+            "remove": "解除",
+            "edit": "編集",
+            "copy": "コピー",
+            "copied": "コピーしました",
+            "reveal": "表示",
+            "hide": "非表示",
+            "close": "閉じる",
+            "refresh": "更新",
+            "search": "検索",
+            "add": "追加",
+            "create": "作成",
+            "send": "送信",
+            "resend": "再送信",
+            "done": "完了"
+        },
+        "states": {
+            "loading": "読み込み中…",
+            "empty": "まだ何もありません。",
+            "saved": "保存しました",
+            "deleted": "削除しました",
+            "on": "オン",
+            "off": "オフ",
+            "yes": "はい",
+            "no": "いいえ",
+            "never": "なし",
+            "notSet": "未設定",
+            "or": "または"
+        },
+        "panel": {
+            "lead": "使っている競技プログラミングサイトを、ひとつのアカウントで。",
+            "oauth": "標準の認可コードフロー。リフレッシュトークンは使用ごとに更新されます。",
+            "pkce": "公開クライアントはクライアントシークレットなしでログインできます。",
+            "identities": "連携アカウントは検証後にのみアプリから読み取れます。"
+        },
+        "mfa": {
+            "totpHint": "認証アプリに表示された 6 桁のコードを入力してください。",
+            "emailHint": "6 桁のコードをメールアドレスに送信しました。",
+            "code": "確認コード",
+            "codePlaceholder": "000000",
+            "verify": "確認"
+        },
+        "proof": {
+            "copy": "この確認コードをコピーしてください。",
+            "place": {
+                "luogu": "確認したい Luogu アカウントでログインし、コードを含む公開クリップボードを作成してください。",
+                "atcoder": "AtCoder プロフィールの所属（Affiliation）欄にコードを入力して保存してください。",
+                "leetcode": "LeetCode（leetcode.cn）プロフィールの自己紹介にコードを入力して保存してください。"
+            },
+            "open": {
+                "luogu": "Luogu クリップボードを開く",
+                "atcoder": "AtCoder の設定を開く",
+                "leetcode": "LeetCode のプロフィール設定を開く"
+            },
+            "submit": {
+                "luogu": "クリップボードの ID または URL を下に貼り付けてください。",
+                "atcoder": "確認してください。確認後はプロフィールからコードを削除できます。",
+                "leetcode": "確認してください。確認後は自己紹介からコードを削除できます。"
+            },
+            "pasteLabel": "クリップボード ID または URL",
+            "pastePlaceholder": "https://www.luogu.com.cn/paste/…",
+            "checking": "次のアカウントの自己紹介を確認します：",
+            "expires": "コードの有効期限は {minutes} 分です。",
+            "verify": "確認"
+        },
+        "reauth": {
+            "title": "本人確認",
+            "method": "確認方法",
+            "methods": {
+                "password": "パスワード",
+                "passkey": "パスキー",
+                "linked": "連携アカウント"
+            },
+            "password": "パスワード",
+            "passwordHint": "現在のパスワードを入力してください。",
+            "passkeyHint": "このアカウントに保存されたパスキーを使用します。",
+            "usePasskey": "パスキーを使用",
+            "passkeyCancelled": "完了前にパスキーの画面が閉じられました。",
+            "linkedHint": "連携アカウントのいずれかを現在も管理していることを確認します。",
+            "purpose": {
+                "email_change": "メールアドレスを変更するには、改めて本人確認が必要です。",
+                "password_change": "パスワードを変更するには、改めて本人確認が必要です。",
+                "mfa_change": "2 段階認証を変更するには、改めて本人確認が必要です。",
+                "passkey_add": "パスキーを追加するには、改めて本人確認が必要です。",
+                "passkey_delete": "パスキーを削除するには、改めて本人確認が必要です。",
+                "binding_change": "連携アカウントを変更するには、改めて本人確認が必要です。"
+            }
+        },
+        "preferences": {
+            "theme": "テーマ",
+            "language": "言語",
+            "system": "システムに合わせる",
+            "light": "ライト",
+            "dark": "ダーク"
+        },
+        "turnstile": {
+            "failed": "セキュリティチェックを読み込めませんでした。",
+            "required": "先にセキュリティチェックを完了してください。"
+        },
+        "footer": {
+            "label": "フッター",
+            "tagline": "競技プログラマー向けの OAuth 2.0 ID サービス",
+            "discovery": "ディスカバリードキュメント",
+            "source": "ソースコード"
+        },
+        "errorPage": {
+            "home": "概要へ移動",
+            "notFound": "ページが見つかりません",
+            "notFoundText": "アドレスが間違っているか、ページが削除されました。",
+            "forbidden": "アクセス権がありません",
+            "forbiddenText": "このアカウントにはこのページを開く権限がありません。",
+            "unavailable": "サービスを利用できません",
+            "generic": "問題が発生しました",
+            "genericText": "ページを読み込めませんでした。しばらくしてから再試行してください。"
+        },
+        "errors": {
+            "generic": "リクエストが完了しませんでした。再試行してください。",
+            "network": "サーバーに接続できません。接続を確認して再試行してください。",
+            "unauthenticated": "セッションが終了しました。再度ログインしてください。",
+            "unavailable": "サービスは一時的に利用できません。しばらくしてから再試行してください。",
+            "clipboard": "コピーできませんでした。テキストを選択して手動でコピーしてください。",
+            "VALIDATION_ERROR": "入力を確認してください：{detail}",
+            "RATE_LIMITED": "試行回数が多すぎます。{seconds} 秒後に再試行してください。",
+            "CSRF_REJECTED": "このサイト以外からのリクエストのためブロックされました。ページを再読み込みしてください。",
+            "REAUTH_REQUIRED": "続行するには本人確認をやり直してください。",
+            "AUTH_STATE_CHANGED": "別のセッションでアカウントが変更されました。再読み込みして再試行してください。",
+            "AUTH_CHALLENGE_EXPIRED": "この確認ステップは期限切れです。最初からやり直してください。",
+            "AUTH_CHALLENGE_EXHAUSTED": "誤りが多すぎます。最初からやり直してください。",
+            "INVALID_CREDENTIALS": "メールアドレスまたはパスワードが正しくありません。",
+            "INVALID_REAUTH_CREDENTIAL": "パスワードが正しくありません。",
+            "INVALID_MFA_CODE": "コードが正しくないか、期限切れです。",
+            "INVALID_PASSKEY_CREDENTIAL": "パスキーを確認できませんでした。",
+            "RESET_TOKEN_INVALID_OR_EXPIRED": "このリセットリンクは無効か期限切れです。再度リクエストしてください。",
+            "USERNAME_REFRESH_COOLDOWN": "最近更新したばかりです。{seconds} 秒後に再試行してください。",
+            "CLIENT_NOT_FOUND": "このクライアントはもう存在しません。",
+            "CLIENT_CONFLICT": "同じ内容のクライアントが既に存在します。",
+            "LAST_ADMIN": "管理者を少なくとも 1 人残す必要があります。",
+            "ADMIN_UNAVAILABLE": "管理機能は一時的に利用できません。",
+            "ACCOUNT_NOT_FOUND": "アカウントが見つかりません。再度ログインしてください。"
+        },
+        "platforms": {
+            "luogu": "Luogu（洛谷）",
+            "atcoder": "AtCoder",
+            "leetcode": "LeetCode（中国版）",
+            "codeforces": "Codeforces",
+            "github": "GitHub",
+            "google": "Google",
+            "clist": "Clist.by"
+        },
+        "scopes": {
+            "openid": { "title": "アカウント ID", "detail": "CP OAuth アカウントの固定識別子。" },
+            "profile": {
+                "title": "基本プロフィール",
+                "detail": "ユーザー名、表示名、アバター、自己紹介。"
+            },
+            "email": { "title": "メールアドレス", "detail": "メールアドレスと確認済みかどうか。" },
+            "cp_linked": {
+                "title": "すべての連携アカウント",
+                "detail": "各連携アカウントのプラットフォーム、UID、ユーザー名。"
+            },
+            "link_luogu": {
+                "title": "連携した Luogu アカウント",
+                "detail": "Luogu アカウントの UID とユーザー名。"
+            },
+            "link_atcoder": {
+                "title": "連携した AtCoder アカウント",
+                "detail": "AtCoder アカウントのユーザー名。"
+            },
+            "link_leetcode": {
+                "title": "連携した LeetCode アカウント",
+                "detail": "LeetCode アカウントのユーザー名。"
+            },
+            "link_codeforces": {
+                "title": "連携した Codeforces アカウント",
+                "detail": "Codeforces アカウントのハンドル。"
+            },
+            "link_github": {
+                "title": "連携した GitHub アカウント",
+                "detail": "GitHub アカウントの ID とログイン名。"
+            },
+            "link_google": {
+                "title": "連携した Google アカウント",
+                "detail": "Google アカウントの ID とアドレス。"
+            },
+            "link_clist": {
+                "title": "連携した Clist.by アカウント",
+                "detail": "Clist.by アカウントの ID とハンドル。"
+            },
+            "cp_summary": {
+                "title": "コンテスト概要",
+                "detail": "該当する連携アカウントの Clist.by のレーティングと参加回数。"
+            },
+            "cp_details": {
+                "title": "レーティング履歴",
+                "detail": "該当する連携アカウントの直近最大 200 件のレート変動。"
+            }
+        }
+    }
+}

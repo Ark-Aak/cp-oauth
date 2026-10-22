@@ -1,0 +1,97 @@
+/* Semantic layer: pages and components consume these names only. */
+:root {
+    --cp-font-sans:
+        'IBM Plex Sans', 'PingFang SC', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+        'Microsoft YaHei', 'Noto Sans CJK SC', 'Yu Gothic', system-ui, sans-serif;
+    --cp-font-mono:
+        'IBM Plex Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+    --cp-text-xs: 12px;
+    --cp-text-sm: 13px;
+    --cp-text-md: 14px;
+    --cp-text-lg: 16px;
+    --cp-text-xl: 18px;
+    --cp-text-2xl: 24px;
+    --cp-text-figure: 28px;
+    --cp-text-display: 32px;
+
+    --cp-leading-xs: 16px;
+    --cp-leading-sm: 20px;
+    --cp-leading-md: 22px;
+    --cp-leading-lg: 24px;
+    --cp-leading-xl: 26px;
+    --cp-leading-2xl: 32px;
+    --cp-leading-figure: 32px;
+    --cp-leading-display: 40px;
+
+    --cp-weight-regular: 400;
+    --cp-weight-medium: 500;
+    --cp-weight-strong: 600;
+    --cp-tracking-kicker: 0.06em;
+
+    --cp-space-1: 4px;
+    --cp-space-2: 8px;
+    --cp-space-3: 12px;
+    --cp-space-4: 16px;
+    --cp-space-5: 20px;
+    --cp-space-6: 24px;
+    --cp-space-8: 32px;
+    --cp-space-10: 40px;
+    --cp-space-12: 48px;
+
+    --cp-radius-sm: 4px;
+    --cp-radius-md: 6px;
+
+    --cp-rail-width: 248px;
+    --cp-content-width: 1120px;
+    --cp-auth-form-width: 400px;
+    --cp-topbar-height: 56px;
+
+    --cp-canvas: var(--el-bg-color-page);
+    --cp-surface: var(--el-bg-color);
+    --cp-sunken: var(--el-fill-color-light);
+    --cp-line: var(--el-border-color-light);
+    --cp-line-strong: var(--el-border-color);
+
+    --cp-text: var(--el-text-color-primary);
+    --cp-text-2: var(--el-text-color-regular);
+    --cp-text-3: var(--el-text-color-secondary);
+
+    --cp-accent: var(--el-color-primary);
+    --cp-accent-strong: var(--el-color-primary-dark-2);
+    --cp-accent-soft: var(--el-color-primary-light-9);
+    --cp-accent-line: var(--el-color-primary-light-7);
+
+    --cp-success: var(--el-color-success);
+    --cp-success-soft: var(--el-color-success-light-9);
+    --cp-warning: var(--el-color-warning);
+    --cp-warning-soft: var(--el-color-warning-light-9);
+    --cp-danger: var(--el-color-danger);
+    --cp-danger-soft: var(--el-color-danger-light-9);
+    --cp-info: var(--el-color-info);
+    --cp-info-soft: var(--el-color-info-light-9);
+
+    --cp-rail-bg: #10233f;
+    --cp-rail-fg: rgba(255, 255, 255, 0.76);
+    --cp-rail-fg-strong: #ffffff;
+    --cp-rail-muted: rgba(255, 255, 255, 0.58);
+    --cp-rail-hover: rgba(255, 255, 255, 0.06);
+    --cp-rail-active: rgba(127, 164, 206, 0.2);
+    --cp-rail-accent: #9fc0e4;
+    --cp-rail-line: rgba(255, 255, 255, 0.1);
+
+    --cp-duration: 120ms;
+    --cp-duration-slide: 200ms;
+    --cp-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+html.dark {
+    --cp-rail-bg: var(--el-bg-color);
+    --cp-rail-fg: var(--el-text-color-regular);
+    --cp-rail-fg-strong: var(--el-text-color-primary);
+    --cp-rail-muted: var(--el-text-color-secondary);
+    --cp-rail-hover: rgba(255, 255, 255, 0.04);
+    --cp-rail-active: var(--el-color-primary-light-9);
+    --cp-rail-accent: var(--el-color-primary);
+    --cp-rail-line: var(--el-border-color-light);
+}

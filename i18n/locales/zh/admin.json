@@ -1,0 +1,120 @@
+{
+    "admin": {
+        "users": {
+            "description": "账号、角色与邮箱验证状态。",
+            "searchPlaceholder": "用户名或邮箱",
+            "total": "共 {n} 个账号",
+            "empty": "还没有账号。",
+            "noMatches": "没有符合搜索条件的账号。",
+            "roles": {
+                "admin": "管理员",
+                "user": "成员"
+            },
+            "verified": "邮箱已验证",
+            "unverified": "邮箱未验证",
+            "actions": "管理",
+            "makeAdmin": "设为管理员",
+            "removeAdmin": "取消管理员",
+            "makeAdminConfirm": "{name} 将可以管理所有账号和站点设置。",
+            "removeAdminConfirm": "{name} 将失去管理权限。",
+            "selfDemote": "你将失去管理员权限并退出登录。",
+            "markVerified": "标记邮箱为已验证",
+            "markUnverified": "标记邮箱为未验证",
+            "delete": "删除账号",
+            "deleteConfirm": "将删除 {name} 及其所有关联账号、应用和令牌，且无法恢复。",
+            "selfDelete": "将删除你自己的账号并退出登录，且无法恢复。"
+        },
+        "config": {
+            "description": "站点设置、邮件发送、人机验证与第三方登录。",
+            "callbackUrl": "回调地址",
+            "callbackHint": "在服务商处登记的地址必须与此完全一致。",
+            "configured": "已设置",
+            "notConfigured": "未设置",
+            "keepSecret": "留空则保持当前值",
+            "willClear": "保存后将清除",
+            "clear": "清除",
+            "undoClear": "保留",
+            "unsaved": "有未保存的修改。",
+            "fixFields": "部分值无效，请检查标出的字段。",
+            "providerText": "用于通过 {name} 登录和关联账号的 OAuth 凭据。",
+            "groups": {
+                "site": "站点",
+                "siteText": "名称、注册与列表设置。",
+                "smtp": "邮件发送",
+                "smtpText": "用于发送验证、重置密码和登录验证码邮件的 SMTP 服务器。",
+                "turnstile": "Cloudflare Turnstile",
+                "turnstileText": "注册与登录时的人机验证。"
+            },
+            "fields": {
+                "siteTitle": "站点名称",
+                "registration": "允许注册",
+                "registrationHint": "关闭后，任何方式都无法创建新账号。",
+                "recentUsers": "概览页显示的最新成员数",
+                "recentUsersHint": "1–20。",
+                "refreshCooldown": "用户名刷新冷却时间",
+                "refreshCooldownHint": "两次刷新关联账号名称之间的分钟数，1–43200。",
+                "smtpHost": "主机",
+                "smtpPort": "端口",
+                "smtpUser": "用户名",
+                "smtpPass": "密码",
+                "smtpFrom": "发件地址",
+                "smtpFromHint": "例如：CP OAuth <no-reply{'@'}example.com>",
+                "turnstileEnabled": "启用 Turnstile",
+                "turnstileHint": "开启前必须先设置两个密钥。",
+                "siteKey": "站点密钥（Site key）",
+                "secretKey": "私密密钥（Secret key）",
+                "clientId": "客户端 ID",
+                "clientSecret": "客户端密钥"
+            }
+        },
+        "notices": {
+            "description": "显示在概览页的公告。",
+            "createTitle": "新公告",
+            "createText": "概览页显示最新的三条公告，置顶公告优先。",
+            "fields": {
+                "title": "标题",
+                "content": "内容（HTML）",
+                "pinned": "置顶"
+            },
+            "allowedTags": "允许：p、br、strong、em、b、i、u、s、code、pre、blockquote、ul、ol、li、a、h1–h6、span。其他标记会被移除。",
+            "publish": "发布",
+            "published": "公告已发布。",
+            "listTitle": "已发布的公告",
+            "listText": "按清理后的存储内容显示。",
+            "empty": "还没有公告。",
+            "pinned": "置顶",
+            "deleteTitle": "删除公告",
+            "deleteConfirm": "将从站点移除「{title}」。"
+        },
+        "showcase": {
+            "description": "显示在公开展示页的条目。",
+            "viewPublic": "查看展示页",
+            "createTitle": "新条目",
+            "fields": {
+                "category": "类别",
+                "sortOrder": "排序",
+                "name": "名称",
+                "url": "链接",
+                "iconUrl": "图标地址",
+                "description": "描述"
+            },
+            "categories": {
+                "site": "站点",
+                "project": "项目"
+            },
+            "groups": {
+                "site": "站点",
+                "project": "项目"
+            },
+            "sortHint": "数字越小越靠前。",
+            "iconHint": "可选。HTTP 或 HTTPS 的方形图片。",
+            "add": "添加条目",
+            "added": "条目已添加。",
+            "empty": "此类别还没有条目。",
+            "order": "#{n}",
+            "invalidUrls": "已存储的地址无效：{fields}",
+            "deleteTitle": "删除条目",
+            "deleteConfirm": "将从展示页移除 {name}。"
+        }
+    }
+}

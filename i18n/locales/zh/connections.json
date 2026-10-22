@@ -1,0 +1,38 @@
+{
+    "connections": {
+        "description": "你已证明归属的其他平台账号。",
+        "footnote": "应用只能通过你同意的 link 与 cp 权限范围读取关联账号。公开展示哪些账号，请在此设置：",
+        "uid": "UID {uid}",
+        "verifiedAt": "{date} 验证",
+        "notLinked": "未关联",
+        "notConfigured": "管理员尚未启用此登录方式。",
+        "refreshName": "刷新名称",
+        "refreshed": "名称已更新为 {name}。",
+        "unlink": "解除关联",
+        "unlinkTitle": "解除关联",
+        "unlinkConfirm": "应用将无法再获取你的 {platform} 身份，你也无法再用它登录。",
+        "unlinked": "已解除 {platform} 关联。",
+        "linked": "已关联 {platform}。",
+        "link": {
+            "action": "关联",
+            "title": "关联 {platform}",
+            "getCode": "获取验证码",
+            "intro": {
+                "luogu": "输入你的洛谷 UID，之后通过公开剪贴板证明归属。",
+                "atcoder": "输入你的 AtCoder 用户名，之后通过个人资料的 Affiliation 字段证明归属。",
+                "leetcode": "输入你的力扣（leetcode.cn）用户名，即个人主页地址中的那一段，之后通过个人简介证明归属。"
+            },
+            "uidLabel": {
+                "luogu": "洛谷 UID",
+                "atcoder": "AtCoder 用户名",
+                "leetcode": "力扣用户名"
+            },
+            "uidPlaceholder": {
+                "luogu": "123456",
+                "atcoder": "tourist",
+                "leetcode": "your-slug"
+            },
+            "luoguUidRule": "洛谷 UID 只包含数字。"
+        }
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "security": {
+        "description": "密码、两步验证和通行密钥。",
+        "password": {
+            "title": "密码",
+            "text": "请使用没有在其他地方用过的密码。",
+            "current": "当前密码",
+            "new": "新密码",
+            "confirm": "再次输入新密码",
+            "rule": "至少 8 个字符，最多 72 字节。",
+            "mismatch": "两次输入的密码不一致。",
+            "effect": "修改密码会退出其他会话，并撤销已授权应用的访问权限。",
+            "submit": "修改密码",
+            "changed": "密码已修改。",
+            "wrongCurrent": "当前密码不正确。"
+        },
+        "mfa": {
+            "title": "两步验证",
+            "text": "在密码、通行密钥或关联账号登录后，再要求输入一次性验证码。",
+            "state": "状态",
+            "method": "方式",
+            "methods": {
+                "totp": "身份验证器应用",
+                "email_otp": "邮箱验证码"
+            },
+            "totpText": "使用 Google Authenticator、1Password、Microsoft Authenticator 等应用生成的验证码。",
+            "emailText": "每次登录时向已验证的邮箱发送验证码。",
+            "emailNeedsVerify": "请先验证邮箱地址。",
+            "setUp": "设置",
+            "enable": "开启",
+            "enabled": "两步验证已开启。",
+            "disable": "关闭两步验证",
+            "disableConfirm": "关闭后，登录时不再要求输入一次性验证码。",
+            "disabled": "两步验证已关闭。",
+            "totpTitle": "设置身份验证器应用",
+            "totpStep1": "用身份验证器应用扫描二维码。",
+            "totpStep2": "输入应用中显示的 6 位验证码。",
+            "qrAlt": "用于将 CP OAuth 添加到身份验证器应用的二维码",
+            "emailTitle": "设置邮箱验证码",
+            "emailStep": "6 位验证码已发送到你已验证的邮箱，输入后即可开启邮箱验证码。"
+        },
+        "passkeys": {
+            "title": "通行密钥",
+            "text": "使用设备屏幕锁或安全密钥登录，无需密码。",
+            "add": "添加通行密钥",
+            "empty": "还没有通行密钥。",
+            "unsupported": "当前浏览器无法创建通行密钥。",
+            "added": "添加于 {date}",
+            "addedMessage": "通行密钥已添加。",
+            "name": "名称",
+            "namePlaceholder": "My Passkey",
+            "nameHint": "便于日后识别设备，可不填。",
+            "duplicate": "这个通行密钥已经注册过。",
+            "removeTitle": "删除通行密钥",
+            "removeConfirm": "删除后，{name} 将无法再登录此账号。",
+            "removed": "通行密钥已删除。"
+        }
+    }
+}

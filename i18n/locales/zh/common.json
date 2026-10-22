@@ -1,0 +1,221 @@
+{
+    "common": {
+        "nav": {
+            "label": "主导航",
+            "skip": "跳到正文",
+            "open": "打开导航",
+            "close": "关闭导航",
+            "explore": "浏览",
+            "account": "账号",
+            "develop": "开发",
+            "admin": "管理",
+            "home": "概览",
+            "showcase": "应用展示",
+            "about": "关于",
+            "profile": "个人资料",
+            "security": "安全",
+            "bindings": "关联账号",
+            "apps": "已授权应用",
+            "privacy": "公开主页",
+            "developer": "OAuth 客户端",
+            "adminUsers": "用户",
+            "adminConfig": "系统配置",
+            "adminNotices": "公告",
+            "adminShowcase": "展示条目",
+            "publicProfile": "查看公开主页"
+        },
+        "actions": {
+            "signIn": "登录",
+            "signOut": "退出登录",
+            "createAccount": "注册账号",
+            "save": "保存",
+            "saveChanges": "保存更改",
+            "cancel": "取消",
+            "confirm": "确认",
+            "continue": "继续",
+            "back": "返回",
+            "retry": "重试",
+            "delete": "删除",
+            "remove": "移除",
+            "edit": "编辑",
+            "copy": "复制",
+            "copied": "已复制",
+            "reveal": "显示",
+            "hide": "隐藏",
+            "close": "关闭",
+            "refresh": "刷新",
+            "search": "搜索",
+            "add": "添加",
+            "create": "创建",
+            "send": "发送",
+            "resend": "重新发送",
+            "done": "完成"
+        },
+        "states": {
+            "loading": "正在加载…",
+            "empty": "暂无内容。",
+            "saved": "已保存",
+            "deleted": "已删除",
+            "on": "开启",
+            "off": "关闭",
+            "yes": "是",
+            "no": "否",
+            "never": "从未",
+            "notSet": "未设置",
+            "or": "或"
+        },
+        "panel": {
+            "lead": "一个账号，连接你常用的所有算法竞赛平台。",
+            "oauth": "标准授权码流程，刷新令牌每次使用后轮换。",
+            "pkce": "公开客户端无需客户端密钥即可完成登录。",
+            "identities": "关联账号经过验证后，应用才能读取。"
+        },
+        "mfa": {
+            "totpHint": "输入身份验证器应用中的 6 位验证码。",
+            "emailHint": "6 位验证码已发送到你的邮箱。",
+            "code": "验证码",
+            "codePlaceholder": "000000",
+            "verify": "验证"
+        },
+        "proof": {
+            "copy": "复制下面的验证码。",
+            "place": {
+                "luogu": "登录你要验证的洛谷账号，新建一个包含验证码的公开剪贴板。",
+                "atcoder": "把验证码填入 AtCoder 个人资料的 Affiliation 字段并保存。",
+                "leetcode": "把验证码填入力扣（leetcode.cn）个人简介并保存。"
+            },
+            "open": {
+                "luogu": "打开洛谷剪贴板",
+                "atcoder": "打开 AtCoder 设置",
+                "leetcode": "打开力扣个人资料设置"
+            },
+            "submit": {
+                "luogu": "在下方粘贴剪贴板 ID 或链接。",
+                "atcoder": "点击验证。验证完成后可以从资料中删除验证码。",
+                "leetcode": "点击验证。验证完成后可以从简介中删除验证码。"
+            },
+            "pasteLabel": "剪贴板 ID 或链接",
+            "pastePlaceholder": "https://www.luogu.com.cn/paste/…",
+            "checking": "将检查以下账号的个人简介：",
+            "expires": "验证码将在 {minutes} 分钟后失效。",
+            "verify": "验证"
+        },
+        "reauth": {
+            "title": "确认是你本人",
+            "method": "验证方式",
+            "methods": {
+                "password": "密码",
+                "passkey": "通行密钥",
+                "linked": "关联账号"
+            },
+            "password": "密码",
+            "passwordHint": "输入当前密码。",
+            "passkeyHint": "使用此账号已保存的任一通行密钥。",
+            "usePasskey": "使用通行密钥",
+            "passkeyCancelled": "通行密钥窗口在完成前被关闭。",
+            "linkedHint": "证明你仍然控制其中一个关联账号。",
+            "purpose": {
+                "email_change": "修改邮箱前需要重新确认身份。",
+                "password_change": "修改密码前需要重新确认身份。",
+                "mfa_change": "修改两步验证前需要重新确认身份。",
+                "passkey_add": "添加通行密钥前需要重新确认身份。",
+                "passkey_delete": "删除通行密钥前需要重新确认身份。",
+                "binding_change": "修改关联账号前需要重新确认身份。"
+            }
+        },
+        "preferences": {
+            "theme": "主题",
+            "language": "语言",
+            "system": "跟随系统",
+            "light": "浅色",
+            "dark": "深色"
+        },
+        "turnstile": {
+            "failed": "安全验证未能加载。",
+            "required": "请先完成安全验证。"
+        },
+        "footer": {
+            "label": "页脚",
+            "tagline": "面向算法竞赛选手的 OAuth 2.0 身份服务",
+            "discovery": "发现文档",
+            "source": "源代码"
+        },
+        "errorPage": {
+            "home": "返回概览",
+            "notFound": "页面不存在",
+            "notFoundText": "地址可能有误，或页面已被移除。",
+            "forbidden": "无权访问",
+            "forbiddenText": "你的账号没有打开此页面的权限。",
+            "unavailable": "服务暂不可用",
+            "generic": "出现错误",
+            "genericText": "页面未能加载，请稍后重试。"
+        },
+        "errors": {
+            "generic": "请求未完成，请重试。",
+            "network": "无法连接服务器，请检查网络后重试。",
+            "unauthenticated": "登录状态已失效，请重新登录。",
+            "unavailable": "服务暂时不可用，请稍后再试。",
+            "clipboard": "复制失败，请手动选中文本复制。",
+            "VALIDATION_ERROR": "请检查输入：{detail}",
+            "RATE_LIMITED": "尝试次数过多，请在 {seconds} 秒后重试。",
+            "CSRF_REJECTED": "请求来源不是本站，已被拦截。请刷新页面。",
+            "REAUTH_REQUIRED": "请重新确认身份后继续。",
+            "AUTH_STATE_CHANGED": "账号已在其他会话中变更，请刷新后重试。",
+            "AUTH_CHALLENGE_EXPIRED": "本次验证已过期，请重新开始。",
+            "AUTH_CHALLENGE_EXHAUSTED": "错误次数过多，请重新开始。",
+            "INVALID_CREDENTIALS": "邮箱或密码不正确。",
+            "INVALID_REAUTH_CREDENTIAL": "密码不正确。",
+            "INVALID_MFA_CODE": "验证码不正确或已过期。",
+            "INVALID_PASSKEY_CREDENTIAL": "无法验证该通行密钥。",
+            "RESET_TOKEN_INVALID_OR_EXPIRED": "重置链接无效或已过期，请重新申请。",
+            "USERNAME_REFRESH_COOLDOWN": "刚刚刷新过，请在 {seconds} 秒后重试。",
+            "CLIENT_NOT_FOUND": "该客户端已不存在。",
+            "CLIENT_CONFLICT": "已存在相同信息的客户端。",
+            "LAST_ADMIN": "至少需要保留一名管理员。",
+            "ADMIN_UNAVAILABLE": "管理功能暂时不可用。",
+            "ACCOUNT_NOT_FOUND": "找不到你的账号，请重新登录。"
+        },
+        "platforms": {
+            "luogu": "洛谷",
+            "atcoder": "AtCoder",
+            "leetcode": "力扣",
+            "codeforces": "Codeforces",
+            "github": "GitHub",
+            "google": "Google",
+            "clist": "Clist.by"
+        },
+        "scopes": {
+            "openid": { "title": "账号 ID", "detail": "你的 CP OAuth 账号的固定标识。" },
+            "profile": { "title": "基本资料", "detail": "用户名、显示名称、头像和简介。" },
+            "email": { "title": "邮箱地址", "detail": "你的邮箱地址及是否已验证。" },
+            "cp_linked": {
+                "title": "全部关联账号",
+                "detail": "每个关联账号的平台、UID 和用户名。"
+            },
+            "link_luogu": { "title": "关联的洛谷账号", "detail": "洛谷账号的 UID 和用户名。" },
+            "link_atcoder": { "title": "关联的 AtCoder 账号", "detail": "AtCoder 账号的用户名。" },
+            "link_leetcode": { "title": "关联的力扣账号", "detail": "力扣账号的用户名。" },
+            "link_codeforces": {
+                "title": "关联的 Codeforces 账号",
+                "detail": "Codeforces 账号的 handle。"
+            },
+            "link_github": {
+                "title": "关联的 GitHub 账号",
+                "detail": "GitHub 账号的 ID 和登录名。"
+            },
+            "link_google": { "title": "关联的 Google 账号", "detail": "Google 账号的 ID 和地址。" },
+            "link_clist": {
+                "title": "关联的 Clist.by 账号",
+                "detail": "Clist.by 账号的 ID 和 handle。"
+            },
+            "cp_summary": {
+                "title": "比赛概况",
+                "detail": "来自 Clist.by 的对应关联账号的 Rating 与参赛次数。"
+            },
+            "cp_details": {
+                "title": "Rating 记录",
+                "detail": "对应关联账号最近至多 200 场计分比赛的结果。"
+            }
+        }
+    }
+}

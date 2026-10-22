@@ -1,0 +1,59 @@
+{
+    "security": {
+        "description": "Password, two-step verification and passkeys.",
+        "password": {
+            "title": "Password",
+            "text": "Use a password you don't use anywhere else.",
+            "current": "Current password",
+            "new": "New password",
+            "confirm": "Repeat new password",
+            "rule": "At least 8 characters, at most 72 bytes.",
+            "mismatch": "The passwords don't match.",
+            "effect": "Changing the password signs out your other sessions and revokes access for authorized apps.",
+            "submit": "Change password",
+            "changed": "Password changed.",
+            "wrongCurrent": "The current password is incorrect."
+        },
+        "mfa": {
+            "title": "Two-step verification",
+            "text": "Ask for a one-time code after your password, passkey or linked-account sign-in.",
+            "state": "Status",
+            "method": "Method",
+            "methods": {
+                "totp": "Authenticator app",
+                "email_otp": "Email codes"
+            },
+            "totpText": "Codes from an app such as Google Authenticator, 1Password or Microsoft Authenticator.",
+            "emailText": "A code is sent to your verified email address at each sign-in.",
+            "emailNeedsVerify": "Verify your email address first.",
+            "setUp": "Set up",
+            "enable": "Turn on",
+            "enabled": "Two-step verification is on.",
+            "disable": "Turn off two-step verification",
+            "disableConfirm": "Sign-ins will no longer ask for a one-time code.",
+            "disabled": "Two-step verification is off.",
+            "totpTitle": "Set up an authenticator app",
+            "totpStep1": "Scan the QR code with your authenticator app.",
+            "totpStep2": "Enter the 6-digit code the app shows.",
+            "qrAlt": "QR code for adding CP OAuth to an authenticator app",
+            "emailTitle": "Set up email codes",
+            "emailStep": "We sent a 6-digit code to your verified email address. Enter it to turn on email codes."
+        },
+        "passkeys": {
+            "title": "Passkeys",
+            "text": "Sign in with your device's screen lock or a security key instead of a password.",
+            "add": "Add passkey",
+            "empty": "No passkeys yet.",
+            "unsupported": "This browser can't create passkeys.",
+            "added": "Added {date}",
+            "addedMessage": "Passkey added.",
+            "name": "Name",
+            "namePlaceholder": "My Passkey",
+            "nameHint": "Helps you recognize the device later. Optional.",
+            "duplicate": "This passkey is already registered.",
+            "removeTitle": "Remove passkey",
+            "removeConfirm": "{name} will no longer be able to sign in to this account.",
+            "removed": "Passkey removed."
+        }
+    }
+}

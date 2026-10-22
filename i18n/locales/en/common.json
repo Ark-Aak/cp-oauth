@@ -1,0 +1,242 @@
+{
+    "common": {
+        "nav": {
+            "label": "Main navigation",
+            "skip": "Skip to content",
+            "open": "Open navigation",
+            "close": "Close navigation",
+            "explore": "Explore",
+            "account": "Account",
+            "develop": "Develop",
+            "admin": "Administration",
+            "home": "Overview",
+            "showcase": "Showcase",
+            "about": "About",
+            "profile": "Profile",
+            "security": "Security",
+            "bindings": "Linked accounts",
+            "apps": "Authorized apps",
+            "privacy": "Public profile",
+            "developer": "OAuth clients",
+            "adminUsers": "Users",
+            "adminConfig": "Configuration",
+            "adminNotices": "Notices",
+            "adminShowcase": "Showcase entries",
+            "publicProfile": "View public profile"
+        },
+        "actions": {
+            "signIn": "Sign in",
+            "signOut": "Sign out",
+            "createAccount": "Create account",
+            "save": "Save",
+            "saveChanges": "Save changes",
+            "cancel": "Cancel",
+            "confirm": "Confirm",
+            "continue": "Continue",
+            "back": "Back",
+            "retry": "Retry",
+            "delete": "Delete",
+            "remove": "Remove",
+            "edit": "Edit",
+            "copy": "Copy",
+            "copied": "Copied",
+            "reveal": "Show",
+            "hide": "Hide",
+            "close": "Close",
+            "refresh": "Refresh",
+            "search": "Search",
+            "add": "Add",
+            "create": "Create",
+            "send": "Send",
+            "resend": "Resend",
+            "done": "Done"
+        },
+        "states": {
+            "loading": "Loading…",
+            "empty": "Nothing here yet.",
+            "saved": "Saved",
+            "deleted": "Deleted",
+            "on": "On",
+            "off": "Off",
+            "yes": "Yes",
+            "no": "No",
+            "never": "Never",
+            "notSet": "Not set",
+            "or": "or"
+        },
+        "panel": {
+            "lead": "One account for every competitive programming site you use.",
+            "oauth": "Standard authorization code flow with refresh token rotation.",
+            "pkce": "Public clients can sign users in without a client secret.",
+            "identities": "Linked accounts are verified before any app can read them."
+        },
+        "mfa": {
+            "totpHint": "Enter the 6-digit code from your authenticator app.",
+            "emailHint": "We sent a 6-digit code to your email address.",
+            "code": "Verification code",
+            "codePlaceholder": "000000",
+            "verify": "Verify"
+        },
+        "proof": {
+            "copy": "Copy this verification code.",
+            "place": {
+                "luogu": "Create a public Luogu clipboard that contains the code, signed in as the account you claim.",
+                "atcoder": "Put the code in the Affiliation field of your AtCoder profile and save it.",
+                "leetcode": "Put the code in the bio of your LeetCode (leetcode.cn) profile and save it."
+            },
+            "open": {
+                "luogu": "Open Luogu clipboard",
+                "atcoder": "Open AtCoder settings",
+                "leetcode": "Open LeetCode profile settings"
+            },
+            "submit": {
+                "luogu": "Paste the clipboard ID or its URL below.",
+                "atcoder": "Verify. You can remove the code from your profile afterwards.",
+                "leetcode": "Verify. You can remove the code from your bio afterwards."
+            },
+            "pasteLabel": "Clipboard ID or URL",
+            "pastePlaceholder": "https://www.luogu.com.cn/paste/…",
+            "checking": "The bio of this account will be checked:",
+            "expires": "The code expires in {minutes} minutes.",
+            "verify": "Verify"
+        },
+        "reauth": {
+            "title": "Confirm it's you",
+            "method": "Verification method",
+            "methods": {
+                "password": "Password",
+                "passkey": "Passkey",
+                "linked": "Linked account"
+            },
+            "password": "Password",
+            "passwordHint": "Enter your current password.",
+            "passkeyHint": "Use one of the passkeys saved on this account.",
+            "usePasskey": "Use passkey",
+            "passkeyCancelled": "The passkey prompt was closed before it finished.",
+            "linkedHint": "Prove you still control one of your linked accounts.",
+            "purpose": {
+                "email_change": "Changing your email address needs a fresh confirmation.",
+                "password_change": "Changing your password needs a fresh confirmation.",
+                "mfa_change": "Changing two-step verification needs a fresh confirmation.",
+                "passkey_add": "Adding a passkey needs a fresh confirmation.",
+                "passkey_delete": "Removing a passkey needs a fresh confirmation.",
+                "binding_change": "Changing linked accounts needs a fresh confirmation."
+            }
+        },
+        "preferences": {
+            "theme": "Theme",
+            "language": "Language",
+            "system": "Match system",
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "turnstile": {
+            "failed": "The security check didn't load.",
+            "required": "Complete the security check first."
+        },
+        "footer": {
+            "label": "Footer",
+            "tagline": "OAuth 2.0 identity for competitive programmers",
+            "discovery": "Discovery document",
+            "source": "Source code"
+        },
+        "errorPage": {
+            "home": "Go to overview",
+            "notFound": "Page not found",
+            "notFoundText": "The address may be mistyped, or the page was removed.",
+            "forbidden": "No access",
+            "forbiddenText": "Your account doesn't have permission to open this page.",
+            "unavailable": "Service unavailable",
+            "generic": "Something went wrong",
+            "genericText": "The page couldn't be loaded. Try again in a moment."
+        },
+        "errors": {
+            "generic": "The request didn't complete. Try again.",
+            "network": "Couldn't reach the server. Check your connection and try again.",
+            "unauthenticated": "Your session has ended. Sign in again.",
+            "unavailable": "The service is temporarily unavailable. Try again shortly.",
+            "clipboard": "Couldn't copy. Select the text and copy it manually.",
+            "VALIDATION_ERROR": "Check the input: {detail}",
+            "RATE_LIMITED": "Too many attempts. Try again in {seconds} seconds.",
+            "CSRF_REJECTED": "The request was blocked because it didn't come from this site. Reload the page.",
+            "REAUTH_REQUIRED": "Confirm your identity again to continue.",
+            "AUTH_STATE_CHANGED": "Your account changed in another session. Reload and try again.",
+            "AUTH_CHALLENGE_EXPIRED": "This verification step expired. Start again.",
+            "AUTH_CHALLENGE_EXHAUSTED": "Too many incorrect attempts. Start again.",
+            "INVALID_CREDENTIALS": "The email or password is incorrect.",
+            "INVALID_REAUTH_CREDENTIAL": "The password is incorrect.",
+            "INVALID_MFA_CODE": "The code is incorrect or expired.",
+            "INVALID_PASSKEY_CREDENTIAL": "The passkey couldn't be verified.",
+            "RESET_TOKEN_INVALID_OR_EXPIRED": "This reset link is invalid or expired. Request a new one.",
+            "USERNAME_REFRESH_COOLDOWN": "Refreshed recently. Try again in {seconds} seconds.",
+            "CLIENT_NOT_FOUND": "This client no longer exists.",
+            "CLIENT_CONFLICT": "A client with these details already exists.",
+            "LAST_ADMIN": "At least one administrator must remain.",
+            "ADMIN_UNAVAILABLE": "Administration is temporarily unavailable.",
+            "ACCOUNT_NOT_FOUND": "Your account was not found. Sign in again."
+        },
+        "platforms": {
+            "luogu": "Luogu",
+            "atcoder": "AtCoder",
+            "leetcode": "LeetCode (CN)",
+            "codeforces": "Codeforces",
+            "github": "GitHub",
+            "google": "Google",
+            "clist": "Clist.by"
+        },
+        "scopes": {
+            "openid": {
+                "title": "Account ID",
+                "detail": "A stable identifier for your CP OAuth account."
+            },
+            "profile": {
+                "title": "Basic profile",
+                "detail": "Username, display name, avatar and bio."
+            },
+            "email": {
+                "title": "Email address",
+                "detail": "Your email address and whether it is verified."
+            },
+            "cp_linked": {
+                "title": "All linked accounts",
+                "detail": "Platform, UID and username of every linked account."
+            },
+            "link_luogu": {
+                "title": "Linked Luogu account",
+                "detail": "UID and username of your Luogu account."
+            },
+            "link_atcoder": {
+                "title": "Linked AtCoder account",
+                "detail": "Username of your AtCoder account."
+            },
+            "link_leetcode": {
+                "title": "Linked LeetCode account",
+                "detail": "Username of your LeetCode account."
+            },
+            "link_codeforces": {
+                "title": "Linked Codeforces account",
+                "detail": "Handle of your Codeforces account."
+            },
+            "link_github": {
+                "title": "Linked GitHub account",
+                "detail": "ID and login of your GitHub account."
+            },
+            "link_google": {
+                "title": "Linked Google account",
+                "detail": "ID and address of your Google account."
+            },
+            "link_clist": {
+                "title": "Linked Clist.by account",
+                "detail": "ID and handle of your Clist.by account."
+            },
+            "cp_summary": {
+                "title": "Contest summary",
+                "detail": "Ratings and contest counts from Clist.by for matching linked accounts."
+            },
+            "cp_details": {
+                "title": "Rating history",
+                "detail": "Up to 200 recent rated contest results for matching linked accounts."
+            }
+        }
+    }
+}

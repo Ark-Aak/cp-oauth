@@ -1,793 +1,395 @@
 <template>
-    <div class="developer">
-        <AppPageHeader :title="$t('developer.title')" :description="$t('developer.subtitle')">
+    <div>
+        <CpPageHeader
+            :kicker="t('common.nav.develop')"
+            :title="t('common.nav.developer')"
+            :description="t('developer.description')"
+        >
             <template #actions>
-                <el-button
-                    ref="registerButton"
-                    type="primary"
-                    native-type="button"
-                    :disabled="
-                        pending || formPending || secretVisible || authStatus === 'anonymous'
-                    "
-                    @click="openCreate"
-                >
-                    <Plus :size="18" aria-hidden="true" />
-                    {{ $t('developer.register_app') }}
+                <el-button type="primary" :disabled="!hydrated" @click="openCreate">
+                    {{ t('developer.newClient') }}
                 </el-button>
             </template>
-        </AppPageHeader>
+        </CpPageHeader>
 
-        <p class="developer__notice" role="status" aria-live="polite">{{ notice }}</p>
-        <p v-if="actionError" class="developer__notice" role="alert">{{ actionError }}</p>
-        <NuxtLink v-if="authStatus === 'anonymous'" :to="loginPath" class="developer__help-link">
-            {{ $t('nav.login') }}
-        </NuxtLink>
-
-        <div class="ui-stack">
-            <section
-                class="developer__applications ui-card"
-                aria-labelledby="developer-applications-title"
-            >
-                <div class="ui-card__header">
-                    <h2 id="developer-applications-title" class="ui-card__title">
-                        <AppWindow :size="18" aria-hidden="true" />
-                        {{ $t('developer.your_apps') }}
-                    </h2>
-                </div>
-                <AppAsyncState
+        <div class="cp-stack">
+            <CpSheet :title="t('developer.clientsTitle')" flush>
+                <CpDataState
                     :pending="pending"
-                    :error="loadError"
-                    :empty="clients.length === 0"
-                    :empty-text="$t('developer.no_apps')"
-                    :empty-icon="AppWindow"
-                    @retry="refresh()"
+                    :error="error ? describe(error) : null"
+                    :empty="!clients?.length"
+                    :empty-text="t('developer.empty')"
+                    @retry="refresh"
                 >
-                    <template #empty>
-                        <p>{{ $t('developer.no_apps') }}</p>
-                        <el-button native-type="button" @click="openCreate">
-                            {{ $t('developer.register_app') }}
-                        </el-button>
-                    </template>
-
-                    <div class="developer__table-wrap">
-                        <table class="developer__table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('developer.app_name') }}</th>
-                                    <th scope="col">{{ $t('developer.redirect_uris') }}</th>
-                                    <th scope="col">{{ $t('developer.actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="client in clients"
-                                    :key="client.id"
-                                    :aria-busy="rowPending(client.id)"
-                                >
-                                    <td>
-                                        <div class="developer__client-heading">
-                                            <p
-                                                :id="`developer-table-name-${client.id}`"
-                                                class="developer__client-name"
-                                            >
-                                                {{ client.name }}
-                                            </p>
-                                            <span class="developer__email-policy">
-                                                {{
-                                                    $t(
-                                                        client.requireEmailVerified
-                                                            ? 'developer.email_verified_required'
-                                                            : 'developer.email_not_required'
-                                                    )
-                                                }}
-                                            </span>
-                                        </div>
-                                        <div class="developer__client-id">
-                                            <span class="sr-only"
-                                                >{{ $t('developer.client_id') }}:
-                                            </span>
-                                            <code>{{ client.clientId }}</code>
-                                            <el-button
-                                                class="is-icon-only"
-                                                native-type="button"
-                                                text
-                                                :disabled="rowPending(client.id) || !!copyingId"
-                                                :loading="copyingId === client.id"
-                                                :aria-label="
-                                                    $t('developer.copy_client_id') +
-                                                    ': ' +
-                                                    client.name
-                                                "
-                                                @click="copyClientId(client)"
-                                            >
-                                                <Copy :size="18" aria-hidden="true" />
-                                            </el-button>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <ul class="developer__uris">
-                                            <li v-for="uri in client.redirectUris" :key="uri">
-                                                <code>{{ uri }}</code>
-                                                <p
-                                                    v-if="!isSafeOAuthRedirectUri(uri)"
-                                                    class="developer__unsafe"
-                                                >
-                                                    {{ $t('developer.unsafe_callback') }}
-                                                </p>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                    <td>
-                                        <div class="developer__row-actions">
-                                            <el-button
-                                                native-type="button"
-                                                text
-                                                :disabled="rowPending(client.id)"
-                                                :aria-label="
-                                                    $t('developer.edit') + ': ' + client.name
-                                                "
-                                                @click="openEdit(client, $event)"
-                                            >
-                                                {{ $t('developer.edit') }}
-                                            </el-button>
-                                            <el-button
-                                                type="danger"
-                                                text
-                                                native-type="button"
-                                                :disabled="rowPending(client.id)"
-                                                :loading="deletingId === client.id"
-                                                :aria-label="
-                                                    $t('developer.delete') + ': ' + client.name
-                                                "
-                                                @click="openDelete(client, $event)"
-                                            >
-                                                {{ $t('developer.delete') }}
-                                            </el-button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <ul class="developer__mobile-list">
+                    <ul class="cp-rows">
                         <li
                             v-for="client in clients"
                             :key="client.id"
-                            class="developer__mobile-client"
-                            :aria-busy="rowPending(client.id)"
+                            class="developer__row"
+                            :class="{ 'is-selected': client.id === selected?.id }"
                         >
-                            <div class="developer__client-heading">
-                                <h3 class="developer__client-name">{{ client.name }}</h3>
-                                <span class="developer__email-policy">
-                                    {{
-                                        $t(
-                                            client.requireEmailVerified
-                                                ? 'developer.email_verified_required'
-                                                : 'developer.email_not_required'
-                                        )
-                                    }}
+                            <div class="cp-rows__main">
+                                <button
+                                    type="button"
+                                    class="developer__name"
+                                    @click="selectedId = client.id"
+                                >
+                                    {{ client.name }}
+                                </button>
+                                <CpCode :value="client.clientId" />
+                                <span class="cp-rows__meta cp-mono">
+                                    {{ client.redirectUris[0] }}
+                                    <template v-if="client.redirectUris.length > 1">
+                                        {{
+                                            t('developer.moreUris', {
+                                                n: client.redirectUris.length - 1
+                                            })
+                                        }}
+                                    </template>
                                 </span>
                             </div>
-                            <div class="developer__client-id">
-                                <span class="sr-only">{{ $t('developer.client_id') }}: </span>
-                                <code>{{ client.clientId }}</code>
-                                <el-button
-                                    class="is-icon-only"
-                                    native-type="button"
-                                    text
-                                    :disabled="rowPending(client.id) || !!copyingId"
-                                    :loading="copyingId === client.id"
-                                    :aria-label="
-                                        $t('developer.copy_client_id') + ': ' + client.name
+                            <div class="developer__facts">
+                                <CpStatus
+                                    :tone="client.requireEmailVerified ? 'accent' : 'info'"
+                                    :label="
+                                        client.requireEmailVerified
+                                            ? t('developer.verifiedOnly')
+                                            : t('developer.anyEmail')
                                     "
-                                    @click="copyClientId(client)"
-                                >
-                                    <Copy :size="18" aria-hidden="true" />
-                                </el-button>
+                                />
+                                <span class="cp-rows__meta">
+                                    {{ t('developer.created', { date: date(client.createdAt) }) }}
+                                </span>
                             </div>
-                            <p class="developer__meta-label">{{ $t('developer.redirect_uris') }}</p>
-                            <ul class="developer__uris">
-                                <li v-for="uri in client.redirectUris" :key="uri">
-                                    <code>{{ uri }}</code>
-                                    <p
-                                        v-if="!isSafeOAuthRedirectUri(uri)"
-                                        class="developer__unsafe"
-                                    >
-                                        {{ $t('developer.unsafe_callback') }}
-                                    </p>
-                                </li>
-                            </ul>
-                            <div class="developer__row-actions">
-                                <el-button
-                                    native-type="button"
-                                    text
-                                    :disabled="rowPending(client.id)"
-                                    :aria-label="$t('developer.edit') + ': ' + client.name"
-                                    @click="openEdit(client, $event)"
-                                >
-                                    {{ $t('developer.edit') }}
+                            <div class="cp-rows__end">
+                                <el-button size="small" @click="openEdit(client)">
+                                    {{ t('common.actions.edit') }}
                                 </el-button>
                                 <el-button
                                     type="danger"
-                                    text
-                                    native-type="button"
-                                    :disabled="rowPending(client.id)"
-                                    :loading="deletingId === client.id"
-                                    :aria-label="$t('developer.delete') + ': ' + client.name"
-                                    @click="openDelete(client, $event)"
+                                    plain
+                                    size="small"
+                                    :loading="deleting === client.id"
+                                    @click="remove(client)"
                                 >
-                                    {{ $t('developer.delete') }}
+                                    {{ t('common.actions.delete') }}
                                 </el-button>
                             </div>
                         </li>
                     </ul>
-                </AppAsyncState>
-            </section>
+                </CpDataState>
+            </CpSheet>
 
-            <aside class="developer__help ui-card" aria-labelledby="developer-guide-title">
-                <div class="ui-card__header">
-                    <h2 id="developer-guide-title" class="ui-card__title">
-                        <BookOpen :size="18" aria-hidden="true" />
-                        {{ $t('developer.integration_guide') }}
-                    </h2>
+            <CpSheet
+                :title="t('developer.reference.title')"
+                :description="t('developer.reference.text')"
+            >
+                <CpDataState
+                    :pending="discoveryPending"
+                    :error="discoveryError ? describe(discoveryError) : null"
+                    @retry="refreshDiscovery"
+                >
+                    <dl v-if="discovery">
+                        <CpField
+                            v-for="endpoint in endpoints"
+                            :key="endpoint.label"
+                            :label="endpoint.label"
+                        >
+                            <CpCode :value="endpoint.value" />
+                        </CpField>
+                        <CpField :label="t('developer.reference.pkce')" mono>
+                            {{ discovery.code_challenge_methods_supported.join(', ') }}
+                        </CpField>
+                        <CpField :label="t('developer.reference.clientAuth')" mono>
+                            {{ discovery.token_endpoint_auth_methods_supported.join(', ') }}
+                        </CpField>
+                        <CpField :label="t('developer.reference.lifetimes')">
+                            {{ t('developer.reference.lifetimesValue') }}
+                        </CpField>
+                        <CpField :label="t('developer.reference.scopes')">
+                            <ul class="developer__scopes">
+                                <li v-for="scope in discovery.scopes_supported" :key="scope">
+                                    <code class="cp-mono">{{ scope }}</code>
+                                    <span class="cp-muted">{{ scopeText.title(scope) }}</span>
+                                </li>
+                            </ul>
+                        </CpField>
+                    </dl>
+                </CpDataState>
+            </CpSheet>
+
+            <CpSheet
+                v-if="selected && discovery"
+                :title="t('developer.example.title')"
+                :description="t('developer.example.text', { name: selected.name })"
+            >
+                <div class="developer__example">
+                    <p class="developer__label">{{ t('developer.example.authorize') }}</p>
+                    <CpCode :value="exampleUrl" block />
+                    <p class="cp-help">{{ t('developer.example.placeholders') }}</p>
+                    <p class="developer__label">{{ t('developer.example.exchange') }}</p>
+                    <CpCode :value="exampleExchange" block />
                 </div>
-                <p>{{ $t('developer.integration_hint') }}</p>
-                <NuxtLink to="/about" class="developer__help-link">
-                    {{ $t('developer.open_guide') }}
-                </NuxtLink>
-            </aside>
+            </CpSheet>
         </div>
 
-        <el-dialog
-            v-model="formVisible"
-            :title="$t(formMode === 'create' ? 'developer.register_app' : 'developer.edit_app')"
-            width="min(680px, calc(100vw - 32px))"
-            :close-on-click-modal="false"
-            :close-on-press-escape="!formPending"
-            :show-close="!formPending"
-            :before-close="beforeFormClose"
-            destroy-on-close
-            @opened="clientForm?.focusFirstField()"
-            @closed="formClosed"
-        >
-            <p v-if="saveError" class="developer__dialog-error" role="alert">{{ saveError }}</p>
-            <OAuthClientForm
-                ref="clientForm"
-                :initial="formInitial"
-                :submit-label="
-                    $t(
-                        formMode === 'create'
-                            ? formPending
-                                ? 'developer.creating'
-                                : 'developer.create'
-                            : formPending
-                              ? 'developer.saving'
-                              : 'developer.save'
-                    )
-                "
-                :pending="formPending"
-                @submit="saveClient"
-                @cancel="formVisible = false"
-            />
-        </el-dialog>
-
-        <OAuthClientSecretDialog
-            v-model="secretVisible"
-            :secret="newSecret"
-            @closed="secretClosed"
+        <DeveloperClientDialog
+            :open="dialog.open"
+            :client="dialog.client"
+            @close="dialog.open = false"
+            @saved="onSaved"
         />
 
         <el-dialog
-            v-model="deleteVisible"
-            :title="$t('developer.delete_application')"
-            width="min(480px, calc(100vw - 32px))"
+            :model-value="secret !== null"
+            :title="t('developer.secret.title')"
+            width="min(520px, calc(100vw - 32px))"
+            append-to-body
+            :show-close="false"
             :close-on-click-modal="false"
-            :close-on-press-escape="!deletingId"
-            :show-close="!deletingId"
-            :before-close="beforeDeleteClose"
-            destroy-on-close
-            @closed="deleteClosed"
+            :close-on-press-escape="false"
         >
-            <template v-if="deleteTarget">
-                <p class="developer__delete-target">
-                    {{ $t('developer.delete_target', { name: deleteTarget.name }) }}
-                </p>
-                <p class="developer__delete-id">
-                    {{ $t('developer.client_id') }}: <code>{{ deleteTarget.clientId }}</code>
-                </p>
-                <p>{{ $t('developer.delete_impact') }}</p>
-                <p v-if="deleteError" class="developer__dialog-error" role="alert">
-                    {{ deleteError }}
-                </p>
-            </template>
+            <div v-if="secret" class="developer__secret">
+                <CpNote tone="warning">{{ t('developer.secret.warning') }}</CpNote>
+                <dl>
+                    <CpField :label="t('developer.secret.clientId')">
+                        <CpCode :value="secret.clientId" />
+                    </CpField>
+                    <CpField :label="t('developer.secret.clientSecret')">
+                        <CpCode :value="secret.value" secret />
+                    </CpField>
+                </dl>
+            </div>
             <template #footer>
-                <div class="developer__dialog-actions">
-                    <el-button
-                        native-type="button"
-                        :disabled="!!deletingId"
-                        @click="deleteVisible = false"
-                    >
-                        {{ $t('developer.cancel') }}
-                    </el-button>
-                    <el-button
-                        type="danger"
-                        text
-                        native-type="button"
-                        :disabled="!!deletingId"
-                        :loading="!!deletingId"
-                        @click="deleteClient"
-                    >
-                        {{ $t('developer.delete') }}
-                    </el-button>
-                </div>
+                <el-button type="primary" @click="secret = null">{{
+                    t('developer.secret.stored')
+                }}</el-button>
             </template>
         </el-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
-import { AppWindow, BookOpen, Copy, Plus } from 'lucide-vue-next';
-import OAuthClientForm from '~/components/developer/OAuthClientForm.vue';
-import OAuthClientSecretDialog from '~/components/developer/OAuthClientSecretDialog.vue';
-import type { OAuthClient, OAuthClientDraft } from '~/types/api';
-import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
-import { isSafeOAuthRedirectUri } from '~/utils/oauth-redirect';
+import type { OAuthClient } from '~/types/api';
+
+interface DiscoveryDocument {
+    authorization_endpoint: string;
+    token_endpoint: string;
+    userinfo_endpoint: string;
+    revocation_endpoint: string;
+    scopes_supported: string[];
+    code_challenge_methods_supported: string[];
+    token_endpoint_auth_methods_supported: string[];
+}
 
 definePageMeta({ middleware: 'auth' });
+
 const { t } = useI18n();
 const api = useApi();
-const route = useRoute();
-const { user, status: authStatus } = useAuth();
-useHead({ title: () => `${t('developer.title')} - CP OAuth` });
-const loginPath = computed(() => buildLoginPath(getSafeRedirectTarget(route.fullPath)));
+const { describe } = useApiError();
+const { date } = useFormat();
+const hydrated = useHydrated();
+const scopeText = useScopeText();
 
-type RequestFailure = {
-    status?: number;
-    statusCode?: number;
-    response?: { status?: number };
-    data?: {
-        message?: string;
-        fields?: Record<string, string>;
-        data?: { fields?: Record<string, string> };
-    };
-};
+useHead({ title: t('common.nav.developer') });
 
-function errorMessage(cause: unknown, fallback: string) {
-    const failure = cause as RequestFailure | null;
-    const code = failure?.response?.status ?? failure?.statusCode ?? failure?.status;
-    if (code === 401) return t('developer.session_expired');
-    if (code === 403) return t('identity.permission_denied');
-    if (code && code >= 500) return t('identity.network_error');
-    return failure?.data?.message || fallback;
-}
-
+const [clientsResult, discoveryResult] = await Promise.all([
+    useAsyncData('developer-clients', () => api<OAuthClient[]>('/api/oauth/clients')),
+    useAsyncData('developer-discovery', () =>
+        api<DiscoveryDocument>('/.well-known/openid-configuration')
+    )
+]);
+const { data: clients, pending, error, refresh } = clientsResult;
 const {
-    data: clients,
-    pending,
-    error: clientsError,
-    refresh
-} = await useAsyncData(
-    `developer:clients:${user.value?.id ?? 'unavailable'}`,
-    () => api<OAuthClient[]>('/api/oauth/clients'),
-    { default: () => [], deep: false }
+    data: discovery,
+    pending: discoveryPending,
+    error: discoveryError,
+    refresh: refreshDiscovery
+} = discoveryResult;
+
+const selectedId = ref<string | null>(null);
+const selected = computed(
+    () =>
+        clients.value?.find(client => client.id === selectedId.value) ?? clients.value?.[0] ?? null
 );
-const loadError = computed(() =>
-    clientsError.value ? errorMessage(clientsError.value, t('identity.network_error')) : null
+
+const endpoints = computed(() =>
+    discovery.value
+        ? [
+              {
+                  label: t('developer.reference.authorization'),
+                  value: discovery.value.authorization_endpoint
+              },
+              { label: t('developer.reference.token'), value: discovery.value.token_endpoint },
+              {
+                  label: t('developer.reference.userinfo'),
+                  value: discovery.value.userinfo_endpoint
+              },
+              {
+                  label: t('developer.reference.revocation'),
+                  value: discovery.value.revocation_endpoint
+              }
+          ]
+        : []
 );
-const notice = ref('');
-const actionError = ref('');
-const copyingId = ref<string | null>(null);
-const registerButton = ref<{ $el: HTMLButtonElement } | null>(null);
-const clientForm = ref<InstanceType<typeof OAuthClientForm> | null>(null);
-const formVisible = ref(false);
-const formMode = ref<'create' | 'edit'>('create');
-const formPending = ref(false);
-const editingId = ref<string | null>(null);
-const formInitial = ref<OAuthClientDraft>({
-    name: '',
-    redirectUris: [''],
-    requireEmailVerified: false
+
+const exampleUrl = computed(() => {
+    if (!selected.value || !discovery.value) return '';
+    const query = new URLSearchParams({
+        response_type: 'code',
+        client_id: selected.value.clientId,
+        redirect_uri: selected.value.redirectUris[0] ?? '',
+        scope: 'openid profile',
+        state: 'STATE',
+        code_challenge: 'CODE_CHALLENGE',
+        code_challenge_method: 'S256'
+    });
+    return `${discovery.value.authorization_endpoint}?${query}`;
 });
-const saveError = ref('');
-let formTrigger: HTMLElement | null = null;
-const newSecret = ref<{ clientId: string; clientSecret: string } | null>(null);
-const secretVisible = ref(false);
-const deleteVisible = ref(false);
-const deleteTarget = ref<OAuthClient | null>(null);
-const deletingId = ref<string | null>(null);
-const deleteError = ref('');
-let deleteTrigger: HTMLElement | null = null;
 
-function triggerFrom(event?: MouseEvent) {
-    return event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+const exampleExchange = computed(() => {
+    if (!selected.value || !discovery.value) return '';
+    const form = new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: selected.value.clientId,
+        code: 'CODE',
+        redirect_uri: selected.value.redirectUris[0] ?? '',
+        code_verifier: 'CODE_VERIFIER'
+    });
+    return `POST ${discovery.value.token_endpoint}\nContent-Type: application/x-www-form-urlencoded\n\n${form}`;
+});
+
+/* Create / edit */
+const dialog = reactive<{ open: boolean; client: OAuthClient | null }>({
+    open: false,
+    client: null
+});
+const secret = ref<{ clientId: string; value: string } | null>(null);
+
+function openCreate() {
+    dialog.client = null;
+    dialog.open = true;
 }
 
-async function restoreFocus(trigger: HTMLElement | null) {
-    await nextTick();
-    if (
-        trigger?.isConnected &&
-        trigger.getClientRects().length &&
-        !trigger.hasAttribute('disabled')
-    ) {
-        trigger.focus();
+function openEdit(client: OAuthClient) {
+    dialog.client = client;
+    dialog.open = true;
+}
+
+async function onSaved(client: OAuthClient & { clientSecret?: string }) {
+    const created = !dialog.client;
+    dialog.open = false;
+    if (created && client.clientSecret) {
+        secret.value = { clientId: client.clientId, value: client.clientSecret };
+        selectedId.value = client.id;
     } else {
-        registerButton.value?.$el?.focus();
+        ElMessage.success(t('common.states.saved'));
     }
+    await refresh();
 }
 
-function rowPending(id: string) {
-    return deletingId.value === id || (formPending.value && editingId.value === id);
-}
+/* Delete */
+const deleting = ref<string | null>(null);
 
-function openCreate(event?: MouseEvent) {
-    if (formPending.value || pending.value || authStatus.value === 'anonymous') return;
-    formTrigger = triggerFrom(event);
-    formMode.value = 'create';
-    editingId.value = null;
-    formInitial.value = { name: '', redirectUris: [''], requireEmailVerified: false };
-    saveError.value = '';
-    formVisible.value = true;
-}
-
-function openEdit(client: OAuthClient, event: MouseEvent) {
-    if (rowPending(client.id)) return;
-    formTrigger = triggerFrom(event);
-    formMode.value = 'edit';
-    editingId.value = client.id;
-    formInitial.value = {
-        name: client.name,
-        redirectUris: [...client.redirectUris],
-        requireEmailVerified: client.requireEmailVerified
-    };
-    saveError.value = '';
-    formVisible.value = true;
-}
-
-function beforeFormClose(done: () => void) {
-    if (!formPending.value) done();
-}
-
-async function saveClient(draft: OAuthClientDraft) {
-    if (formPending.value) return;
-    formPending.value = true;
-    saveError.value = '';
-    notice.value = '';
+async function remove(client: OAuthClient) {
     try {
-        if (formMode.value === 'create') {
-            const result = await api<OAuthClient & { clientSecret: string }>('/api/oauth/clients', {
-                method: 'POST',
-                body: draft
-            });
-            const { clientSecret, ...client } = result;
-            clients.value = [client, ...clients.value];
-            newSecret.value = { clientId: client.clientId, clientSecret };
-            notice.value = t('developer.created');
-        } else if (editingId.value) {
-            const client = await api<OAuthClient>(
-                `/api/oauth/clients/${encodeURIComponent(editingId.value)}`,
-                {
-                    method: 'PATCH',
-                    body: draft
-                }
-            );
-            clients.value = clients.value.map(current =>
-                current.id === client.id ? client : current
-            );
-            notice.value = t('developer.updated');
-        }
-        formVisible.value = false;
-    } catch (cause) {
-        const failure = cause as RequestFailure;
-        const fields = failure.data?.data?.fields ?? failure.data?.fields;
-        if (fields) {
-            clientForm.value?.setFieldErrors(fields);
-            saveError.value = t('developer.form_invalid');
-        } else {
-            saveError.value = errorMessage(
-                cause,
-                t(formMode.value === 'create' ? 'developer.create_error' : 'developer.update_error')
-            );
-        }
-    } finally {
-        formPending.value = false;
+        await ElMessageBox.confirm(
+            t('developer.deleteConfirm', { name: client.name }),
+            t('developer.deleteTitle'),
+            {
+                type: 'warning',
+                confirmButtonText: t('common.actions.delete'),
+                cancelButtonText: t('common.actions.cancel'),
+                confirmButtonClass: 'el-button--danger'
+            }
+        );
+    } catch {
+        return;
     }
-}
-
-async function formClosed() {
-    editingId.value = null;
-    formInitial.value = { name: '', redirectUris: [''], requireEmailVerified: false };
-    saveError.value = '';
-    if (newSecret.value) {
-        await nextTick();
-        secretVisible.value = true;
-    } else {
-        await restoreFocus(formTrigger);
-        formTrigger = null;
-    }
-}
-
-async function secretClosed() {
-    newSecret.value = null;
-    await restoreFocus(formTrigger);
-    formTrigger = null;
-}
-
-function openDelete(client: OAuthClient, event: MouseEvent) {
-    if (rowPending(client.id)) return;
-    deleteTarget.value = client;
-    deleteTrigger = triggerFrom(event);
-    deleteError.value = '';
-    deleteVisible.value = true;
-}
-
-function beforeDeleteClose(done: () => void) {
-    if (!deletingId.value) done();
-}
-
-async function deleteClient() {
-    const client = deleteTarget.value;
-    if (!client || deletingId.value) return;
-    deletingId.value = client.id;
-    deleteError.value = '';
-    notice.value = '';
+    deleting.value = client.id;
     try {
         await api(`/api/oauth/clients/${encodeURIComponent(client.id)}`, { method: 'DELETE' });
-        clients.value = clients.value.filter(current => current.id !== client.id);
-        notice.value = t('developer.deleted', { name: client.name });
-        deleteVisible.value = false;
+        if (selectedId.value === client.id) selectedId.value = null;
+        await refresh();
+        ElMessage.success(t('common.states.deleted'));
     } catch (cause) {
-        deleteError.value = errorMessage(cause, t('developer.delete_error'));
+        ElMessage.error(describe(cause));
     } finally {
-        deletingId.value = null;
-    }
-}
-
-async function deleteClosed() {
-    deleteTarget.value = null;
-    deleteError.value = '';
-    await restoreFocus(deleteTrigger);
-    deleteTrigger = null;
-}
-
-async function copyClientId(client: OAuthClient) {
-    if (copyingId.value) return;
-    copyingId.value = client.id;
-    actionError.value = '';
-    notice.value = '';
-    try {
-        await navigator.clipboard.writeText(client.clientId);
-        notice.value = t('developer.copy_success');
-    } catch {
-        actionError.value = t('developer.copy_error');
-    } finally {
-        copyingId.value = null;
+        deleting.value = null;
     }
 }
 </script>
 
 <style scoped lang="scss">
-.developer {
-    min-width: 0;
+.developer__row {
+    align-items: flex-start;
 
-    &__notice {
-        margin-bottom: var(--space-4);
-        color: var(--text-primary);
-        overflow-wrap: anywhere;
+    &.is-selected {
+        box-shadow: inset 2px 0 0 var(--cp-accent);
     }
+}
 
-    &__notice:empty {
-        display: none;
+.developer__name {
+    padding: 0;
+    font: inherit;
+    font-weight: var(--cp-weight-medium);
+    text-align: left;
+    color: var(--cp-text);
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--cp-accent);
     }
+}
 
-    &__applications {
-        min-width: 0;
-    }
+.developer__facts {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--cp-space-1);
+}
 
-    &__table-wrap {
-        width: 100%;
-        overflow-x: auto;
-    }
+.developer__scopes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--cp-space-1) var(--cp-space-4);
 
-    &__table {
-        width: 100%;
-        min-width: 620px;
-        table-layout: fixed;
-        border-collapse: collapse;
-
-        thead {
-            background: var(--bg-secondary);
-        }
-    }
-
-    th,
-    td {
-        padding: var(--space-3);
-        border-bottom: 1px solid var(--divider-subtle);
-        text-align: left;
-        vertical-align: top;
-        overflow-wrap: anywhere;
-    }
-
-    th {
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        font-weight: 600;
-    }
-
-    th:first-child {
-        width: 38%;
-    }
-
-    th:last-child {
-        width: 184px;
-    }
-
-    th:last-child,
-    td:last-child {
-        text-align: right;
-    }
-
-    tbody tr:last-child td {
-        border-bottom: 0;
-    }
-
-    &__client-heading {
-        display: grid;
-        gap: var(--space-1);
-        min-width: 0;
-    }
-
-    &__client-name {
-        margin: 0;
-        color: var(--text-primary);
-        font-size: var(--font-size-subheading);
-        font-weight: 600;
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-    }
-
-    &__client-id {
+    li {
         display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        width: fit-content;
-        max-width: 100%;
-        margin-top: var(--space-2);
-        min-width: 0;
-
-        code {
-            min-width: 0;
-            font-size: var(--font-size-meta);
-        }
-
-        :deep(.el-button) {
-            flex-shrink: 0;
-        }
+        gap: var(--cp-space-2);
+        font-size: var(--cp-text-sm);
     }
+}
 
-    code {
-        font-size: var(--font-size-control);
-        line-height: 1.5;
-        color: var(--text-secondary);
-        overflow-wrap: anywhere;
-        white-space: normal;
+.developer__example {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-2);
+}
+
+.developer__label {
+    margin-top: var(--cp-space-2);
+    font-size: var(--cp-text-sm);
+    font-weight: var(--cp-weight-medium);
+    color: var(--cp-text);
+
+    &:first-child {
+        margin-top: 0;
     }
+}
 
-    &__email-policy {
-        font-size: var(--font-size-control);
-        color: var(--text-secondary);
-        line-height: 1.5;
-        overflow-wrap: anywhere;
-    }
+.developer__secret {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-4);
+}
 
-    &__uris {
-        display: grid;
-        gap: var(--space-2);
-        min-width: 0;
-        padding: 0;
-        margin: 0;
-        list-style: none;
-    }
-
-    &__uris code {
-        display: block;
-    }
-
-    &__unsafe {
-        margin-top: var(--space-2);
-        padding-left: var(--space-3);
-        border-left: 2px solid var(--el-color-warning);
-        color: var(--text-primary);
-        font-size: var(--font-size-control);
-        line-height: 1.5;
-    }
-
-    &__row-actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: var(--space-2);
-    }
-
-    &__row-actions :deep(.el-button),
-    &__dialog-actions :deep(.el-button) {
-        margin: 0;
-    }
-
-    &__mobile-list {
-        display: none;
-        gap: var(--space-3);
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    &__mobile-client {
-        min-width: 0;
-        padding: var(--space-4);
-        border: 1px solid var(--divider-subtle);
-        border-radius: var(--card-radius);
-    }
-
-    &__meta-label {
-        margin: var(--space-4) 0 var(--space-2);
-        font-size: var(--font-size-control);
-        font-weight: 600;
-    }
-
-    &__help {
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-    }
-
-    &__help-link {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-2);
-        margin-top: var(--space-2);
-        overflow-wrap: anywhere;
-    }
-
-    &__dialog-error {
-        margin: var(--space-3) 0 var(--space-4);
-        color: var(--text-primary);
-        overflow-wrap: anywhere;
-    }
-
-    &__delete-target {
-        margin-bottom: var(--space-3);
-        font-weight: 600;
-        overflow-wrap: anywhere;
-    }
-
-    &__delete-id {
-        margin-bottom: var(--space-4);
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-        overflow-wrap: anywhere;
-    }
-
-    &__dialog-actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: var(--space-2);
-    }
-
-    @media (max-width: 767px) {
-        &__table-wrap {
-            display: none;
-        }
-
-        &__mobile-list {
-            display: grid;
-        }
-
-        &__row-actions {
-            justify-content: flex-start;
-            margin-top: var(--space-4);
-        }
+@media (max-width: 767px) {
+    .developer__facts {
+        align-items: flex-start;
     }
 }
 </style>

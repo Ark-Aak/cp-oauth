@@ -1,463 +1,260 @@
 <template>
-    <div class="admin-notices">
-        <AppPageHeader
-            :title="$t('admin.notices.tab')"
-            :description="$t('admin.workbench.notices_description')"
-        >
-            <template #actions>
-                <el-button type="primary" native-type="button" @click="createOpen = true">
-                    {{ $t('admin.notices.create_title') }}
-                </el-button>
-            </template>
-        </AppPageHeader>
-        <div class="ui-stack">
-            <AdminSectionNav current="notices" />
-            <p v-if="sessionExpired" class="admin-notices__help">
-                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-            </p>
+    <div>
+        <CpPageHeader
+            :kicker="t('common.nav.admin')"
+            :title="t('common.nav.adminNotices')"
+            :description="t('admin.notices.description')"
+        />
 
-            <section class="admin-notices__results ui-card" aria-labelledby="notice-list-title">
-                <div class="ui-card__header">
-                    <h2 id="notice-list-title" class="ui-card__title">
-                        <Bell :size="18" aria-hidden="true" />
-                        {{ $t('admin.notices.list_title') }}
-                    </h2>
-                </div>
-                <AppAsyncState
-                    :pending="loading"
-                    :error="loadError"
-                    :empty="notices.length === 0"
-                    :empty-text="$t('admin.notices.empty')"
-                    :empty-icon="Bell"
-                    @retry="loadNotices"
-                >
-                    <div class="admin-notices__list">
-                        <article
-                            v-for="notice in notices"
-                            :key="notice.id"
-                            class="admin-notices__item"
-                            :aria-busy="!!deleting[notice.id]"
-                        >
-                            <header class="admin-notices__item-header">
-                                <div class="admin-notices__meta">
-                                    <h3>{{ notice.title }}</h3>
-                                    <span v-if="notice.pinned" class="admin-notices__pin">{{
-                                        $t('admin.notices.pinned_status')
-                                    }}</span>
-                                </div>
-                                <el-button
-                                    type="danger"
-                                    link
-                                    native-type="button"
-                                    :loading="!!deleting[notice.id]"
-                                    :disabled="!!deleting[notice.id]"
-                                    :aria-label="`${$t('admin.notices.delete')}: ${notice.title}`"
-                                    @click="deleteNotice(notice)"
-                                >
-                                    {{ $t('admin.notices.delete') }}
-                                </el-button>
-                            </header>
-                            <p class="admin-notices__content">{{ notice.content }}</p>
-                            <p class="admin-notices__time">{{ formatTime(notice.publishedAt) }}</p>
-                            <p
-                                v-if="deleteErrors[notice.id]"
-                                class="admin-notices__error"
-                                role="alert"
-                            >
-                                {{ deleteErrors[notice.id] }}
-                            </p>
-                        </article>
+        <div class="cp-stack">
+            <CpSheet
+                :title="t('admin.notices.createTitle')"
+                :description="t('admin.notices.createText')"
+            >
+                <form class="notice-form" method="post" novalidate @submit.prevent="create">
+                    <div class="notice-form__field">
+                        <label :for="ids.title">{{ t('admin.notices.fields.title') }}</label>
+                        <el-input
+                            :id="ids.title"
+                            v-model="form.title"
+                            maxlength="120"
+                            show-word-limit
+                            :disabled="busy"
+                        />
+                        <p v-if="fieldErrors.title" class="notice-form__error">
+                            {{ fieldErrors.title }}
+                        </p>
                     </div>
-                </AppAsyncState>
-            </section>
-        </div>
+                    <div class="notice-form__field">
+                        <label :for="ids.content">{{ t('admin.notices.fields.content') }}</label>
+                        <el-input
+                            :id="ids.content"
+                            v-model="form.content"
+                            type="textarea"
+                            class="notice-form__content"
+                            :autosize="{ minRows: 6, maxRows: 20 }"
+                            :disabled="busy"
+                        />
+                        <p v-if="fieldErrors.content" class="notice-form__error">
+                            {{ fieldErrors.content }}
+                        </p>
+                        <p v-else class="cp-help">{{ t('admin.notices.allowedTags') }}</p>
+                    </div>
+                    <div class="notice-form__row">
+                        <el-checkbox v-model="form.pinned" :disabled="busy">{{
+                            t('admin.notices.fields.pinned')
+                        }}</el-checkbox>
+                        <div class="notice-form__actions">
+                            <CpNote v-if="createError" tone="danger">{{ createError }}</CpNote>
+                            <el-button
+                                type="primary"
+                                native-type="submit"
+                                :loading="busy"
+                                :disabled="!form.title.trim() || !form.content.trim()"
+                            >
+                                {{ t('admin.notices.publish') }}
+                            </el-button>
+                        </div>
+                    </div>
+                </form>
+            </CpSheet>
 
-        <el-dialog
-            v-model="createOpen"
-            :title="$t('admin.notices.create_title')"
-            width="min(680px, calc(100vw - 32px))"
-            destroy-on-close
-            :close-on-click-modal="false"
-            :close-on-press-escape="!creating"
-            :show-close="!creating"
-            :before-close="beforeClose"
-            @closed="resetForm"
-        >
-            <p
-                v-if="createError"
-                id="notice-create-error"
-                class="admin-notices__error"
-                tabindex="-1"
-                role="alert"
+            <CpSheet
+                :title="t('admin.notices.listTitle')"
+                :description="t('admin.notices.listText')"
+                flush
             >
-                {{ createError }}
-            </p>
-            <p v-if="sessionExpired" class="admin-notices__help">
-                <NuxtLink :to="loginPath">{{ $t('auth.login.submit') }}</NuxtLink>
-            </p>
-            <el-form
-                method="post"
-                label-position="top"
-                :disabled="creating"
-                @submit.prevent="handleCreate"
-            >
-                <el-form-item
-                    for="notice-title"
-                    :label="$t('admin.notices.notice_title')"
-                    :error="fieldErrors.title"
+                <CpDataState
+                    :pending="pending"
+                    :error="error ? describe(error) : null"
+                    :empty="!data?.notices.length"
+                    :empty-text="t('admin.notices.empty')"
+                    @retry="refresh"
                 >
-                    <el-input
-                        id="notice-title"
-                        v-model="form.title"
-                        :aria-invalid="!!fieldErrors.title"
-                        :aria-describedby="fieldErrors.title ? 'notice-title-error' : undefined"
-                        @input="touch('title')"
-                        @blur="touch('title')"
-                    />
-                    <template #error="{ error }"
-                        ><span id="notice-title-error">{{ error }}</span></template
-                    >
-                </el-form-item>
-                <el-form-item
-                    for="notice-content"
-                    :label="$t('admin.notices.notice_content')"
-                    :error="fieldErrors.content"
-                >
-                    <AppInputFormatHint id="notice-content-format" format="html" />
-                    <el-input
-                        id="notice-content"
-                        v-model="form.content"
-                        type="textarea"
-                        :autosize="{ minRows: 5, maxRows: 12 }"
-                        :aria-invalid="!!fieldErrors.content"
-                        :aria-describedby="
-                            fieldErrors.content
-                                ? 'notice-content-format notice-content-error notice-content-help'
-                                : 'notice-content-format notice-content-help'
-                        "
-                        @input="touch('content')"
-                        @blur="touch('content')"
-                    />
-                    <p id="notice-content-help" class="admin-notices__help">
-                        {{ $t('admin.workbench.content_limit') }}
-                    </p>
-                    <template #error="{ error }"
-                        ><span id="notice-content-error">{{ error }}</span></template
-                    >
-                </el-form-item>
-                <el-form-item :error="fieldErrors.pinned">
-                    <el-checkbox
-                        id="notice-pinned"
-                        v-model="form.pinned"
-                        :aria-invalid="!!fieldErrors.pinned"
-                        :aria-describedby="fieldErrors.pinned ? 'notice-pinned-error' : undefined"
-                        @change="touch('pinned')"
-                    >
-                        {{ $t('admin.notices.pinned') }}
-                    </el-checkbox>
-                    <template #error="{ error }"
-                        ><span id="notice-pinned-error">{{ error }}</span></template
-                    >
-                </el-form-item>
-                <div class="task-actions">
-                    <el-button
-                        type="primary"
-                        native-type="submit"
-                        :loading="creating"
-                        :disabled="creating"
-                    >
-                        {{ creating ? $t('admin.notices.creating') : $t('admin.notices.create') }}
-                    </el-button>
-                    <el-button native-type="button" :disabled="creating" @click="closeCreate">{{
-                        $t('common.cancel')
-                    }}</el-button>
-                </div>
-            </el-form>
-        </el-dialog>
+                    <ul class="notice-list">
+                        <li
+                            v-for="notice in data?.notices"
+                            :key="notice.id"
+                            class="notice-list__item"
+                        >
+                            <div class="notice-list__head">
+                                <h3 class="notice-list__title">{{ notice.title }}</h3>
+                                <CpStatus
+                                    v-if="notice.pinned"
+                                    tone="accent"
+                                    :label="t('admin.notices.pinned')"
+                                />
+                                <time class="cp-help" :datetime="notice.publishedAt">{{
+                                    dateTime(notice.publishedAt)
+                                }}</time>
+                                <el-button
+                                    class="notice-list__delete"
+                                    type="danger"
+                                    plain
+                                    size="small"
+                                    :loading="deleting === notice.id"
+                                    @click="remove(notice)"
+                                >
+                                    {{ t('common.actions.delete') }}
+                                </el-button>
+                            </div>
+                            <!-- eslint-disable-next-line vue/no-v-html -- sanitized by the server allow-list -->
+                            <div class="cp-prose notice-list__body" v-html="notice.content" />
+                        </li>
+                    </ul>
+                </CpDataState>
+            </CpSheet>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Bell } from 'lucide-vue-next';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import AdminSectionNav from '~/components/admin/AdminSectionNav.vue';
-import { formatCSTTime } from '~/utils/time';
-import { adminRequestError } from '~/utils/admin-feedback';
-import { noticeCreateSchema } from '~/utils/admin-validation';
-import { buildLoginPath } from '~/utils/auth-redirect';
 import type { NoticeSummary } from '~/types/api';
 
 definePageMeta({ middleware: 'admin' });
+
 const { t } = useI18n();
-useHead({ title: () => `${t('admin.notices.tab')} - CP OAuth` });
-
 const api = useApi();
-const route = useRoute();
-const loginPath = computed(() => buildLoginPath(route.fullPath));
-const sessionExpired = ref(false);
-const loading = ref(false);
-const creating = ref(false);
-const createOpen = ref(false);
-const loadError = ref('');
-const createError = ref('');
-const serverFields = ref<Record<string, string>>({});
-const touched = reactive<Record<string, boolean>>({});
-const submitted = ref(false);
-const deleting = reactive<Record<string, boolean>>({});
-const deleteErrors = reactive<Record<string, string>>({});
-const notices = ref<NoticeSummary[]>([]);
+const { describe, read } = useApiError();
+const { dateTime } = useFormat();
+
+useHead({ title: t('common.nav.adminNotices') });
+
+const ids = { title: useId(), content: useId() };
+
+const { data, pending, error, refresh } = await useAsyncData('admin-notices', () =>
+    api<{ notices: NoticeSummary[] }>('/api/admin/notices')
+);
+
 const form = reactive({ title: '', content: '', pinned: false });
-const parsedForm = computed(() => noticeCreateSchema.safeParse(form));
-const fieldErrors = computed(() => {
-    const errors: Record<string, string> = {};
-    if (!parsedForm.value.success) {
-        for (const issue of parsedForm.value.error.issues) {
-            const field = String(issue.path[0]);
-            if (!submitted.value && !touched[field]) continue;
-            errors[field] =
-                issue.code === 'too_big'
-                    ? t('admin.workbench.max_characters', { max: 120 })
-                    : issue.code === 'custom'
-                      ? t('admin.workbench.content_limit')
-                      : t('admin.workbench.required');
-        }
-    }
-    return { ...errors, ...serverFields.value };
-});
-const hasDraft = computed(() => !!(form.title || form.content || form.pinned));
+const busy = ref(false);
+const createError = ref('');
+const fieldErrors = ref<Record<string, string>>({});
 
-function touch(field: string) {
-    touched[field] = true;
-    Reflect.deleteProperty(serverFields.value, field);
+async function create() {
+    busy.value = true;
     createError.value = '';
-}
-
-function resetForm() {
-    Object.assign(form, { title: '', content: '', pinned: false });
-    serverFields.value = {};
-    for (const field of Object.keys(touched)) Reflect.deleteProperty(touched, field);
-    submitted.value = false;
-    createError.value = '';
-}
-
-async function beforeClose(done: () => void) {
-    if (creating.value) return;
-    if (hasDraft.value) {
-        try {
-            await ElMessageBox.confirm(t('admin.workbench.discard_changes'), t('common.confirm'), {
-                confirmButtonText: t('admin.workbench.discard'),
-                cancelButtonText: t('common.cancel'),
-                type: 'warning'
-            });
-        } catch {
-            return;
-        }
-    }
-    done();
-}
-
-function closeCreate() {
-    void beforeClose(() => {
-        createOpen.value = false;
-    });
-}
-
-function formatTime(raw: string): string {
-    return formatCSTTime(raw, { withSeconds: true, withTimezone: true });
-}
-
-function requestError(error: unknown) {
-    const failure = adminRequestError(
-        error,
-        t('identity.network_error'),
-        t('identity.permission_denied')
-    );
-    const response = error as {
-        response?: { status?: number };
-        statusCode?: number;
-        status?: number;
-    };
-    if ((response.response?.status ?? response.statusCode ?? response.status) === 401) {
-        failure.message = t('admin.workbench.session_expired');
-        sessionExpired.value = true;
-    }
-    return failure;
-}
-
-let controller: AbortController | undefined;
-let sequence = 0;
-onBeforeUnmount(() => {
-    sequence++;
-    controller?.abort();
-});
-
-async function loadNotices() {
-    controller?.abort();
-    controller = new AbortController();
-    const current = ++sequence;
-    loading.value = true;
-    loadError.value = '';
+    fieldErrors.value = {};
     try {
-        const data = await api<{ notices: NoticeSummary[] }>('/api/admin/notices', {
-            signal: controller.signal
+        await api('/api/admin/notices', {
+            method: 'POST',
+            body: { title: form.title.trim(), content: form.content, pinned: form.pinned }
         });
-        if (current === sequence) {
-            notices.value = data.notices;
-            sessionExpired.value = false;
-        }
-    } catch (error) {
-        if (current === sequence) loadError.value = requestError(error).message;
+        form.title = '';
+        form.content = '';
+        form.pinned = false;
+        await refresh();
+        ElMessage.success(t('admin.notices.published'));
+    } catch (cause) {
+        const info = read(cause);
+        fieldErrors.value = info.fields;
+        if (!Object.keys(info.fields).length) createError.value = describe(cause);
     } finally {
-        if (current === sequence) loading.value = false;
+        busy.value = false;
     }
 }
 
-async function focusError() {
-    await nextTick();
-    const firstField = ['title', 'content', 'pinned'].find(field => fieldErrors.value[field]);
-    const target =
-        document.getElementById(`notice-${firstField}`) ||
-        document.getElementById('notice-create-error');
-    target?.focus();
-}
+const deleting = ref<string | null>(null);
 
-async function handleCreate() {
-    if (creating.value) return;
-    submitted.value = true;
-    serverFields.value = {};
-    createError.value = '';
-    const parsed = parsedForm.value;
-    if (!parsed.success) {
-        createError.value = t('admin.workbench.validation_error');
-        await focusError();
+async function remove(notice: NoticeSummary) {
+    try {
+        await ElMessageBox.confirm(
+            t('admin.notices.deleteConfirm', { title: notice.title }),
+            t('admin.notices.deleteTitle'),
+            {
+                type: 'warning',
+                confirmButtonText: t('common.actions.delete'),
+                cancelButtonText: t('common.actions.cancel'),
+                confirmButtonClass: 'el-button--danger'
+            }
+        );
+    } catch {
         return;
     }
-    creating.value = true;
+    deleting.value = notice.id;
     try {
-        await api('/api/admin/notices', { method: 'POST', body: parsed.data });
-        resetForm();
-        createOpen.value = false;
-        ElMessage.success(t('admin.notices.created'));
-        await loadNotices();
-    } catch (error) {
-        const failure = requestError(error);
-        createError.value = failure.message;
-        serverFields.value = failure.fields;
-        creating.value = false;
-        await focusError();
+        await api(`/api/admin/notices/${encodeURIComponent(notice.id)}`, { method: 'DELETE' });
+        await refresh();
+        ElMessage.success(t('common.states.deleted'));
+    } catch (cause) {
+        ElMessage.error(describe(cause));
     } finally {
-        creating.value = false;
+        deleting.value = null;
     }
 }
-
-async function deleteNotice(notice: NoticeSummary) {
-    const id = notice.id;
-    if (deleting[id]) return;
-    deleting[id] = true;
-    Reflect.deleteProperty(deleteErrors, id);
-    try {
-        try {
-            await ElMessageBox.confirm(
-                t('admin.notices.delete_confirm', { title: notice.title }),
-                t('admin.notices.delete'),
-                {
-                    confirmButtonText: t('admin.notices.delete'),
-                    confirmButtonClass: 'el-button--danger',
-                    cancelButtonText: t('common.cancel'),
-                    type: 'warning'
-                }
-            );
-        } catch {
-            return;
-        }
-        await api(`/api/admin/notices/${id}`, { method: 'DELETE' });
-        ElMessage.success(t('admin.notices.deleted'));
-        await loadNotices();
-    } catch (error) {
-        deleteErrors[id] = requestError(error).message;
-    } finally {
-        Reflect.deleteProperty(deleting, id);
-    }
-}
-
-await loadNotices();
 </script>
 
 <style scoped lang="scss">
-.admin-notices {
-    min-width: 0;
+.notice-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-4);
+}
 
-    &__item {
-        padding: var(--space-3) 0;
-        min-width: 0;
+.notice-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-1);
 
-        & + & {
-            border-top: 1px solid var(--divider-subtle);
-        }
+    label {
+        font-size: var(--cp-text-sm);
+        font-weight: var(--cp-weight-medium);
+        color: var(--cp-text);
     }
+}
 
-    &__item-header {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: start;
-        gap: var(--space-4);
+.notice-form__content :deep(textarea) {
+    font-family: var(--cp-font-mono);
+    font-size: var(--cp-text-sm);
+}
+
+.notice-form__error {
+    font-size: var(--cp-text-sm);
+    color: var(--cp-danger);
+}
+
+.notice-form__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cp-space-3);
+}
+
+.notice-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--cp-space-3);
+}
+
+.notice-list__item {
+    padding: var(--cp-space-4) var(--cp-space-5);
+    border-bottom: 1px solid var(--cp-line);
+
+    &:last-child {
+        border-bottom: 0;
     }
+}
 
-    &__meta {
-        min-width: 0;
+.notice-list__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--cp-space-2) var(--cp-space-3);
+}
 
-        h3 {
-            margin: 0;
-            overflow-wrap: anywhere;
-        }
-    }
+.notice-list__title {
+    font-size: var(--cp-text-md);
+    font-weight: var(--cp-weight-strong);
+    color: var(--cp-text);
+}
 
-    &__pin,
-    &__time,
-    &__help {
-        color: var(--text-secondary);
-        font-size: var(--font-size-control);
-    }
+.notice-list__delete {
+    margin-left: auto;
+}
 
-    &__pin,
-    &__time {
-        font-size: var(--font-size-meta);
-    }
-
-    &__pin {
-        display: block;
-        margin-top: var(--space-1);
-    }
-
-    &__content {
-        margin: var(--space-3) 0;
-        font-size: var(--font-size-control);
-        line-height: 1.85;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-    }
-
-    &__help {
-        margin: var(--space-2) 0 0;
-    }
-
-    &__error {
-        color: var(--el-color-danger);
-        overflow-wrap: anywhere;
-        margin-bottom: var(--space-3);
-    }
-
-    @media (max-width: 767px) {
-        &__list {
-            display: grid;
-            gap: var(--space-3);
-        }
-
-        &__item {
-            padding: var(--space-4);
-            border: 1px solid var(--divider-subtle);
-            border-radius: var(--card-radius);
-        }
-    }
+.notice-list__body {
+    margin-top: var(--cp-space-2);
 }
 </style>

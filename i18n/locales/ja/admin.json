@@ -1,0 +1,120 @@
+{
+    "admin": {
+        "users": {
+            "description": "アカウント、ロール、メール確認状態。",
+            "searchPlaceholder": "ユーザー名またはメールアドレス",
+            "total": "{n} 件のアカウント",
+            "empty": "アカウントはまだありません。",
+            "noMatches": "検索に一致するアカウントはありません。",
+            "roles": {
+                "admin": "管理者",
+                "user": "メンバー"
+            },
+            "verified": "メール確認済み",
+            "unverified": "メール未確認",
+            "actions": "管理",
+            "makeAdmin": "管理者にする",
+            "removeAdmin": "管理者を解除",
+            "makeAdminConfirm": "{name} はすべてのアカウントとサイト設定を管理できるようになります。",
+            "removeAdminConfirm": "{name} は管理機能にアクセスできなくなります。",
+            "selfDemote": "あなたは管理者権限を失い、ログアウトします。",
+            "markVerified": "メールを確認済みにする",
+            "markUnverified": "メールを未確認にする",
+            "delete": "アカウントを削除",
+            "deleteConfirm": "{name} と、その連携アカウント、クライアント、トークンをすべて削除します。元に戻せません。",
+            "selfDelete": "あなた自身のアカウントを削除してログアウトします。元に戻せません。"
+        },
+        "config": {
+            "description": "サイト設定、メール送信、CAPTCHA、ログインプロバイダー。",
+            "callbackUrl": "コールバック URL",
+            "callbackHint": "プロバイダーにはこの URL をそのまま登録してください。",
+            "configured": "設定済み",
+            "notConfigured": "未設定",
+            "keepSecret": "空欄なら現在の値を維持します",
+            "willClear": "保存時に削除されます",
+            "clear": "削除",
+            "undoClear": "維持",
+            "unsaved": "保存されていない変更があります。",
+            "fixFields": "無効な値があります。強調表示された項目を確認してください。",
+            "providerText": "{name} でのログインと連携に使う OAuth 認証情報。",
+            "groups": {
+                "site": "サイト",
+                "siteText": "名前、登録、一覧表示の設定。",
+                "smtp": "メール送信",
+                "smtpText": "確認、パスワード再設定、ログインコードのメールに使う SMTP サーバー。",
+                "turnstile": "Cloudflare Turnstile",
+                "turnstileText": "登録とログイン時の CAPTCHA。"
+            },
+            "fields": {
+                "siteTitle": "サイト名",
+                "registration": "登録を許可",
+                "registrationHint": "オフにすると、どの方法でも新しいアカウントを作成できません。",
+                "recentUsers": "概要に表示する新メンバー数",
+                "recentUsersHint": "1〜20。",
+                "refreshCooldown": "ユーザー名更新の待ち時間",
+                "refreshCooldownHint": "連携アカウント名を再度更新できるまでの分数（1〜43200）。",
+                "smtpHost": "ホスト",
+                "smtpPort": "ポート",
+                "smtpUser": "ユーザー名",
+                "smtpPass": "パスワード",
+                "smtpFrom": "送信元アドレス",
+                "smtpFromHint": "例：CP OAuth <no-reply{'@'}example.com>",
+                "turnstileEnabled": "Turnstile を必須にする",
+                "turnstileHint": "有効にする前に両方のキーを設定してください。",
+                "siteKey": "サイトキー",
+                "secretKey": "シークレットキー",
+                "clientId": "クライアント ID",
+                "clientSecret": "クライアントシークレット"
+            }
+        },
+        "notices": {
+            "description": "概要ページに表示するお知らせ。",
+            "createTitle": "新しいお知らせ",
+            "createText": "概要には最新 3 件が表示され、固定したお知らせが先頭になります。",
+            "fields": {
+                "title": "タイトル",
+                "content": "内容（HTML）",
+                "pinned": "先頭に固定"
+            },
+            "allowedTags": "使用可能：p、br、strong、em、b、i、u、s、code、pre、blockquote、ul、ol、li、a、h1〜h6、span。それ以外は削除されます。",
+            "publish": "公開",
+            "published": "お知らせを公開しました。",
+            "listTitle": "公開済みのお知らせ",
+            "listText": "サニタイズ後の保存内容を表示しています。",
+            "empty": "お知らせはまだありません。",
+            "pinned": "固定",
+            "deleteTitle": "お知らせを削除",
+            "deleteConfirm": "「{title}」をサイトから削除します。"
+        },
+        "showcase": {
+            "description": "公開ショーケースページに掲載する項目。",
+            "viewPublic": "ショーケースを見る",
+            "createTitle": "新しい項目",
+            "fields": {
+                "category": "カテゴリ",
+                "sortOrder": "並び順",
+                "name": "名前",
+                "url": "URL",
+                "iconUrl": "アイコン URL",
+                "description": "説明"
+            },
+            "categories": {
+                "site": "サイト",
+                "project": "プロジェクト"
+            },
+            "groups": {
+                "site": "サイト",
+                "project": "プロジェクト"
+            },
+            "sortHint": "小さい数ほど前に表示されます。",
+            "iconHint": "任意。HTTP または HTTPS の正方形の画像。",
+            "add": "項目を追加",
+            "added": "項目を追加しました。",
+            "empty": "このカテゴリの項目はありません。",
+            "order": "#{n}",
+            "invalidUrls": "保存された URL が無効です：{fields}",
+            "deleteTitle": "項目を削除",
+            "deleteConfirm": "{name} をショーケースから削除します。"
+        }
+    }
+}

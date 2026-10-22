@@ -1,105 +1,116 @@
 <template>
-    <section class="auth-card" aria-labelledby="forgot-password-title" :aria-busy="pending">
-        <h1 id="forgot-password-title" class="auth-card__title">
-            {{ $t('auth.password.forgot_title') }}
-        </h1>
-        <p class="auth-card__lead">{{ $t('auth.password.forgot_desc') }}</p>
-        <p v-if="errorMessage" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
-            {{ errorMessage }}
-        </p>
-        <p v-if="sent" class="auth-card__status" role="status">
-            {{ $t('auth.password.reset_sent') }}
-        </p>
-        <el-form
-            ref="formRef"
-            class="auth-card__form"
-            method="post"
-            :disabled="!hydrationReady"
-            :model="form"
-            :rules="rules"
-            label-position="top"
-            @submit.prevent="sendReset"
-        >
-            <el-form-item prop="email" :label="$t('auth.login.email')" for="forgot-email">
+    <CpAuthScreen
+        v-if="sent"
+        :title="t('auth.forgot.sentTitle')"
+        :description="t('auth.forgot.sentText', { email: email.trim() })"
+        :icon="MailCheck"
+        tone="success"
+    >
+        <div class="forgot__actions">
+            <el-button type="primary" @click="navigateTo(loginLink)">{{
+                t('auth.forgot.backToSignIn')
+            }}</el-button>
+            <el-button @click="sent = false">{{ t('auth.forgot.tryAnother') }}</el-button>
+        </div>
+    </CpAuthScreen>
+
+    <CpAuthScreen
+        v-else
+        :title="t('auth.forgot.title')"
+        :description="t('auth.forgot.description')"
+    >
+        <form class="forgot" method="post" novalidate @submit.prevent="submit">
+            <AuthField v-slot="{ id }" :label="t('auth.fields.email')">
                 <el-input
-                    id="forgot-email"
-                    v-model="form.email"
-                    :aria-label="$t('auth.login.email')"
-                    type="email"
+                    :id="id"
+                    v-model="email"
                     name="email"
+                    type="email"
                     autocomplete="email"
-                    :disabled="!hydrationReady || pending"
+                    inputmode="email"
+                    :disabled="!hydrated || busy"
                 />
-            </el-form-item>
-            <div class="task-actions">
-                <el-button
-                    type="primary"
-                    native-type="submit"
-                    :loading="pending"
-                    :disabled="!hydrationReady || pending"
-                >
-                    {{ $t(sent ? 'auth.password.send_again' : 'auth.password.send_reset') }}
-                </el-button>
-            </div>
-        </el-form>
-        <p class="auth-card__footer">
-            <NuxtLink :to="loginPath">{{ $t('auth.password.back_login') }}</NuxtLink>
-        </p>
-    </section>
+            </AuthField>
+            <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
+            <el-button
+                class="forgot__submit"
+                type="primary"
+                native-type="submit"
+                :loading="busy"
+                :disabled="!hydrated || !email.trim()"
+            >
+                {{ t('auth.forgot.submit') }}
+            </el-button>
+        </form>
+        <template #footer>
+            <p>
+                {{ t('auth.forgot.remembered') }}
+                <NuxtLink :to="loginLink">{{ t('common.actions.signIn') }}</NuxtLink>
+            </p>
+        </template>
+    </CpAuthScreen>
 </template>
 
 <script setup lang="ts">
-import type { FormInstance, FormRules } from 'element-plus';
-import { buildLoginPath, getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { MailCheck } from 'lucide-vue-next';
 
 definePageMeta({ layout: 'auth' });
 
 const { t } = useI18n();
-const route = useRoute();
 const api = useApi();
-const { data: publicConfig } = await usePublicConfig();
-const formRef = ref<FormInstance>();
-const form = reactive({ email: '' });
-const pending = ref(false);
+const route = useRoute();
+const { describe } = useApiError();
+const hydrated = useHydrated();
+
+useHead({ title: t('auth.forgot.title') });
+
+const redirect = computed(() =>
+    getSafeRedirectTarget(route.query.redirect as string | undefined, '/profile')
+);
+const loginLink = computed(() =>
+    redirect.value === '/profile' ? '/login' : buildLoginPath(redirect.value)
+);
+
+const email = ref('');
+const busy = ref(false);
+const error = ref('');
 const sent = ref(false);
-const errorMessage = ref('');
-const errorEl = ref<HTMLElement | null>(null);
-const hydrationReady = useHydrationReady();
-const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
-const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
-const loginPath = computed(() => buildLoginPath(redirectTarget.value));
-const rules = computed<FormRules>(() => ({
-    email: [
-        { required: true, message: t('auth.flow.email_invalid'), trigger: 'blur' },
-        { type: 'email', message: t('auth.flow.email_invalid'), trigger: 'blur' }
-    ]
-}));
 
-useHead({ title: () => `${t('auth.password.forgot_title')} - ${siteTitle.value}` });
-watch(errorMessage, async message => {
-    if (!message) return;
-    await nextTick();
-    errorEl.value?.focus();
-});
-
-async function sendReset() {
-    if (pending.value || !formRef.value) return;
-    pending.value = true;
-    errorMessage.value = '';
-    sent.value = false;
+async function submit() {
+    busy.value = true;
+    error.value = '';
     try {
-        const valid = await formRef.value.validate().catch(() => false);
-        if (!valid) return;
-        await api<{ success: true }>('/api/auth/password/forgot', {
+        await api('/api/auth/password/forgot', {
             method: 'POST',
-            body: { email: form.email.trim(), redirect: redirectTarget.value }
+            body: { email: email.value.trim(), redirect: redirect.value }
         });
         sent.value = true;
-    } catch (error) {
-        const err = error as { data?: { message?: string } };
-        errorMessage.value = err.data?.message || t('auth.password.reset_error');
+    } catch (cause) {
+        error.value = describe(cause);
     } finally {
-        pending.value = false;
+        busy.value = false;
     }
 }
 </script>
+
+<style scoped lang="scss">
+.forgot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cp-space-4);
+}
+
+.forgot__submit {
+    width: 100%;
+}
+
+.forgot__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cp-space-2);
+
+    .el-button + .el-button {
+        margin-left: 0;
+    }
+}
+</style>

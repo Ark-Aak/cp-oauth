@@ -1,0 +1,69 @@
+{
+    "account": {
+        "fields": {
+            "username": "用户名",
+            "displayName": "显示名称",
+            "avatarUrl": "头像地址",
+            "bio": "简介",
+            "email": "邮箱"
+        },
+        "basic": {
+            "description": "其他人和你授权的应用看到的资料。",
+            "identityTitle": "基本信息",
+            "identityText": "获得 profile 权限的应用可以读取这些字段。",
+            "avatarHint": "填写完整的 HTTP 或 HTTPS 图片地址。留空则显示首字母。",
+            "usernameRule": "3–24 个字符，只能使用小写字母、数字和下划线。",
+            "usernameTaken": "这个用户名已被使用。",
+            "homepageTitle": "个人主页",
+            "homepageText": "显示在公开主页上的 Markdown 内容。",
+            "homepagePlaceholder": "## 关于我\n\n使用 Markdown 编写。",
+            "homepageSize": "已用 {used} KiB，上限 {limit} KiB",
+            "homepageEmpty": "还没有可预览的内容。",
+            "edit": "编辑",
+            "preview": "预览",
+            "emailTitle": "邮箱地址",
+            "emailText": "用于登录、重置密码和接收验证码。",
+            "verified": "已验证",
+            "unverified": "未验证",
+            "pendingEmail": "待确认的地址",
+            "pendingUntil": "链接有效期至 {time}",
+            "accountId": "账号 ID",
+            "resendVerification": "重新发送验证邮件",
+            "resendPending": "重新发送确认链接",
+            "changeEmail": "修改邮箱",
+            "newEmail": "新邮箱地址",
+            "newEmailHint": "我们会发送确认链接。打开链接前，当前邮箱仍然有效。",
+            "sendConfirmation": "发送确认链接",
+            "emailSent": "确认链接已发送到 {email}。",
+            "emailNotSent": "邮件发送失败，请稍后重试。",
+            "alreadyVerified": "你的邮箱已经验证。"
+        },
+        "privacy": {
+            "description": "选择公开主页和资料卡片显示的内容。",
+            "visibilityTitle": "可见范围",
+            "visibilityText": "任何人都能打开你的公开主页，只会显示你选中的内容。",
+            "platformsLegend": "公开显示的关联账号",
+            "noBindings": "你还没有关联任何账号。",
+            "cpStats": "比赛统计",
+            "cpStatsText": "公开关联账号在 Clist.by 上的 Rating 与参赛次数。",
+            "ratingHistory": "Rating 记录",
+            "ratingHistoryText": "公开关联账号在 Clist.by 上最近的 Rating 变化。",
+            "cardTitle": "资料卡片",
+            "cardText": "展示公开关联账号的 SVG 卡片，可嵌入 README 或网站。",
+            "cardWidth": "宽度：{width} px",
+            "cardAlt": "{username} 的资料卡片",
+            "markdownSnippet": "Markdown",
+            "htmlSnippet": "HTML"
+        },
+        "apps": {
+            "description": "你允许使用 CP OAuth 账号的应用。",
+            "empty": "还没有应用。你同意某个应用的授权请求后，它会出现在这里。",
+            "lastAuthorized": "最近授权",
+            "activeTokens": "有效令牌",
+            "revoke": "撤销授权",
+            "revokeTitle": "撤销授权",
+            "revokeConfirm": "{name} 将立即失去对你账号的访问权限。之后它可以再次申请授权。",
+            "revoked": "已撤销 {name} 的授权：移除 {tokens} 个令牌和 {codes} 个待使用的授权码。"
+        }
+    }
+}

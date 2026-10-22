@@ -1,0 +1,36 @@
+{
+    "oauth": {
+        "authorize": {
+            "pageTitle": "授权应用",
+            "title": "允许 {app} 使用你的账号？",
+            "description": "继续之前，请确认应用将获得的信息。",
+            "app": "应用",
+            "returnsTo": "返回地址",
+            "account": "当前账号",
+            "switch": "使用其他账号",
+            "permissions": "应用将可以读取",
+            "pkce": "此请求受 PKCE（{method}）保护。",
+            "noPkce": "此请求未使用 PKCE。",
+            "verifyTitle": "需要已验证的邮箱",
+            "verifyText": "{app} 只接受邮箱已验证的账号。",
+            "verifyAction": "验证邮箱",
+            "deny": "拒绝",
+            "approve": "允许",
+            "revokeHint": "你可以随时在「已授权应用」中撤销访问权限。",
+            "errorTitle": "无法完成此授权请求",
+            "errorHint": "请返回应用重新登录。如果仍然失败，请联系应用开发者。",
+            "invalid": "请求无效，或应用已不再注册。"
+        },
+        "callback": {
+            "pageTitle": "正在通过 {provider} 登录",
+            "workingTitle": "正在通过 {provider} 登录",
+            "workingText": "正在完成登录，请稍候。",
+            "failedTitle": "通过 {provider} 登录未完成",
+            "denied": "你在 {provider} 拒绝了此请求。",
+            "providerError": "服务商返回了 {code}。",
+            "incomplete": "服务商返回的信息不完整，请重新开始。",
+            "mfaCancelled": "已取消两步验证，请重新登录。",
+            "return": "返回"
+        }
+    }
+}

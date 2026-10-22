@@ -1,97 +1,78 @@
 <template>
-    <section class="auth-card" aria-labelledby="email-verification-title">
-        <h1 id="email-verification-title" class="auth-card__title">{{ $t(titleKey) }}</h1>
-        <p class="auth-card__lead" :role="outcome === 'success' ? 'status' : 'alert'">
-            {{ $t(descriptionKey) }}
-        </p>
-        <p v-if="identityError" ref="errorEl" class="auth-card__error" role="alert" tabindex="-1">
-            {{ identityError }}
-        </p>
-        <div class="task-actions">
-            <NuxtLink
-                v-if="outcome === 'success'"
-                :to="loginPath"
-                class="el-button el-button--primary"
-            >
-                {{ $t('auth.verify_result.go_login') }}
-            </NuxtLink>
-            <NuxtLink v-else :to="verificationPath" class="el-button el-button--primary">
-                {{ $t('auth.flow.verification_request_again') }}
-            </NuxtLink>
-        </div>
-        <p class="auth-card__footer">
-            <NuxtLink v-if="outcome !== 'success'" :to="loginPath">
-                {{ $t('auth.verify_result.go_login') }}
-            </NuxtLink>
-            <NuxtLink :to="redirectTarget">{{ $t('auth.flow.return_task') }}</NuxtLink>
-        </p>
-    </section>
+    <CpAuthScreen
+        :title="content.title"
+        :description="content.text"
+        :icon="content.icon"
+        :tone="content.tone"
+    >
+        <el-button type="primary" @click="navigateTo(content.target)">{{
+            content.action
+        }}</el-button>
+    </CpAuthScreen>
 </template>
 
 <script setup lang="ts">
-import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { CircleAlert, CircleCheck, Clock, Mail } from 'lucide-vue-next';
 
 definePageMeta({ layout: 'auth' });
 
+type Status = 'success' | 'error' | 'expired' | 'conflict';
+
 const { t } = useI18n();
 const route = useRoute();
-const { load, clearPending } = useAuth();
-const { data: publicConfig } = await usePublicConfig();
-const siteTitle = computed(() => publicConfig.value?.siteTitle || t('app.name'));
-const redirectTarget = computed(() => getSafeRedirectTarget(route.query.redirect));
-const outcome = computed(() => {
-    const value = Array.isArray(route.query.status) ? route.query.status[0] : route.query.status;
+const { user } = useSession();
+
+const status = computed<Status>(() => {
+    const value = route.query.status;
     return value === 'success' || value === 'expired' || value === 'conflict' ? value : 'error';
 });
-const titleKey = computed(
-    () =>
-        ({
-            success: 'auth.verify_result.success_title',
-            error: 'auth.verify_result.error_title',
-            expired: 'auth.flow.verification_expired_title',
-            conflict: 'auth.flow.verification_conflict_title'
-        })[outcome.value]
+const redirect = computed(() =>
+    getSafeRedirectTarget(route.query.redirect as string | undefined, '/profile')
 );
-const descriptionKey = computed(
-    () =>
-        ({
-            success: 'auth.flow.verification_success',
-            error: 'auth.verify_result.error_desc',
-            expired: 'auth.flow.verification_expired',
-            conflict: 'auth.flow.verification_conflict'
-        })[outcome.value]
-);
-const loginPath = computed(() => ({
-    path: '/login',
-    query: {
-        redirect: redirectTarget.value,
-        ...(outcome.value === 'success' ? { verified: 'true' } : {})
-    }
-}));
-const verificationPath = computed(() => ({
-    path: '/profile',
-    query: { tab: 'basic', redirect: redirectTarget.value }
-}));
-const identityError = ref('');
-const errorEl = ref<HTMLElement | null>(null);
 
-if (import.meta.server && outcome.value === 'conflict') {
-    const event = useRequestEvent();
-    if (event) event.node.res.statusCode = 409;
-}
-useHead({ title: () => `${t(titleKey.value)} - ${siteTitle.value}` });
-watch(identityError, async message => {
-    if (!message) return;
-    await nextTick();
-    errorEl.value?.focus();
-});
-onMounted(async () => {
-    if (outcome.value !== 'success') return;
-    clearPending();
-    try {
-        await load(true);
-    } catch {
-        identityError.value = t('identity.identity_unavailable');
+const content = computed(() => {
+    const signIn = redirect.value === '/profile' ? '/login' : buildLoginPath(redirect.value);
+    const retry = user.value ? '/profile?tab=basic' : buildLoginPath('/profile?tab=basic');
+    const retryAction = user.value ? t('auth.verified.openProfile') : t('common.actions.signIn');
+    switch (status.value) {
+        case 'success':
+            return {
+                title: t('auth.verified.successTitle'),
+                text: t('auth.verified.successText'),
+                icon: CircleCheck,
+                tone: 'success' as const,
+                target: signIn,
+                action: t('common.actions.signIn')
+            };
+        case 'expired':
+            return {
+                title: t('auth.verified.expiredTitle'),
+                text: t('auth.verified.expiredText'),
+                icon: Clock,
+                tone: 'warning' as const,
+                target: retry,
+                action: retryAction
+            };
+        case 'conflict':
+            return {
+                title: t('auth.verified.conflictTitle'),
+                text: t('auth.verified.conflictText'),
+                icon: Mail,
+                tone: 'warning' as const,
+                target: retry,
+                action: retryAction
+            };
+        default:
+            return {
+                title: t('auth.verified.errorTitle'),
+                text: t('auth.verified.errorText'),
+                icon: CircleAlert,
+                tone: 'danger' as const,
+                target: retry,
+                action: retryAction
+            };
     }
 });
+
+useHead(() => ({ title: content.value.title }));
 </script>

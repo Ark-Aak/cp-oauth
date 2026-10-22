@@ -1,0 +1,55 @@
+{
+    "developer": {
+        "description": "Register apps that sign users in with CP OAuth.",
+        "newClient": "New client",
+        "clientsTitle": "Your clients",
+        "empty": "No clients yet. Create one to get a client ID and secret for your app.",
+        "moreUris": "and {n} more",
+        "verifiedOnly": "Verified email required",
+        "anyEmail": "Any email",
+        "created": "Created {date}",
+        "deleteTitle": "Delete client",
+        "deleteConfirm": "{name} will be deleted. All of its tokens and pending authorizations stop working immediately.",
+        "form": {
+            "createTitle": "New OAuth client",
+            "editTitle": "Edit OAuth client",
+            "name": "Name",
+            "redirectUris": "Redirect URIs",
+            "redirectRule": "Exact match. HTTPS, or HTTP only for localhost, 127.0.0.1 and [::1]. No fragment.",
+            "redirectUriN": "Redirect URI {n}",
+            "removeUri": "Remove redirect URI {n}",
+            "addUri": "Add redirect URI",
+            "uriInvalid": "Use an HTTPS URL, or HTTP on a loopback address, without a fragment.",
+            "requireVerified": "Require a verified email",
+            "requireVerifiedText": "Users with an unverified email can't approve this client.",
+            "create": "Create client"
+        },
+        "secret": {
+            "title": "Store the client secret",
+            "warning": "The client secret is shown only once. Copy it to a secure place before closing this dialog.",
+            "clientId": "Client ID",
+            "clientSecret": "Client secret",
+            "stored": "I have stored the secret"
+        },
+        "reference": {
+            "title": "Integration reference",
+            "text": "Values from the discovery document.",
+            "authorization": "Authorization endpoint",
+            "token": "Token endpoint",
+            "userinfo": "Userinfo endpoint",
+            "revocation": "Revocation endpoint",
+            "pkce": "PKCE methods",
+            "clientAuth": "Client authentication",
+            "lifetimes": "Lifetimes",
+            "lifetimesValue": "Authorization code 10 minutes · access token 1 hour · refresh token 30 days, replaced on every use",
+            "scopes": "Scopes"
+        },
+        "example": {
+            "title": "Example requests",
+            "text": "For {name}, using its first redirect URI. Select another client in the list to switch.",
+            "authorize": "Send the user to",
+            "exchange": "Exchange the returned code",
+            "placeholders": "Replace STATE with a random value you verify on return, and CODE_CHALLENGE with the S256 hash of your code verifier. Confidential clients send client_secret instead of code_verifier."
+        }
+    }
+}

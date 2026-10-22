@@ -1,0 +1,36 @@
+{
+    "oauth": {
+        "authorize": {
+            "pageTitle": "アプリの認可",
+            "title": "{app} にアカウントの利用を許可しますか？",
+            "description": "続ける前に、アプリが受け取る情報を確認してください。",
+            "app": "アプリ",
+            "returnsTo": "戻り先",
+            "account": "ログイン中のアカウント",
+            "switch": "別のアカウントを使う",
+            "permissions": "アプリが読み取れる情報",
+            "pkce": "このリクエストは PKCE（{method}）で保護されています。",
+            "noPkce": "このリクエストは PKCE を使用していません。",
+            "verifyTitle": "確認済みのメールアドレスが必要です",
+            "verifyText": "{app} はメールアドレスを確認済みのアカウントのみ受け付けます。",
+            "verifyAction": "メールアドレスを確認",
+            "deny": "拒否",
+            "approve": "許可",
+            "revokeHint": "許可したアプリの一覧から、いつでもアクセスを取り消せます。",
+            "errorTitle": "この認可リクエストは完了できません",
+            "errorHint": "アプリに戻ってもう一度ログインしてください。解決しない場合はアプリの開発者にお問い合わせください。",
+            "invalid": "リクエストが無効か、アプリが登録されていません。"
+        },
+        "callback": {
+            "pageTitle": "{provider} でログイン中",
+            "workingTitle": "{provider} でログイン中",
+            "workingText": "ログインを完了しています。しばらくお待ちください。",
+            "failedTitle": "{provider} でのログインが完了しませんでした",
+            "denied": "{provider} でリクエストを拒否しました。",
+            "providerError": "プロバイダーから {code} が返されました。",
+            "incomplete": "プロバイダーからの応答が不完全です。もう一度やり直してください。",
+            "mfaCancelled": "2 段階認証がキャンセルされました。もう一度ログインしてください。",
+            "return": "戻る"
+        }
+    }
+}

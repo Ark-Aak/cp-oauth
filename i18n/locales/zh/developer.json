@@ -1,0 +1,55 @@
+{
+    "developer": {
+        "description": "注册使用 CP OAuth 登录用户的应用。",
+        "newClient": "新建应用",
+        "clientsTitle": "你的应用",
+        "empty": "还没有应用。新建一个即可获得应用所需的客户端 ID 和密钥。",
+        "moreUris": "等另外 {n} 个",
+        "verifiedOnly": "要求已验证邮箱",
+        "anyEmail": "不限邮箱",
+        "created": "{date} 创建",
+        "deleteTitle": "删除应用",
+        "deleteConfirm": "将删除 {name}，它的所有令牌和待完成的授权会立即失效。",
+        "form": {
+            "createTitle": "新建 OAuth 应用",
+            "editTitle": "编辑 OAuth 应用",
+            "name": "名称",
+            "redirectUris": "回调地址",
+            "redirectRule": "需完全匹配。使用 HTTPS；仅 localhost、127.0.0.1 和 [::1] 可使用 HTTP。不能包含片段（#）。",
+            "redirectUriN": "回调地址 {n}",
+            "removeUri": "删除回调地址 {n}",
+            "addUri": "添加回调地址",
+            "uriInvalid": "请使用 HTTPS 地址，或回环地址上的 HTTP 地址，且不能包含片段。",
+            "requireVerified": "要求已验证邮箱",
+            "requireVerifiedText": "邮箱未验证的用户无法授权此应用。",
+            "create": "创建应用"
+        },
+        "secret": {
+            "title": "保存客户端密钥",
+            "warning": "客户端密钥只显示这一次。关闭前请复制并妥善保存。",
+            "clientId": "客户端 ID",
+            "clientSecret": "客户端密钥",
+            "stored": "我已保存密钥"
+        },
+        "reference": {
+            "title": "接入参考",
+            "text": "以下数值来自发现文档。",
+            "authorization": "授权端点",
+            "token": "令牌端点",
+            "userinfo": "用户信息端点",
+            "revocation": "撤销端点",
+            "pkce": "PKCE 方法",
+            "clientAuth": "客户端认证方式",
+            "lifetimes": "有效期",
+            "lifetimesValue": "授权码 10 分钟 · 访问令牌 1 小时 · 刷新令牌 30 天，每次使用后替换",
+            "scopes": "权限范围"
+        },
+        "example": {
+            "title": "请求示例",
+            "text": "针对 {name}，使用它的第一个回调地址。在列表中选择其他应用可切换。",
+            "authorize": "将用户引导至",
+            "exchange": "用返回的 code 换取令牌",
+            "placeholders": "将 STATE 替换为返回时需要校验的随机值，将 CODE_CHALLENGE 替换为 code verifier 的 S256 哈希。机密客户端用 client_secret 代替 code_verifier。"
+        }
+    }
+}
