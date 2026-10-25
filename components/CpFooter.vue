@@ -11,7 +11,7 @@
             <a href="/.well-known/openid-configuration" target="_blank" rel="noopener">
                 {{ t('common.footer.discovery') }}
             </a>
-            <a href="https://github.com/Mr-Python-in-China/cp-oauth" target="_blank" rel="noopener">
+            <a href="https://github.com/Ark-Aak/cp-oauth" target="_blank" rel="noopener">
                 {{ t('common.footer.source') }}
             </a>
         </nav>
