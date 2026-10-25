@@ -71,14 +71,14 @@
     --cp-info: var(--el-color-info);
     --cp-info-soft: var(--el-color-info-light-9);
 
-    --cp-rail-bg: #10233f;
-    --cp-rail-fg: rgba(255, 255, 255, 0.76);
-    --cp-rail-fg-strong: #ffffff;
-    --cp-rail-muted: rgba(255, 255, 255, 0.58);
-    --cp-rail-hover: rgba(255, 255, 255, 0.06);
-    --cp-rail-active: rgba(127, 164, 206, 0.2);
-    --cp-rail-accent: #9fc0e4;
-    --cp-rail-line: rgba(255, 255, 255, 0.1);
+    --cp-rail-bg: var(--el-bg-color);
+    --cp-rail-fg: var(--el-text-color-regular);
+    --cp-rail-fg-strong: var(--el-text-color-primary);
+    --cp-rail-muted: var(--el-text-color-secondary);
+    --cp-rail-hover: var(--el-fill-color-light);
+    --cp-rail-active: var(--el-color-primary-light-9);
+    --cp-rail-accent: var(--el-color-primary);
+    --cp-rail-line: var(--el-border-color-light);
 
     --cp-duration: 120ms;
     --cp-duration-slide: 200ms;
@@ -86,12 +86,5 @@
 }
 
 html.dark {
-    --cp-rail-bg: var(--el-bg-color);
-    --cp-rail-fg: var(--el-text-color-regular);
-    --cp-rail-fg-strong: var(--el-text-color-primary);
-    --cp-rail-muted: var(--el-text-color-secondary);
     --cp-rail-hover: rgba(255, 255, 255, 0.04);
-    --cp-rail-active: var(--el-color-primary-light-9);
-    --cp-rail-accent: var(--el-color-primary);
-    --cp-rail-line: var(--el-border-color-light);
 }

@@ -46,7 +46,7 @@
                     <CpAvatar
                         :src="user.avatarUrl"
                         :name="user.displayName || user.username"
-                        :size="32"
+                        :size="28"
                     />
                     <span class="cp-rail__who">
                         <span class="cp-rail__name">{{ user.displayName || user.username }}</span>
@@ -240,7 +240,7 @@ async function onSignOut() {
     display: flex;
     align-items: center;
     gap: var(--cp-space-3);
-    height: 64px;
+    height: 56px;
     padding: 0 var(--cp-space-5);
     color: var(--cp-rail-fg-strong);
     border-bottom: 1px solid var(--cp-rail-line);
@@ -277,16 +277,22 @@ async function onSignOut() {
 .cp-rail__nav {
     flex: 1;
     min-height: 0;
-    padding: var(--cp-space-4) var(--cp-space-3);
+    padding: var(--cp-space-3);
     overflow-y: auto;
+    /* Short windows still scroll (wheel, keyboard focus) without a visible bar. */
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .cp-rail__group + .cp-rail__group {
-    margin-top: var(--cp-space-5);
+    margin-top: var(--cp-space-3);
 }
 
 .cp-rail__group-label {
-    padding: 0 var(--cp-space-3) var(--cp-space-2);
+    padding: var(--cp-space-1) var(--cp-space-3);
     font-family: var(--cp-font-mono);
     font-size: var(--cp-text-xs);
     line-height: var(--cp-leading-xs);
@@ -301,7 +307,7 @@ async function onSignOut() {
     display: flex;
     align-items: center;
     gap: var(--cp-space-3);
-    height: 34px;
+    height: 32px;
     padding: 0 var(--cp-space-3);
     font-size: var(--cp-text-md);
     color: var(--cp-rail-fg);
@@ -344,8 +350,8 @@ async function onSignOut() {
 .cp-rail__foot {
     display: flex;
     flex-direction: column;
-    gap: var(--cp-space-3);
-    padding: var(--cp-space-4) var(--cp-space-4) var(--cp-space-5);
+    gap: var(--cp-space-2);
+    padding: var(--cp-space-3) var(--cp-space-4);
     border-top: 1px solid var(--cp-rail-line);
 }
 

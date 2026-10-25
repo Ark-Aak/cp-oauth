@@ -20,18 +20,10 @@
         <div class="consent">
             <dl class="consent__facts">
                 <CpField :label="t('oauth.authorize.app')">
-                    <span class="consent__app">
-                        <span class="consent__app-name">{{ request.client.name }}</span>
-                        <span class="cp-mono cp-muted" :title="request.client.clientId">{{
-                            request.client.clientId
-                        }}</span>
-                    </span>
+                    <span class="consent__app-name">{{ request.client.name }}</span>
                 </CpField>
                 <CpField :label="t('oauth.authorize.returnsTo')">
-                    <span class="consent__target">
-                        <span class="consent__host cp-mono">{{ target.host }}</span>
-                        <span class="cp-mono cp-muted consent__uri">{{ request.redirectUri }}</span>
-                    </span>
+                    <span class="consent__host cp-mono">{{ target.host }}</span>
                 </CpField>
                 <CpField :label="t('oauth.authorize.account')">
                     <span class="consent__account">
@@ -226,14 +218,6 @@ async function switchAccount() {
     gap: var(--cp-space-5);
 }
 
-.consent__app,
-.consent__target {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
 .consent__app-name {
     font-weight: var(--cp-weight-medium);
 }
@@ -241,11 +225,6 @@ async function switchAccount() {
 .consent__host {
     font-weight: var(--cp-weight-medium);
     color: var(--cp-text);
-}
-
-.consent__uri {
-    font-size: var(--cp-text-sm);
-    overflow-wrap: anywhere;
 }
 
 .consent__account {
