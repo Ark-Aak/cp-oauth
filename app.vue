@@ -4,6 +4,7 @@
         <NuxtLayout>
             <NuxtPage />
         </NuxtLayout>
+        <CpLinkedAvatarDialog />
     </div>
 </template>
 

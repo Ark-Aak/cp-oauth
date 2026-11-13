@@ -97,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+import { linkedAvatarSuggestion } from '~/utils/linked-avatar';
 import type { LinkedAccount } from '~/types/api';
 import {
     OAUTH_PROVIDERS,
@@ -114,6 +115,7 @@ const { describe } = useApiError();
 const { date } = useFormat();
 const hydrated = useHydrated();
 const session = useSession();
+const linkedAvatar = useLinkedAvatar();
 const reauth = useReauth();
 const startProvider = useProviderStart();
 const { config } = usePublicConfig();
@@ -172,6 +174,8 @@ async function link(platform: Platform) {
 async function onLinked(account: LinkedAccount) {
     await Promise.all([refresh(), session.refresh()]);
     ElMessage.success(t('connections.linked', { platform: PLATFORMS[account.platform].name }));
+    const suggestion = linkedAvatarSuggestion(account.platform, account.platformUid);
+    if (suggestion) linkedAvatar.offer(suggestion);
 }
 
 async function unlink(platform: Platform) {

@@ -10,4 +10,8 @@ export type AuthResult =
     | { authenticated: true; redirect: string; verificationEmailSent?: boolean }
     | { requiresTwoFactor: true; method: TwoFactorMethod; challengeId: string; redirect: string }
     | { reauthToken: string; expiresIn: 300; purpose: ReauthPurpose; redirect: string }
-    | { bound: true; redirect: string };
+    | {
+          bound: true;
+          redirect: string;
+          avatarSuggestion?: import('../utils/linked-avatar').LinkedAvatarSuggestion;
+      };

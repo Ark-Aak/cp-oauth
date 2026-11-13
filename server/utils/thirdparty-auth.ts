@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { AuthResult, ReauthPurpose } from '~/types/auth';
 import type { OAuthProvider, Platform } from '~/utils/platforms';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { linkedAvatarSuggestion } from '~/utils/linked-avatar';
 import { emailSchema, httpUrlSchema } from '~/utils/validation';
 import { getConfig, requireRegistrationEnabled } from './config';
 import { getPublicBaseUrl } from './base-url';
@@ -426,7 +427,16 @@ async function bindProviderIdentity(
             return { id: auth.userId, authVersion: auth.authVersion + 1 };
         });
         await finishSensitiveMutation(event, user.id, user.authVersion);
-        return { bound: true, redirect: state.redirect } as const;
+        const avatarSuggestion = linkedAvatarSuggestion(
+            provider,
+            identity.platformUid,
+            identity.avatarUrl
+        );
+        return {
+            bound: true,
+            redirect: state.redirect,
+            ...(avatarSuggestion ? { avatarSuggestion } : {})
+        } as const;
     } catch (error) {
         rethrowIdentityMutationError(error);
     }
