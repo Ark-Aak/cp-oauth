@@ -520,6 +520,16 @@ The six secret keys (`smtp_pass`, `turnstile_secret_key`, and the four provider 
 
 The unit tests include configuration-input and encryption boundaries. Setting `CONFIG_TEST_DATABASE_URL` when running `npm run test:unit` additionally exercises actual HTTP configuration handlers and rollback against an isolated temporary schema; the URL is rejected unless its host is loopback and its database name ends in `_test`. Without that explicit variable, the database-backed configuration test is skipped.
 
+## CAPTCHA Providers
+
+The administrator configuration page supports Cloudflare Turnstile and self-hosted CAP. Each has an independent enable switch: use either one, both, or neither. Existing Turnstile settings and saved secrets are preserved. Leaving a secret input empty keeps its saved value; clearing it is explicit. CAP secrets use the same encrypted, write-only configuration contract.
+
+For CAP, enter the instance URL, site key and secret key. Choose jsDelivr CDN, unpkg CDN, or the self-hosted asset server. CDN widget assets are pinned to `cap-widget@0.1.63` and WASM to `@cap.js/wasm@0.0.8`; self-hosted mode uses the instance's `/assets/widget.js`, `/assets/cap_wasm_bg.wasm` and `/assets/hashwx.wasm`. Enable widget-file serving on the CAP server first. See the [CAP widget documentation](https://capjs.js.org/guide/widget.html#self-hosting-the-widget) and [server configuration](https://capjs.js.org/guide/capd/options.html#widget-files). The instance must allow browser requests from this application's origin.
+
+When both providers are enabled, **Preferred CAPTCHA provider** selects the provider used on a fresh challenge. With **Automatic failover** off, only that provider is used. With failover on, script/network/service failures switch to the other enabled provider and require a fresh proof. A rejected or expired proof never disables verification. Both services being unavailable blocks the operation. A page that switched providers retains its fallback until retry or navigation; a fresh page starts with the preferred provider again.
+
+This policy covers password login, registration, platform registration challenges, Luogu login challenges and third-party login/registration starts. The existing API field `turnstileToken` remains compatible: Turnstile tokens are unchanged and CAP proofs use `cap:<token>`. The server accepts only providers allowed by the current configuration, sends proofs only to their own verifier, and checks the existing hostname/action binding for Turnstile. CAP proofs are scoped to the configured CAP site key and verified once by that instance.
+
 ## Third-Party Login Providers
 
 GitHub, Google, Codeforces and Clist can create accounts on first sign-in when registration is enabled. Configure their credentials in the admin panel (`/admin/config`). Luogu sign-in is different: it only authenticates an existing CP OAuth account with an already-linked Luogu UID; it never automatically registers a user.

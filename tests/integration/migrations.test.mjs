@@ -49,6 +49,7 @@ const securityName = '20261001000100_refactor_security';
 const configKeys = [
     'smtp_pass',
     'turnstile_secret_key',
+    'cap_secret_key',
     'codeforces_client_secret',
     'github_client_secret',
     'google_client_secret',

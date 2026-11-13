@@ -18,7 +18,7 @@ import {
 } from './auth';
 import { completePrimaryAuthentication, requireFreshReauthentication } from './auth-completion';
 import { enforceRateLimit } from './rate-limit';
-import { verifyTurnstileToken } from './turnstile';
+import { verifyCaptchaToken } from './captcha';
 import {
     AUTH_RANDOM_ID_PATTERN,
     ensureAuthFlowHash,
@@ -217,7 +217,7 @@ export async function startThirdpartyAuthentication(event: H3Event, provider: OA
         expectedUid = existing?.platformUid;
     } else {
         await enforceRateLimit(event, query.mode === 'register' ? 'register' : 'challenge');
-        await verifyTurnstileToken({
+        await verifyCaptchaToken({
             token: query.turnstileToken,
             action: query.mode === 'register' ? 'register' : 'login'
         });

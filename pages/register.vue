@@ -62,7 +62,7 @@
                         :disabled="!hydrated || busy"
                     />
                 </AuthField>
-                <CpTurnstile ref="proofTurnstile" v-model="proofToken" action="register" />
+                <CpCaptcha ref="proofTurnstile" v-model="proofToken" action="register" />
                 <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
                 <div class="register-form__actions">
                     <el-button :disabled="busy" @click="leaveProof">{{
@@ -76,7 +76,7 @@
                             !hydrated ||
                             !proofUid.trim() ||
                             proofUidInvalid ||
-                            (config.turnstileEnabled && !proofToken)
+                            (config.captchaEnabled && !proofToken)
                         "
                     >
                         {{ t('auth.luogu.getCode') }}
@@ -144,14 +144,14 @@
                     :disabled="!hydrated || busy"
                 />
             </AuthField>
-            <CpTurnstile ref="registerTurnstile" v-model="registerToken" action="register" />
+            <CpCaptcha ref="registerTurnstile" v-model="registerToken" action="register" />
             <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
             <el-button
                 class="register-form__submit"
                 type="primary"
                 native-type="submit"
                 :loading="busy"
-                :disabled="!hydrated || !valid || (config.turnstileEnabled && !registerToken)"
+                :disabled="!hydrated || !valid || (config.captchaEnabled && !registerToken)"
             >
                 {{ t('common.actions.createAccount') }}
             </el-button>

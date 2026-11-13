@@ -173,7 +173,8 @@
             "CLIENT_CONFLICT": "同じ内容のクライアントが既に存在します。",
             "LAST_ADMIN": "管理者を少なくとも 1 人残す必要があります。",
             "ADMIN_UNAVAILABLE": "管理機能は一時的に利用できません。",
-            "ACCOUNT_NOT_FOUND": "アカウントが見つかりません。再度ログインしてください。"
+            "ACCOUNT_NOT_FOUND": "アカウントが見つかりません。再度ログインしてください。",
+            "CAPTCHA_UNAVAILABLE": "CAPTCHA サービスが利用できません。切替後の認証を完了して再試行してください。"
         },
         "platforms": {
             "luogu": "Luogu（洛谷）",
@@ -231,6 +232,9 @@
                 "title": "レーティング履歴",
                 "detail": "該当する連携アカウントの直近最大 200 件のレート変動。"
             }
+        },
+        "captcha": {
+            "switched": "{provider} に切り替えました。認証を完了してください。"
         }
     }
 }

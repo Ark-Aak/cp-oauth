@@ -11,7 +11,7 @@ import { createUserWithInitialRole } from '~/server/utils/role';
 import { emailSchema, usernameSchema, newPasswordSchema } from '~/utils/validation';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 import { parseBody } from '~/server/utils/validation';
-import { verifyTurnstileToken } from '~/server/utils/turnstile';
+import { verifyCaptchaToken } from '~/server/utils/captcha';
 import { enforceRateLimit } from '~/server/utils/rate-limit';
 import { completePrimaryAuthentication } from '~/server/utils/auth-completion';
 
@@ -29,7 +29,7 @@ export default defineEventHandler(async event => {
     const body = await parseBody(event, registerSchema);
     await enforceRateLimit(event, 'register');
     await requireRegistrationEnabled();
-    await verifyTurnstileToken({ token: body.turnstileToken, action: 'register' });
+    await verifyCaptchaToken({ token: body.turnstileToken, action: 'register' });
     const redirect = getSafeRedirectTarget(body.redirect);
     const baseUrl = getPublicBaseUrl();
     getDataEncryptionKey();

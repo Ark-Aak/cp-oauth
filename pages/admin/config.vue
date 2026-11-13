@@ -48,7 +48,9 @@
                                             values[field.key as PublicConfigKey] === 'true'
                                         "
                                         :aria-labelledby="`cfg-${field.key}`"
-                                        :disabled="saving"
+                                        :disabled="
+                                            saving || (field.requiresBoth && !bothCaptchasEnabled)
+                                        "
                                         @update:model-value="
                                             value =>
                                                 (values[field.key as PublicConfigKey] = value
@@ -112,6 +114,26 @@
                                     </el-button>
                                 </div>
                             </template>
+                            <template v-else-if="field.kind === 'select'">
+                                <label class="config-field__label" :for="`cfg-${field.key}`">{{
+                                    field.label
+                                }}</label>
+                                <el-select
+                                    :id="`cfg-${field.key}`"
+                                    v-model="values[field.key as PublicConfigKey]"
+                                    :disabled="
+                                        saving || (field.requiresBoth && !bothCaptchasEnabled)
+                                    "
+                                >
+                                    <el-option
+                                        v-for="option in field.options"
+                                        :key="option.value"
+                                        :label="option.label"
+                                        :value="option.value"
+                                    />
+                                </el-select>
+                                <p v-if="field.hint" class="cp-help">{{ field.hint }}</p>
+                            </template>
                             <template v-else>
                                 <label class="config-field__label" :for="`cfg-${field.key}`">{{
                                     field.label
@@ -160,13 +182,15 @@ import type {
     SecretConfigKey
 } from '~/types/config';
 
-type FieldKind = 'text' | 'number' | 'switch' | 'secret';
+type FieldKind = 'text' | 'number' | 'switch' | 'secret' | 'select';
 interface Field {
     key: PublicConfigKey | SecretConfigKey;
     label: string;
     kind: FieldKind;
     hint?: string;
     mono?: boolean;
+    options?: { value: string; label: string }[];
+    requiresBoth?: boolean;
 }
 
 definePageMeta({ middleware: 'admin' });
@@ -192,6 +216,9 @@ const clears = ref(new Set<SecretConfigKey>());
 const fieldErrors = ref<Record<string, string>>({});
 const saveError = ref('');
 const saving = ref(false);
+const bothCaptchasEnabled = computed(
+    () => values.turnstile_enabled === 'true' && values.cap_enabled === 'true'
+);
 
 function reset() {
     if (!config.value) return;
@@ -315,6 +342,70 @@ const groups = computed(() => [
                 key: 'turnstile_secret_key',
                 label: t('admin.config.fields.secretKey'),
                 kind: 'secret'
+            }
+        ] as Field[]
+    },
+    {
+        id: 'cap',
+        title: 'CAP',
+        description: t('admin.config.groups.capText'),
+        callback: '',
+        fields: [
+            {
+                key: 'cap_enabled',
+                label: t('admin.config.fields.capEnabled'),
+                kind: 'switch',
+                hint: t('admin.config.fields.capHint')
+            },
+            {
+                key: 'cap_instance_url',
+                label: t('admin.config.fields.capInstanceUrl'),
+                kind: 'text',
+                mono: true
+            },
+            {
+                key: 'cap_site_key',
+                label: t('admin.config.fields.siteKey'),
+                kind: 'text',
+                mono: true
+            },
+            { key: 'cap_secret_key', label: t('admin.config.fields.secretKey'), kind: 'secret' },
+            {
+                key: 'cap_asset_source',
+                label: t('admin.config.fields.capAssetSource'),
+                kind: 'select',
+                hint: t('admin.config.fields.capAssetHint'),
+                options: [
+                    { value: 'jsdelivr', label: 'jsDelivr CDN' },
+                    { value: 'unpkg', label: 'unpkg CDN' },
+                    { value: 'self-hosted', label: t('admin.config.fields.capSelfHosted') }
+                ]
+            }
+        ] as Field[]
+    },
+    {
+        id: 'captcha-policy',
+        title: t('admin.config.groups.captcha'),
+        description: t('admin.config.groups.captchaText'),
+        callback: '',
+        fields: [
+            {
+                key: 'captcha_preferred_provider',
+                label: t('admin.config.fields.captchaPreferred'),
+                kind: 'select',
+                requiresBoth: true,
+                hint: t('admin.config.fields.captchaPreferredHint'),
+                options: [
+                    { value: 'turnstile', label: 'Cloudflare Turnstile' },
+                    { value: 'cap', label: 'CAP' }
+                ]
+            },
+            {
+                key: 'captcha_auto_failover',
+                label: t('admin.config.fields.captchaFailover'),
+                kind: 'switch',
+                requiresBoth: true,
+                hint: t('admin.config.fields.captchaFailoverHint')
             }
         ] as Field[]
     },

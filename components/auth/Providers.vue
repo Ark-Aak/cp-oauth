@@ -23,7 +23,7 @@ import { OAUTH_PROVIDERS, PLATFORMS, type OAuthProvider } from '~/utils/platform
 const props = defineProps<{
     mode: 'login' | 'register';
     redirect: string;
-    /** Turnstile token for the same action as the surrounding form; required when enabled. */
+    /** CAPTCHA proof for the surrounding form (legacy API field name). */
     turnstileToken?: string;
     disabled?: boolean;
 }>();
@@ -46,7 +46,7 @@ const busy = ref<OAuthProvider | null>(null);
 const error = ref('');
 
 async function start(provider: OAuthProvider) {
-    if (config.value.turnstileEnabled && !props.turnstileToken) {
+    if (config.value.captchaEnabled && !props.turnstileToken) {
         error.value = t('common.turnstile.required');
         return;
     }

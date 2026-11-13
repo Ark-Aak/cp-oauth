@@ -43,7 +43,10 @@
                 "smtp": "邮件发送",
                 "smtpText": "用于发送验证、重置密码和登录验证码邮件的 SMTP 服务器。",
                 "turnstile": "Cloudflare Turnstile",
-                "turnstileText": "注册与登录时的人机验证。"
+                "turnstileText": "注册与登录时的人机验证。",
+                "capText": "自部署 CAP 人机验证，可单独启用或与 Turnstile 同时启用。",
+                "captcha": "验证码策略",
+                "captchaText": "各提供商可独立开关；首选项与自动切换仅在两者都启用时生效。"
             },
             "fields": {
                 "siteTitle": "站点名称",
@@ -64,7 +67,17 @@
                 "siteKey": "站点密钥（Site key）",
                 "secretKey": "私密密钥（Secret key）",
                 "clientId": "客户端 ID",
-                "clientSecret": "客户端密钥"
+                "clientSecret": "客户端密钥",
+                "capEnabled": "启用 CAP",
+                "capHint": "开启前须设置实例 URL、站点密钥和私密密钥。",
+                "capInstanceUrl": "实例 URL",
+                "capAssetSource": "静态资源来源",
+                "capSelfHosted": "自部署服务器",
+                "capAssetHint": "自部署模式从实例的 /assets/widget.js 加载，请先在 CAP 服务端启用静态资源服务。",
+                "captchaPreferred": "首选验证码提供商",
+                "captchaPreferredHint": "两者均启用时优先使用此提供商；仅开启一家时自动使用该家。",
+                "captchaFailover": "自动故障切换",
+                "captchaFailoverHint": "仅在两家均启用时生效。加载或服务故障时切换到另一家重新验证；验证不通过不会放行。"
             }
         },
         "notices": {

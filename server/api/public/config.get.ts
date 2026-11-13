@@ -9,6 +9,13 @@ export default defineEventHandler(async event => {
         'turnstile_enabled',
         'turnstile_site_key',
         'turnstile_secret_key',
+        'cap_enabled',
+        'cap_instance_url',
+        'cap_site_key',
+        'cap_secret_key',
+        'cap_asset_source',
+        'captcha_preferred_provider',
+        'captcha_auto_failover',
         'codeforces_client_id',
         'codeforces_client_secret',
         'github_client_id',
@@ -24,12 +31,24 @@ export default defineEventHandler(async event => {
         !!config.turnstile_site_key.trim() &&
         !!config.turnstile_secret_key.trim();
 
+    const capEnabled =
+        config.cap_enabled === 'true' &&
+        !!config.cap_instance_url.trim() &&
+        !!config.cap_site_key.trim() &&
+        !!config.cap_secret_key.trim();
     return {
         siteTitle: config.site_title,
         registrationEnabled: config.registration_enabled === 'true',
         recentUsersCount: Number(config.home_recent_users_count),
         turnstileEnabled,
         turnstileSiteKey: turnstileEnabled ? config.turnstile_site_key : '',
+        captchaEnabled: turnstileEnabled || capEnabled,
+        capEnabled,
+        capInstanceUrl: capEnabled ? config.cap_instance_url : '',
+        capSiteKey: capEnabled ? config.cap_site_key : '',
+        capAssetSource: config.cap_asset_source,
+        captchaPreferredProvider: config.captcha_preferred_provider,
+        captchaAutoFailover: config.captcha_auto_failover === 'true',
         codeforcesLoginEnabled:
             !!config.codeforces_client_id.trim() && !!config.codeforces_client_secret.trim(),
         githubLoginEnabled:
