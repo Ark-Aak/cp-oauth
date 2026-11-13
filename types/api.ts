@@ -27,6 +27,13 @@ export interface PublicConfigResponse {
     recentUsersCount: number;
     turnstileEnabled: boolean;
     turnstileSiteKey: string;
+    captchaEnabled: boolean;
+    capEnabled: boolean;
+    capInstanceUrl: string;
+    capSiteKey: string;
+    capAssetSource: import('../utils/captcha').CapAssetSource;
+    captchaPreferredProvider: import('../utils/captcha').CaptchaProvider;
+    captchaAutoFailover: boolean;
     githubLoginEnabled: boolean;
     googleLoginEnabled: boolean;
     codeforcesLoginEnabled: boolean;

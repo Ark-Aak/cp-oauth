@@ -14,11 +14,25 @@ type JsonFetch = <T>(url: string, options: FetchOptions<'json'>) => Promise<T>;
  */
 export function useApi() {
     const requestFetch = useRequestFetch() as unknown as JsonFetch;
-    return function api<T = unknown>(url: string, options: ApiOptions = {}): Promise<T> {
+    return async function api<T = unknown>(url: string, options: ApiOptions = {}): Promise<T> {
         const { reauthToken, headers, ...rest } = options;
         const merged = new Headers(headers);
         merged.set('X-CP-OAuth-CSRF', '1');
         if (reauthToken) merged.set('X-CP-OAuth-Reauth', reauthToken);
-        return requestFetch<T>(url, { ...rest, headers: merged, credentials: 'same-origin' });
+        try {
+            return await requestFetch<T>(url, {
+                ...rest,
+                headers: merged,
+                credentials: 'same-origin'
+            });
+        } catch (error) {
+            const info = readApiError(error);
+            if (import.meta.client && info.code === 'CAPTCHA_UNAVAILABLE') {
+                window.dispatchEvent(
+                    new CustomEvent('cp:captcha-unavailable', { detail: info.data })
+                );
+            }
+            throw error;
+        }
     };
 }

@@ -49,6 +49,7 @@ const securityName = '20261001000100_refactor_security';
 const configKeys = [
     'smtp_pass',
     'turnstile_secret_key',
+    'cap_secret_key',
     'codeforces_client_secret',
     'github_client_secret',
     'google_client_secret',
@@ -779,15 +780,19 @@ test(
                 await withSchema(async ({ db, cli, security, scopedUrl }) => {
                     const key = randomBytes(32);
                     const wrongKey = randomBytes(32);
+                    const totpUserCount = 102;
+                    const existingEnvelopeCount = 4; // SMTP, two TOTP seeds and the provider ID token.
+                    const totalSecretCount = totpUserCount + configKeys.length + 3;
                     await db.$executeRawUnsafe(
                         `
                 INSERT INTO users (id, username, email, password_hash, role, totp_secret, updated_at)
                 SELECT 'encrypt-user-' || lpad(i::text, 3, '0'), 'encrypt_user_' || i,
                     'encrypt-user-' || i || '@example.test', 'fixture-hash',
                     CASE WHEN i = 0 THEN 'admin' ELSE 'user' END, 'seed-fixture-' || i, $1
-                FROM generate_series(0, 101) AS i
+                FROM generate_series(0, $2::integer - 1) AS i
             `,
-                        new Date('2026-01-01T00:00:00Z')
+                        new Date('2026-01-01T00:00:00Z'),
+                        totpUserCount
                     );
                     await insertUser(db, { id: 'empty-secret-user', totp: '' });
                     await insertLink(db, 'encrypted-link', 'encrypt-user-000', 'clist', {
@@ -843,7 +848,10 @@ test(
                     const partialBefore = await snapshot(db);
                     const absentCanaryWrongKey = await cli('--encrypt', wrongKey);
                     assert.equal(absentCanaryWrongKey.status, 1);
-                    assert.equal(absentCanaryWrongKey.report.secrets.invalidEnvelopeCount, 4);
+                    assert.equal(
+                        absentCanaryWrongKey.report.secrets.invalidEnvelopeCount,
+                        existingEnvelopeCount
+                    );
                     assert.equal(absentCanaryWrongKey.report.secrets.canaryPresent, false);
                     assert.ok(
                         partialBefore === (await snapshot(db)),
@@ -851,9 +859,12 @@ test(
                     );
                     const encrypted = await cli('--encrypt', key);
                     assert.equal(encrypted.status, 0);
-                    assert.equal(encrypted.complete.encryptedCount, 107);
+                    assert.equal(
+                        encrypted.complete.encryptedCount,
+                        totalSecretCount - existingEnvelopeCount
+                    );
                     assert.equal(encrypted.complete.secrets.plaintextCount, 0);
-                    assert.equal(encrypted.complete.secrets.envelopeCount, 111);
+                    assert.equal(encrypted.complete.secrets.envelopeCount, totalSecretCount);
                     assert.equal(encrypted.complete.secrets.invalidEnvelopeCount, 0);
                     assert.equal(encrypted.complete.secrets.canaryVerified, true);
                     for (const configKey of configKeys) {

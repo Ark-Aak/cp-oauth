@@ -43,7 +43,10 @@
                 "smtp": "メール送信",
                 "smtpText": "確認、パスワード再設定、ログインコードのメールに使う SMTP サーバー。",
                 "turnstile": "Cloudflare Turnstile",
-                "turnstileText": "登録とログイン時の CAPTCHA。"
+                "turnstileText": "登録とログイン時の CAPTCHA。",
+                "capText": "セルフホストの CAP 認証。単独または Turnstile と同時に有効にできます。",
+                "captcha": "CAPTCHA 設定",
+                "captchaText": "各サービスを個別に有効化できます。優先設定と自動切替は両方が有効な場合に適用されます。"
             },
             "fields": {
                 "siteTitle": "サイト名",
@@ -64,7 +67,17 @@
                 "siteKey": "サイトキー",
                 "secretKey": "シークレットキー",
                 "clientId": "クライアント ID",
-                "clientSecret": "クライアントシークレット"
+                "clientSecret": "クライアントシークレット",
+                "capEnabled": "CAP を有効化",
+                "capHint": "有効にする前にインスタンス URL と両方のキーを設定してください。",
+                "capInstanceUrl": "インスタンス URL",
+                "capAssetSource": "静的リソースの配信元",
+                "capSelfHosted": "セルフホストサーバー",
+                "capAssetHint": "セルフホストではインスタンスの /assets/widget.js を読み込みます。CAP サーバーで静的リソース配信を有効にしてください。",
+                "captchaPreferred": "優先する CAPTCHA",
+                "captchaPreferredHint": "両方が有効な場合に優先します。一方のみ有効な場合はそのサービスを使用します。",
+                "captchaFailover": "障害時の自動切替",
+                "captchaFailoverHint": "両方が有効な場合のみ適用されます。読込やサービスの障害時は別のサービスで再認証します。認証失敗を回避する機能ではありません。"
             }
         },
         "notices": {

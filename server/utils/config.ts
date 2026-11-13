@@ -12,11 +12,21 @@ import prisma from './prisma';
 import { getDataEncryptionKey } from './data-encryption';
 import { decryptSecret, encryptSecret } from './secrets';
 import { parseInput } from './validation';
+import { normalizeCapUrl } from '~/utils/captcha';
 
 export type { ConfigKey, PublicConfigKey, SecretConfigKey } from '~/types/config';
 
 const stringSchema = z.string().max(2048);
 const booleanSchema = z.enum(['true', 'false']);
+const capUrlSchema = stringSchema.refine(value => {
+    if (!value) return true;
+    try {
+        normalizeCapUrl(value);
+        return true;
+    } catch {
+        return false;
+    }
+}, 'Use an HTTPS instance URL (HTTP is allowed for localhost only)');
 
 function integerSchema(min: number, max: number) {
     return z
@@ -48,6 +58,28 @@ export const CONFIG_REGISTRY = {
     turnstile_enabled: { default: 'false', schema: booleanSchema, secret: false },
     turnstile_site_key: { default: '', schema: stringSchema, secret: false },
     turnstile_secret_key: { default: '', schema: stringSchema, secret: true },
+    cap_enabled: { default: 'false', schema: booleanSchema, secret: false },
+    cap_instance_url: { default: '', schema: capUrlSchema, secret: false },
+    cap_site_key: {
+        default: '',
+        schema: z
+            .string()
+            .max(256)
+            .regex(/^[A-Za-z0-9_-]*$/),
+        secret: false
+    },
+    cap_secret_key: { default: '', schema: stringSchema, secret: true },
+    cap_asset_source: {
+        default: 'jsdelivr',
+        schema: z.enum(['jsdelivr', 'unpkg', 'self-hosted']),
+        secret: false
+    },
+    captcha_preferred_provider: {
+        default: 'turnstile',
+        schema: z.enum(['turnstile', 'cap']),
+        secret: false
+    },
+    captcha_auto_failover: { default: 'false', schema: booleanSchema, secret: false },
     codeforces_client_id: { default: '', schema: stringSchema, secret: false },
     codeforces_client_secret: { default: '', schema: stringSchema, secret: true },
     github_client_id: { default: '', schema: stringSchema, secret: false },
@@ -191,6 +223,25 @@ export async function updateConfig(
                     fields: {
                         'values.turnstile_enabled':
                             'Configure both Turnstile keys before enabling it'
+                    }
+                }
+            });
+        }
+
+        if (
+            values.cap_enabled === 'true' &&
+            (!values.cap_instance_url.trim() ||
+                !values.cap_site_key.trim() ||
+                !values.cap_secret_key.trim())
+        ) {
+            throw createError({
+                statusCode: 400,
+                message: 'CAP requires an instance URL, site key and secret key',
+                data: {
+                    code: 'VALIDATION_ERROR',
+                    fields: {
+                        'values.cap_enabled':
+                            'Configure the CAP instance URL and both keys before enabling it'
                     }
                 }
             });

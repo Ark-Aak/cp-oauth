@@ -10,6 +10,13 @@ export interface ConfigValues {
     turnstile_enabled: string;
     turnstile_site_key: string;
     turnstile_secret_key: string;
+    cap_enabled: string;
+    cap_instance_url: string;
+    cap_site_key: string;
+    cap_secret_key: string;
+    cap_asset_source: string;
+    captcha_preferred_provider: string;
+    captcha_auto_failover: string;
     codeforces_client_id: string;
     codeforces_client_secret: string;
     github_client_id: string;
@@ -25,6 +32,7 @@ export type ConfigKey = keyof ConfigValues;
 export type SecretConfigKey =
     | 'smtp_pass'
     | 'turnstile_secret_key'
+    | 'cap_secret_key'
     | 'codeforces_client_secret'
     | 'github_client_secret'
     | 'google_client_secret'

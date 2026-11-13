@@ -57,6 +57,13 @@ test('rejects unknown keys, wrong sections, and scalar type confusion', () => {
         { clearSecrets: ['__data_key_check'] },
         { values: { registration_enabled: false } },
         { values: { turnstile_enabled: 'TRUE' } },
+        { values: { cap_enabled: 'TRUE' } },
+        { values: { captcha_auto_failover: 'yes' } },
+        { values: { captcha_preferred_provider: 'unknown' } },
+        { values: { cap_asset_source: 'unknown' } },
+        { values: { cap_instance_url: 'http://external.example' } },
+        { values: { cap_site_key: '../siteverify' } },
+        { values: { cap_secret_key: 'must not be readable' } },
         { values: { smtp_host: [] } },
         { values: { site_title: {} } },
         { secrets: { smtp_pass: null } },
@@ -205,6 +212,67 @@ test('applies actual HTTP config mutations atomically and never exposes stored s
             assert.equal(rejected.response.status, 400);
             assert.equal((await getAdminConfig()).secrets.turnstile_secret_key.configured, true);
         });
+
+        await t.test(
+            'CAP configuration is atomic, encrypted, write-only, and preserves secrets on empty edits',
+            async () => {
+                const before = await prisma.systemConfig.findMany({ orderBy: { key: 'asc' } });
+                const invalid = await request('/api/admin/config', {
+                    values: { cap_enabled: 'true', site_title: 'must not commit' }
+                });
+                assert.equal(invalid.response.status, 400);
+                assert.deepEqual(
+                    await prisma.systemConfig.findMany({ orderBy: { key: 'asc' } }),
+                    before
+                );
+                const saved = await request('/api/admin/config', {
+                    values: {
+                        cap_enabled: 'true',
+                        cap_instance_url: 'https://cap.example.test',
+                        cap_site_key: 'test-site',
+                        cap_asset_source: 'unpkg',
+                        captcha_preferred_provider: 'cap',
+                        captcha_auto_failover: 'true'
+                    },
+                    secrets: { cap_secret_key: 'private-cap-secret' }
+                });
+                assert.equal(saved.response.status, 200);
+                assert.deepEqual(saved.body.secrets.cap_secret_key, { configured: true });
+                assert.equal(JSON.stringify(saved.body).includes('private-cap-secret'), false);
+                const stored = await prisma.systemConfig.findUnique({
+                    where: { key: 'cap_secret_key' }
+                });
+                assert.equal(
+                    decryptSecret(stored.value, 'SystemConfig:cap_secret_key', key),
+                    'private-cap-secret'
+                );
+                const publicConfig = (await request('/api/public/config')).body;
+                assert.equal(publicConfig.captchaEnabled, true);
+                assert.equal(publicConfig.capEnabled, true);
+                assert.equal(publicConfig.captchaPreferredProvider, 'cap');
+                assert.equal(publicConfig.captchaAutoFailover, true);
+                assert.equal(
+                    JSON.stringify(publicConfig).includes('private-cap-secret'),
+                    false
+                );
+                await request('/api/admin/config', { secrets: { cap_secret_key: '' } });
+                assert.equal(
+                    (await prisma.systemConfig.findUnique({ where: { key: 'cap_secret_key' } }))
+                        .value,
+                    stored.value
+                );
+                assert.equal(
+                    (await request('/api/admin/config', { clearSecrets: ['cap_secret_key'] }))
+                        .response.status,
+                    400
+                );
+                await request('/api/admin/config', {
+                    values: { cap_enabled: 'false' },
+                    clearSecrets: ['cap_secret_key']
+                });
+                assert.equal((await request('/api/public/config')).body.capEnabled, false);
+            }
+        );
 
         await t.test('registration gate reads current transactional configuration', async () => {
             await updateConfig('config-admin', { values: { registration_enabled: 'false' } });

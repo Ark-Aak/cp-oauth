@@ -26,7 +26,6 @@
                             v-for="client in clients"
                             :key="client.id"
                             class="developer__row"
-                            :class="{ 'is-selected': client.id === selected?.id }"
                         >
                             <div class="cp-rows__main">
                                 <button
@@ -323,9 +322,19 @@ async function remove(client: OAuthClient) {
 <style scoped lang="scss">
 .developer__row {
     align-items: flex-start;
+    box-shadow: inset 2px 0 0 transparent;
+    transition: box-shadow 120ms ease-in-out;
+}
 
-    &.is-selected {
+@media (hover: hover) {
+    .developer__row:hover {
         box-shadow: inset 2px 0 0 var(--cp-accent);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .developer__row {
+        transition: none;
     }
 }
 

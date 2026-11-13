@@ -42,7 +42,7 @@
                         :disabled="!hydrated || busy"
                     />
                 </AuthField>
-                <CpTurnstile ref="luoguTurnstile" v-model="luoguToken" action="luogu_challenge" />
+                <CpCaptcha ref="luoguTurnstile" v-model="luoguToken" action="luogu_challenge" />
                 <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
                 <div class="login-form__actions">
                     <el-button :disabled="busy" @click="leaveLuogu">{{
@@ -56,7 +56,7 @@
                             !hydrated ||
                             !luoguUid.trim() ||
                             luoguUidInvalid ||
-                            (config.turnstileEnabled && !luoguToken)
+                            (config.captchaEnabled && !luoguToken)
                         "
                     >
                         {{ t('auth.luogu.getCode') }}
@@ -93,7 +93,7 @@
                     />
                 </template>
             </AuthField>
-            <CpTurnstile ref="loginTurnstile" v-model="loginToken" action="login" />
+            <CpCaptcha ref="loginTurnstile" v-model="loginToken" action="login" />
             <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
             <el-button
                 class="login-form__submit"
@@ -104,7 +104,7 @@
                     !hydrated ||
                     !email.trim() ||
                     !password ||
-                    (config.turnstileEnabled && !loginToken)
+                    (config.captchaEnabled && !loginToken)
                 "
             >
                 {{ t('common.actions.signIn') }}

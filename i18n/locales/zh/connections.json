@@ -1,5 +1,15 @@
 {
     "connections": {
+        "avatar": {
+            "title": "更换头像",
+            "description": "账号绑定成功。是否将你的头像更换为 {platform} 头像？",
+            "before": "当前头像",
+            "after": "{platform} 头像",
+            "keep": "暂不更换",
+            "use": "使用新头像",
+            "saved": "头像已更新。",
+            "imageFailed": "新头像暂时无法加载，你可以暂不更换，账号绑定已完成。"
+        },
         "description": "你已证明归属的其他平台账号。",
         "footnote": "应用只能通过你同意的 link 与 cp 权限范围读取关联账号。公开展示哪些账号，请在此设置：",
         "uid": "UID {uid}",

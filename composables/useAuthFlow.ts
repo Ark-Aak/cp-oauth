@@ -17,6 +17,7 @@ export function useAuthFlow() {
     const session = useSession();
     const preferences = usePreferences();
     const { storeProof } = useReauth();
+    const linkedAvatar = useLinkedAvatar();
 
     async function complete(result: AuthResult, fallback = '/profile'): Promise<PendingMfa | null> {
         if ('requiresTwoFactor' in result) {
@@ -33,6 +34,8 @@ export function useAuthFlow() {
             return null;
         }
         await session.refresh();
+        if ('bound' in result && result.avatarSuggestion)
+            linkedAvatar.offer(result.avatarSuggestion);
         if ('authenticated' in result) await preferences.applyAccount();
         await navigateTo(target === '/' && 'authenticated' in result ? fallback : target, {
             replace: true

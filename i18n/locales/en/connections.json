@@ -1,5 +1,15 @@
 {
     "connections": {
+        "avatar": {
+            "title": "Change profile image",
+            "description": "Account linked. Would you like to use your {platform} profile image?",
+            "before": "Current image",
+            "after": "{platform} image",
+            "keep": "Keep current image",
+            "use": "Use new image",
+            "saved": "Profile image updated.",
+            "imageFailed": "The new image could not be loaded. You can keep your current image; your account is already linked."
+        },
         "description": "Accounts on other platforms that you have proven you own.",
         "footnote": "Apps can read linked accounts only with the link and cp scopes you approve. Choose which ones appear publicly in",
         "uid": "UID {uid}",

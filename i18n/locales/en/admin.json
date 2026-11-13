@@ -43,7 +43,10 @@
                 "smtp": "Email delivery",
                 "smtpText": "SMTP server for verification, reset and sign-in code emails.",
                 "turnstile": "Cloudflare Turnstile",
-                "turnstileText": "CAPTCHA for registration and sign-in."
+                "turnstileText": "CAPTCHA for registration and sign-in.",
+                "capText": "Self-hosted CAP verification. Enable it alone or alongside Turnstile.",
+                "captcha": "CAPTCHA policy",
+                "captchaText": "Enable each provider independently. Preference and failover apply when both are enabled."
             },
             "fields": {
                 "siteTitle": "Site title",
@@ -64,7 +67,17 @@
                 "siteKey": "Site key",
                 "secretKey": "Secret key",
                 "clientId": "Client ID",
-                "clientSecret": "Client secret"
+                "clientSecret": "Client secret",
+                "capEnabled": "Enable CAP",
+                "capHint": "Set the instance URL and both keys before enabling CAP.",
+                "capInstanceUrl": "Instance URL",
+                "capAssetSource": "Asset source",
+                "capSelfHosted": "Self-hosted server",
+                "capAssetHint": "Self-hosted mode loads /assets/widget.js from the instance. Enable asset serving on your CAP server first.",
+                "captchaPreferred": "Preferred CAPTCHA provider",
+                "captchaPreferredHint": "Used first when both providers are enabled. When only one is enabled, that provider is used.",
+                "captchaFailover": "Automatic failover",
+                "captchaFailoverHint": "Applies when both providers are enabled. Loading or service failures switch to a fresh challenge from the other provider. Rejected proofs never bypass verification."
             }
         },
         "notices": {

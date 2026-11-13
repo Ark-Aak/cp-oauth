@@ -173,7 +173,8 @@
             "CLIENT_CONFLICT": "已存在相同信息的客户端。",
             "LAST_ADMIN": "至少需要保留一名管理员。",
             "ADMIN_UNAVAILABLE": "管理功能暂时不可用。",
-            "ACCOUNT_NOT_FOUND": "找不到你的账号，请重新登录。"
+            "ACCOUNT_NOT_FOUND": "找不到你的账号，请重新登录。",
+            "CAPTCHA_UNAVAILABLE": "验证码服务暂不可用；如已自动切换，请完成新验证后重试。"
         },
         "platforms": {
             "luogu": "洛谷",
@@ -216,6 +217,9 @@
                 "title": "Rating 记录",
                 "detail": "对应关联账号最近至多 200 场计分比赛的结果。"
             }
+        },
+        "captcha": {
+            "switched": "已切换至 {provider}，请完成安全验证。"
         }
     }
 }

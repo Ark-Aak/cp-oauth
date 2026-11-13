@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { AuthResult, ReauthPurpose } from '~/types/auth';
 import type { OAuthProvider, Platform } from '~/utils/platforms';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
+import { linkedAvatarSuggestion } from '~/utils/linked-avatar';
 import { emailSchema, httpUrlSchema } from '~/utils/validation';
 import { getConfig, requireRegistrationEnabled } from './config';
 import { getPublicBaseUrl } from './base-url';
@@ -18,7 +19,7 @@ import {
 } from './auth';
 import { completePrimaryAuthentication, requireFreshReauthentication } from './auth-completion';
 import { enforceRateLimit } from './rate-limit';
-import { verifyTurnstileToken } from './turnstile';
+import { verifyCaptchaToken } from './captcha';
 import {
     AUTH_RANDOM_ID_PATTERN,
     ensureAuthFlowHash,
@@ -217,7 +218,7 @@ export async function startThirdpartyAuthentication(event: H3Event, provider: OA
         expectedUid = existing?.platformUid;
     } else {
         await enforceRateLimit(event, query.mode === 'register' ? 'register' : 'challenge');
-        await verifyTurnstileToken({
+        await verifyCaptchaToken({
             token: query.turnstileToken,
             action: query.mode === 'register' ? 'register' : 'login'
         });
@@ -426,7 +427,16 @@ async function bindProviderIdentity(
             return { id: auth.userId, authVersion: auth.authVersion + 1 };
         });
         await finishSensitiveMutation(event, user.id, user.authVersion);
-        return { bound: true, redirect: state.redirect } as const;
+        const avatarSuggestion = linkedAvatarSuggestion(
+            provider,
+            identity.platformUid,
+            identity.avatarUrl
+        );
+        return {
+            bound: true,
+            redirect: state.redirect,
+            ...(avatarSuggestion ? { avatarSuggestion } : {})
+        } as const;
     } catch (error) {
         rethrowIdentityMutationError(error);
     }

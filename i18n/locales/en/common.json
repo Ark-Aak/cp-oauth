@@ -173,7 +173,8 @@
             "CLIENT_CONFLICT": "A client with these details already exists.",
             "LAST_ADMIN": "At least one administrator must remain.",
             "ADMIN_UNAVAILABLE": "Administration is temporarily unavailable.",
-            "ACCOUNT_NOT_FOUND": "Your account was not found. Sign in again."
+            "ACCOUNT_NOT_FOUND": "Your account was not found. Sign in again.",
+            "CAPTCHA_UNAVAILABLE": "The CAPTCHA service is unavailable. If switched, complete the new verification and try again."
         },
         "platforms": {
             "luogu": "Luogu",
@@ -237,6 +238,9 @@
                 "title": "Rating history",
                 "detail": "Up to 200 recent rated contest results for matching linked accounts."
             }
+        },
+        "captcha": {
+            "switched": "Switched to {provider}. Please complete verification."
         }
     }
 }

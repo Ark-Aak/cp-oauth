@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import prisma from '~/server/utils/prisma';
 import { parseBody } from '~/server/utils/validation';
-import { verifyTurnstileToken } from '~/server/utils/turnstile';
+import { verifyCaptchaToken } from '~/server/utils/captcha';
 import { enforceRateLimit } from '~/server/utils/rate-limit';
 import {
     createPlatformChallenge,
@@ -20,7 +20,7 @@ export default defineEventHandler(async event => {
     const body = await parseBody(event, requestSchema);
     const platformUid = normalizePlatformUid('luogu', body.luoguUid);
     await enforceRateLimit(event, 'challenge', `luogu:${platformUid}`);
-    await verifyTurnstileToken({ token: body.turnstileToken, action: 'luogu_challenge' });
+    await verifyCaptchaToken({ token: body.turnstileToken, action: 'luogu_challenge' });
     // Luogu login only authenticates an existing binding. It never registers or auto-links a user.
     const linked = await prisma.linkedAccount.findUnique({
         where: { platform_platformUid: { platform: 'luogu', platformUid } },

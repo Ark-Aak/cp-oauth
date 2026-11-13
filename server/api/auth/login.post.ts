@@ -4,7 +4,7 @@ import prisma from '~/server/utils/prisma';
 import { emailSchema } from '~/utils/validation';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 import { parseBody } from '~/server/utils/validation';
-import { verifyTurnstileToken } from '~/server/utils/turnstile';
+import { verifyCaptchaToken } from '~/server/utils/captcha';
 import { enforceRateLimit } from '~/server/utils/rate-limit';
 import { completePrimaryAuthentication } from '~/server/utils/auth-completion';
 
@@ -20,7 +20,7 @@ const loginSchema = z
 export default defineEventHandler(async event => {
     const body = await parseBody(event, loginSchema);
     await enforceRateLimit(event, 'login', body.email);
-    await verifyTurnstileToken({ token: body.turnstileToken, action: 'login' });
+    await verifyCaptchaToken({ token: body.turnstileToken, action: 'login' });
     const user = await prisma.user.findUnique({
         where: { email: body.email },
         select: { id: true, passwordHash: true, authVersion: true }
