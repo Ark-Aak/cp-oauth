@@ -362,6 +362,9 @@ test(
                     });
                     await verifyDataKeyCanary(key);
                     await assert.rejects(verifyDataKeyCanary(randomBytes(32)));
+                    await updateConfig('config-admin', {
+                        secrets: { github_client_secret: 'encrypted-secret' }
+                    });
                     activeKey = randomBytes(32).toString('base64');
                     assert.equal((await request('/api/admin/config')).response.status, 503);
                     activeKey = key.toString('base64');
