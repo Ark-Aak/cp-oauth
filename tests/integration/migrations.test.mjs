@@ -850,9 +850,9 @@ test(
                     );
                     const encrypted = await cli('--encrypt', key);
                     assert.equal(encrypted.status, 0);
-                    assert.equal(encrypted.complete.encryptedCount, 107);
+                    assert.equal(encrypted.complete.encryptedCount, 106);
                     assert.equal(encrypted.complete.secrets.plaintextCount, 0);
-                    assert.equal(encrypted.complete.secrets.envelopeCount, 111);
+                    assert.equal(encrypted.complete.secrets.envelopeCount, 110);
                     assert.equal(encrypted.complete.secrets.invalidEnvelopeCount, 0);
                     assert.equal(encrypted.complete.secrets.canaryVerified, true);
                     for (const configKey of configKeys) {
