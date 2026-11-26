@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.account')"
-            :title="t('common.nav.security')"
-            :description="t('security.description')"
-        >
+        <CpPageHeader :kicker="t('common.nav.account')" :title="t('common.nav.security')">
             <template #actions>
                 <el-button :loading="signingOut" @click="signOut">{{
                     t('common.actions.signOut')
@@ -13,10 +9,7 @@
         </CpPageHeader>
 
         <div class="cp-stack">
-            <CpSheet
-                :title="t('security.password.title')"
-                :description="t('security.password.text')"
-            >
+            <CpSheet :title="t('security.password.title')">
                 <form
                     class="security-form"
                     method="post"
@@ -241,7 +234,7 @@
                                     :loading="removing === passkey.id"
                                     @click="removePasskey(passkey)"
                                 >
-                                    {{ t('common.actions.remove') }}
+                                    {{ t('common.actions.delete') }}
                                 </el-button>
                             </div>
                         </li>
@@ -274,7 +267,6 @@
                         :placeholder="t('security.passkeys.namePlaceholder')"
                         :disabled="addPasskey.busy"
                     />
-                    <p class="cp-help">{{ t('security.passkeys.nameHint') }}</p>
                 </div>
                 <CpNote v-if="addPasskey.error" tone="danger">{{ addPasskey.error }}</CpNote>
                 <div class="security-form__actions">
@@ -520,7 +512,7 @@ async function removePasskey(passkey: PasskeySummary) {
             t('security.passkeys.removeTitle'),
             {
                 type: 'warning',
-                confirmButtonText: t('common.actions.remove'),
+                confirmButtonText: t('common.actions.delete'),
                 cancelButtonText: t('common.actions.cancel'),
                 confirmButtonClass: 'el-button--danger'
             }

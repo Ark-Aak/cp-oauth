@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.account')"
-            :title="t('common.nav.bindings')"
-            :description="t('connections.description')"
-        />
+        <CpPageHeader :kicker="t('common.nav.account')" :title="t('common.nav.bindings')" />
 
         <CpSheet flush>
             <template #footer>

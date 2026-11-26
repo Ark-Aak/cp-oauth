@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.admin')"
-            :title="t('common.nav.adminConfig')"
-            :description="t('admin.config.description')"
-        />
+        <CpPageHeader :kicker="t('common.nav.admin')" :title="t('common.nav.adminConfig')" />
 
         <CpDataState
             :pending="pending"
@@ -136,7 +132,7 @@
                     <CpNote v-if="saveError" tone="danger">{{ saveError }}</CpNote>
                     <span v-else-if="dirty" class="cp-help">{{ t('admin.config.unsaved') }}</span>
                     <el-button :disabled="!dirty || saving" @click="reset">{{
-                        t('common.actions.cancel')
+                        t('common.actions.discard')
                     }}</el-button>
                     <el-button
                         type="primary"
@@ -224,7 +220,7 @@ function fieldError(key: string): string {
 const provider = (id: 'codeforces' | 'github' | 'google' | 'clist', name: string) => ({
     id,
     title: name,
-    description: t('admin.config.providerText', { name }),
+    description: undefined,
     callback: `${origin}/oauth/thirdparty/${id}`,
     fields: [
         {
@@ -241,15 +237,14 @@ const groups = computed(() => [
     {
         id: 'site',
         title: t('admin.config.groups.site'),
-        description: t('admin.config.groups.siteText'),
+        description: undefined,
         callback: '',
         fields: [
             { key: 'site_title', label: t('admin.config.fields.siteTitle'), kind: 'text' },
             {
                 key: 'registration_enabled',
                 label: t('admin.config.fields.registration'),
-                kind: 'switch',
-                hint: t('admin.config.fields.registrationHint')
+                kind: 'switch'
             },
             {
                 key: 'home_recent_users_count',
@@ -302,8 +297,7 @@ const groups = computed(() => [
             {
                 key: 'cap_enabled',
                 label: t('admin.config.fields.capEnabled'),
-                kind: 'switch',
-                hint: t('admin.config.fields.capHint')
+                kind: 'switch'
             }
         ] as Field[]
     },

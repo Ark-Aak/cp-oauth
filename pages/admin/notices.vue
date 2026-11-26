@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.admin')"
-            :title="t('common.nav.adminNotices')"
-            :description="t('admin.notices.description')"
-        />
+        <CpPageHeader :kicker="t('common.nav.admin')" :title="t('common.nav.adminNotices')" />
 
         <div class="cp-stack">
             <CpSheet
@@ -59,11 +55,7 @@
                 </form>
             </CpSheet>
 
-            <CpSheet
-                :title="t('admin.notices.listTitle')"
-                :description="t('admin.notices.listText')"
-                flush
-            >
+            <CpSheet :title="t('admin.notices.listTitle')" flush>
                 <CpDataState
                     :pending="pending"
                     :error="error ? describe(error) : null"

@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.develop')"
-            :title="t('common.nav.developer')"
-            :description="t('developer.description')"
-        >
+        <CpPageHeader :kicker="t('common.nav.develop')" :title="t('common.nav.developer')">
             <template #actions>
                 <el-button type="primary" :disabled="!hydrated" @click="openCreate">
                     {{ t('developer.newClient') }}
@@ -80,10 +76,7 @@
                 </CpDataState>
             </CpSheet>
 
-            <CpSheet
-                :title="t('developer.reference.title')"
-                :description="t('developer.reference.text')"
-            >
+            <CpSheet :title="t('developer.reference.title')">
                 <CpDataState
                     :pending="discoveryPending"
                     :error="discoveryError ? describe(discoveryError) : null"

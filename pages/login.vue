@@ -184,7 +184,7 @@ const screen = computed(() => {
     if (mfa.value) {
         return {
             title: t('auth.mfa.title'),
-            description: t('auth.mfa.description'),
+            description: undefined,
             step: t('auth.step', { n: 2, total: 2 })
         };
     }
@@ -197,7 +197,7 @@ const screen = computed(() => {
     }
     return {
         title: t('auth.login.title', { site: config.value.siteTitle }),
-        description: t('auth.login.description'),
+        description: undefined,
         step: undefined
     };
 });

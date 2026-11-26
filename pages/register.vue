@@ -227,7 +227,7 @@ const screen = computed(() => {
     if (mfa.value)
         return {
             title: t('auth.mfa.title'),
-            description: t('auth.mfa.description'),
+            description: undefined,
             step: undefined
         };
     if (proofPlatform.value) {

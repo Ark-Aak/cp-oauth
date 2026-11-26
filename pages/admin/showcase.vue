@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.admin')"
-            :title="t('common.nav.adminShowcase')"
-            :description="t('admin.showcase.description')"
-        >
+        <CpPageHeader :kicker="t('common.nav.admin')" :title="t('common.nav.adminShowcase')">
             <template #actions>
                 <el-button @click="navigateTo('/showcase')">{{
                     t('admin.showcase.viewPublic')

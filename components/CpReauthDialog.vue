@@ -57,7 +57,6 @@
                         autocomplete="current-password"
                         show-password
                     />
-                    <p class="cp-help">{{ t('common.reauth.passwordHint') }}</p>
                     <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
                     <div class="reauth__actions">
                         <el-button @click="cancel">{{ t('common.actions.cancel') }}</el-button>
@@ -67,13 +66,12 @@
                             :loading="busy"
                             :disabled="!password"
                         >
-                            {{ t('common.actions.confirm') }}
+                            {{ t('common.actions.continue') }}
                         </el-button>
                     </div>
                 </form>
 
                 <div v-else-if="method === 'passkey'" class="reauth__form">
-                    <p class="cp-help">{{ t('common.reauth.passkeyHint') }}</p>
                     <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
                     <div class="reauth__actions">
                         <el-button @click="cancel">{{ t('common.actions.cancel') }}</el-button>

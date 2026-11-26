@@ -2,7 +2,6 @@
     <CpAuthScreen
         v-if="state === 'done'"
         :title="t('auth.reset.doneTitle')"
-        :description="t('auth.reset.doneText')"
         :icon="CircleCheck"
         tone="success"
     >

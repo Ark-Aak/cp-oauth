@@ -1,10 +1,6 @@
 <template>
     <div class="about">
-        <CpPageHeader
-            :kicker="t('common.nav.explore')"
-            :title="t('public.about.title')"
-            :description="t('public.about.description')"
-        >
+        <CpPageHeader :kicker="t('common.nav.explore')" :title="t('public.about.title')">
             <template #actions>
                 <el-button type="primary" @click="navigateTo('/developer')">
                     {{ t('public.about.toDeveloper') }}
@@ -13,11 +9,7 @@
         </CpPageHeader>
 
         <div class="cp-stack">
-            <CpSheet
-                :title="t('public.about.platformsTitle')"
-                :description="t('public.about.platformsText')"
-                flush
-            >
+            <CpSheet :title="t('public.about.platformsTitle')" flush>
                 <ul class="cp-rows">
                     <li v-for="platform in PLATFORM_NAMES" :key="platform">
                         <CpPlatformMark :platform="platform" />
@@ -61,11 +53,7 @@
                 </CpDataState>
             </CpSheet>
 
-            <CpSheet
-                :title="t('public.about.scopesTitle')"
-                :description="t('public.about.scopesText')"
-                flush
-            >
+            <CpSheet :title="t('public.about.scopesTitle')" flush>
                 <ul class="cp-rows">
                     <li v-for="scope in scopes" :key="scope">
                         <code class="about__scope cp-mono">{{ scope }}</code>

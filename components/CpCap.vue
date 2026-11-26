@@ -135,10 +135,14 @@ defineExpose({ reset });
     display: block;
     width: 100%;
     --cap-widget-width: 100%;
+    --cap-widget-height: 56px;
+    --cap-widget-padding: var(--cp-space-3);
+    --cap-gap: var(--cp-space-3);
     --cap-background: var(--cp-surface);
     --cap-border-color: var(--cp-line-strong);
     --cap-border-radius: var(--cp-radius-md);
     --cap-color: var(--cp-text);
+    --cap-checkbox-size: 24px;
     --cap-checkbox-border: 1px solid var(--cp-line-strong);
     --cap-checkbox-border-radius: var(--cp-radius-sm);
     --cap-checkbox-background: var(--cp-sunken);
@@ -146,10 +150,16 @@ defineExpose({ reset });
     --cap-spinner-color: var(--cp-accent);
     --cap-spinner-background-color: var(--cp-line);
     --cap-focus-ring: var(--cp-accent);
+    --cap-troubleshoot-color: var(--cp-accent);
+    --cap-invalid-border-color: var(--cp-danger);
+    --cap-invalid-ring-color: var(--cp-danger-soft);
 }
 
 .cp-cap__placeholder {
-    min-height: 58px;
+    height: 56px;
+    background: var(--cp-sunken);
+    border: 1px solid var(--cp-line);
+    border-radius: var(--cp-radius-md);
 }
 
 .cp-cap__error {

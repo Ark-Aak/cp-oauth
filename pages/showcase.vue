@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.explore')"
-            :title="t('public.showcase.title')"
-            :description="t('public.showcase.description')"
-        />
+        <CpPageHeader :kicker="t('common.nav.explore')" :title="t('public.showcase.title')" />
 
         <CpDataState
             :pending="pending"
@@ -13,13 +9,7 @@
             @retry="refresh"
         >
             <div class="cp-stack">
-                <CpSheet
-                    v-for="group in groups"
-                    :key="group.key"
-                    :title="group.title"
-                    :description="group.description"
-                    flush
-                >
+                <CpSheet v-for="group in groups" :key="group.key" :title="group.title" flush>
                     <ul v-if="group.items.length" class="cp-rows">
                         <li v-for="item in group.items" :key="item.id">
                             <PublicShowcaseIcon :src="item.iconUrl" :name="item.name" />
@@ -74,14 +64,12 @@ const groups = computed(() => [
     {
         key: 'sites',
         title: t('public.showcase.sites'),
-        description: t('public.showcase.sitesText'),
         empty: t('public.showcase.noSites'),
         items: data.value?.sites ?? []
     },
     {
         key: 'projects',
         title: t('public.showcase.projects'),
-        description: t('public.showcase.projectsText'),
         empty: t('public.showcase.noProjects'),
         items: data.value?.projects ?? []
     }

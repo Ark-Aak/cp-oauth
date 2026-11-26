@@ -1,16 +1,15 @@
 {
     "connections": {
-        "description": "Accounts on other platforms that you have proven you own.",
-        "footnote": "Apps can read linked accounts only with the link and cp scopes you approve. Choose which ones appear publicly in",
+        "footnote": "Apps read linked accounts via the scopes you approve. Manage public visibility in",
         "uid": "UID {uid}",
         "verifiedAt": "Verified {date}",
         "notLinked": "Not linked",
-        "notConfigured": "The administrator hasn't enabled this provider.",
+        "notConfigured": "Unavailable",
         "refreshName": "Refresh name",
-        "refreshed": "Name updated to {name}.",
+        "refreshed": "Updated to {name}.",
         "unlink": "Unlink",
         "unlinkTitle": "Unlink account",
-        "unlinkConfirm": "Apps will no longer receive your {platform} identity, and you can no longer sign in with it.",
+        "unlinkConfirm": "Apps will stop receiving your {platform} account, and {platform} sign-in will be disabled.",
         "unlinked": "{platform} unlinked.",
         "linked": "{platform} linked.",
         "link": {
@@ -18,9 +17,9 @@
             "title": "Link {platform}",
             "getCode": "Get verification code",
             "intro": {
-                "luogu": "Enter your Luogu UID. You'll prove ownership with a public clipboard.",
-                "atcoder": "Enter your AtCoder username. You'll prove ownership through your profile's Affiliation field.",
-                "leetcode": "Enter your LeetCode (leetcode.cn) username as it appears in your profile URL. You'll prove ownership through your bio."
+                "luogu": "Verify ownership with a public Luogu clipboard.",
+                "atcoder": "Verify ownership via your AtCoder profile Affiliation.",
+                "leetcode": "Verify ownership via your leetcode.cn profile bio."
             },
             "uidLabel": {
                 "luogu": "Luogu UID",
@@ -32,7 +31,7 @@
                 "atcoder": "tourist",
                 "leetcode": "your-slug"
             },
-            "luoguUidRule": "A Luogu UID contains digits only."
+            "luoguUidRule": "Enter digits for a Luogu UID."
         }
     }
 }

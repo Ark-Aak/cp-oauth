@@ -1,11 +1,10 @@
 {
     "admin": {
         "users": {
-            "description": "Accounts, roles and email verification.",
             "searchPlaceholder": "Username or email",
-            "total": "{n} accounts",
-            "empty": "No accounts yet.",
-            "noMatches": "No accounts match this search.",
+            "total": "{n} users",
+            "empty": "No users yet.",
+            "noMatches": "No matching users.",
             "roles": {
                 "admin": "Administrator",
                 "user": "Member"
@@ -15,77 +14,69 @@
             "actions": "Manage",
             "makeAdmin": "Make administrator",
             "removeAdmin": "Remove administrator",
-            "makeAdminConfirm": "{name} will be able to manage all accounts and site settings.",
-            "removeAdminConfirm": "{name} will lose access to administration.",
+            "makeAdminConfirm": "{name} will be able to manage all users and site settings.",
+            "removeAdminConfirm": "{name} will lose administrator access.",
             "selfDemote": "You will lose administrator access and be signed out.",
             "markVerified": "Mark email verified",
-            "markUnverified": "Mark email not verified",
+            "markUnverified": "Mark email unverified",
             "delete": "Delete account",
-            "deleteConfirm": "{name} and all of their linked accounts, clients and tokens will be deleted. This can't be undone.",
-            "selfDelete": "Your own account will be deleted and you will be signed out. This can't be undone."
+            "deleteConfirm": "{name} and all linked accounts, clients and tokens will be permanently deleted.",
+            "selfDelete": "Your account will be permanently deleted and you will be signed out."
         },
         "config": {
-            "description": "Site settings, email delivery, CAPTCHA and sign-in providers.",
             "callbackUrl": "Callback URL",
-            "callbackHint": "Register exactly this URL with the provider.",
+            "callbackHint": "Register this exact URL with the provider.",
             "configured": "Set",
             "notConfigured": "Not set",
-            "keepSecret": "Leave empty to keep the current value",
-            "willClear": "Will be cleared on save",
+            "keepSecret": "Leave blank to keep current secret",
+            "willClear": "Will clear on save",
             "clear": "Clear",
             "undoClear": "Keep",
-            "unsaved": "You have unsaved changes.",
-            "fixFields": "Some values are invalid. Check the highlighted fields.",
-            "providerText": "OAuth credentials for signing in and linking with {name}.",
+            "unsaved": "Unsaved changes",
+            "fixFields": "Check the highlighted fields.",
             "groups": {
                 "site": "Site",
-                "siteText": "Name, registration and listing settings.",
                 "smtp": "Email delivery",
-                "smtpText": "SMTP server for verification, reset and sign-in code emails.",
-                "cap": "Cap CAPTCHA",
-                "capText": "Self-hosted proof-of-work CAPTCHA for registration and sign-in."
+                "smtpText": "SMTP server for verification, reset and sign-in emails.",
+                "cap": "Cap",
+                "capText": "CAPTCHA for registration and sign-in."
             },
             "fields": {
                 "siteTitle": "Site title",
                 "registration": "Allow registration",
-                "registrationHint": "When off, new accounts can't be created by any method.",
                 "recentUsers": "Newest members on overview",
-                "recentUsersHint": "1–20.",
+                "recentUsersHint": "1–20",
                 "refreshCooldown": "Username refresh cooldown",
-                "refreshCooldownHint": "Minutes between refreshes of a linked account name, 1–43200.",
+                "refreshCooldownHint": "Minutes between refreshes, 1–43200.",
                 "smtpHost": "Host",
                 "smtpPort": "Port",
                 "smtpUser": "Username",
                 "smtpPass": "Password",
                 "smtpFrom": "From address",
-                "smtpFromHint": "For example: CP OAuth <no-reply{'@'}example.com>",
+                "smtpFromHint": "Example: CP OAuth <no-reply{'@'}example.com>",
                 "capEnabled": "Require Cap",
-                "capHint": "Runs in this server with Redis; no external keys are required.",
                 "clientId": "Client ID",
                 "clientSecret": "Client secret"
             }
         },
         "notices": {
-            "description": "Announcements shown on the overview page.",
             "createTitle": "New notice",
-            "createText": "The newest three notices appear on the overview; pinned notices come first.",
+            "createText": "Overview shows the newest three notices, with pinned notices first.",
             "fields": {
                 "title": "Title",
                 "content": "Content (HTML)",
                 "pinned": "Pin to top"
             },
-            "allowedTags": "Allowed: p, br, strong, em, b, i, u, s, code, pre, blockquote, ul, ol, li, a, h1–h6, span. Other markup is removed.",
+            "allowedTags": "Supported tags: p, br, strong, em, b, i, u, s, code, pre, blockquote, ul, ol, li, a, h1–h6, span.",
             "publish": "Publish",
             "published": "Notice published.",
             "listTitle": "Published notices",
-            "listText": "Shown as stored after sanitizing.",
             "empty": "No notices yet.",
             "pinned": "Pinned",
             "deleteTitle": "Delete notice",
-            "deleteConfirm": "“{title}” will be removed from the site."
+            "deleteConfirm": "“{title}” will be permanently deleted."
         },
         "showcase": {
-            "description": "Entries listed on the public showcase page.",
             "viewPublic": "View showcase",
             "createTitle": "New entry",
             "fields": {
@@ -105,14 +96,14 @@
                 "project": "Projects"
             },
             "sortHint": "Lower numbers appear first.",
-            "iconHint": "Optional. Square image over HTTP or HTTPS.",
+            "iconHint": "Square HTTP or HTTPS image URL.",
             "add": "Add entry",
             "added": "Entry added.",
             "empty": "No entries in this category.",
             "order": "#{n}",
-            "invalidUrls": "Stored URL rejected: {fields}",
+            "invalidUrls": "Invalid URL: {fields}",
             "deleteTitle": "Delete entry",
-            "deleteConfirm": "{name} will be removed from the showcase."
+            "deleteConfirm": "{name} will be permanently deleted from the showcase."
         }
     }
 }

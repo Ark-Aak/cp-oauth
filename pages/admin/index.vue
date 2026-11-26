@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.admin')"
-            :title="t('common.nav.adminUsers')"
-            :description="t('admin.users.description')"
-        />
+        <CpPageHeader :kicker="t('common.nav.admin')" :title="t('common.nav.adminUsers')" />
 
         <form class="admin-users__toolbar" role="search" @submit.prevent="applySearch">
             <el-input
@@ -193,11 +189,10 @@ async function act(item: AdminUser, command: string) {
                           : 'admin.users.removeAdminConfirm',
                       { name }
                   );
-        ok = await confirm(
-            message,
-            t(next === 'admin' ? 'admin.users.makeAdmin' : 'admin.users.removeAdmin'),
-            t('common.actions.confirm')
+        const roleAction = t(
+            next === 'admin' ? 'admin.users.makeAdmin' : 'admin.users.removeAdmin'
         );
+        ok = await confirm(message, roleAction, roleAction);
         if (!ok) return;
         await run(
             item,

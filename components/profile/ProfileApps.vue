@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.account')"
-            :title="t('common.nav.apps')"
-            :description="t('account.apps.description')"
-        />
+        <CpPageHeader :kicker="t('common.nav.account')" :title="t('common.nav.apps')" />
 
         <CpSheet flush>
             <CpDataState

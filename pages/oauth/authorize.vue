@@ -15,7 +15,6 @@
     <CpAuthScreen
         v-else-if="request && me"
         :title="t('oauth.authorize.title', { app: request.client.name })"
-        :description="t('oauth.authorize.description')"
     >
         <div class="consent">
             <dl class="consent__facts">
@@ -67,16 +66,6 @@
                 </ul>
             </section>
 
-            <p class="cp-help">
-                {{
-                    request.codeChallenge
-                        ? t('oauth.authorize.pkce', {
-                              method: request.codeChallengeMethod ?? 'plain'
-                          })
-                        : t('oauth.authorize.noPkce')
-                }}
-            </p>
-
             <CpNote
                 v-if="needsVerifiedEmail"
                 tone="warning"
@@ -108,7 +97,6 @@
                     {{ t('oauth.authorize.approve') }}
                 </el-button>
             </div>
-            <p class="cp-help consent__fineprint">{{ t('oauth.authorize.revokeHint') }}</p>
         </div>
     </CpAuthScreen>
 </template>
@@ -301,10 +289,6 @@ async function switchAccount() {
         flex: 1;
         margin-left: 0;
     }
-}
-
-.consent__fineprint {
-    text-align: center;
 }
 
 @media (max-width: 767px) {

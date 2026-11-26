@@ -11,11 +11,7 @@
         }}</el-button>
     </CpAuthScreen>
 
-    <CpAuthScreen
-        v-else-if="mfa"
-        :title="t('auth.mfa.title')"
-        :description="t('auth.mfa.description')"
-    >
+    <CpAuthScreen v-else-if="mfa" :title="t('auth.mfa.title')">
         <CpMfaForm
             :challenge-id="mfa.challengeId"
             :method="mfa.method"
@@ -24,11 +20,7 @@
         />
     </CpAuthScreen>
 
-    <CpAuthScreen
-        v-else
-        :title="t('oauth.callback.workingTitle', { provider: providerName })"
-        :description="t('oauth.callback.workingText')"
-    >
+    <CpAuthScreen v-else :title="t('oauth.callback.workingTitle', { provider: providerName })">
         <div class="callback" role="status" aria-live="polite">
             <CpPlatformMark :platform="provider" :label="false" :size="24" />
             <span class="callback__bar" aria-hidden="true" />

@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.account')"
-            :title="t('common.nav.profile')"
-            :description="t('account.basic.description')"
-        >
+        <CpPageHeader :kicker="t('common.nav.account')" :title="t('common.nav.profile')">
             <template #actions>
                 <el-button @click="navigateTo(`/user/${me.username}`)">
                     {{ t('common.nav.publicProfile') }}
@@ -100,7 +96,7 @@
                             :disabled="!identityDirty || savingIdentity"
                             @click="resetIdentity"
                         >
-                            {{ t('common.actions.cancel') }}
+                            {{ t('common.actions.discard') }}
                         </el-button>
                         <el-button
                             type="primary"
@@ -114,10 +110,7 @@
                 </form>
             </CpSheet>
 
-            <CpSheet
-                :title="t('account.basic.homepageTitle')"
-                :description="t('account.basic.homepageText')"
-            >
+            <CpSheet :title="t('account.basic.homepageTitle')">
                 <template #actions>
                     <el-segmented v-model="homepageMode" :options="homepageModes" size="small" />
                 </template>
@@ -152,16 +145,13 @@
                             :loading="savingHomepage"
                             :disabled="!hydrated || !homepageDirty || homepageTooLarge"
                         >
-                            {{ t('common.actions.save') }}
+                            {{ t('common.actions.saveChanges') }}
                         </el-button>
                     </div>
                 </form>
             </CpSheet>
 
-            <CpSheet
-                :title="t('account.basic.emailTitle')"
-                :description="t('account.basic.emailText')"
-            >
+            <CpSheet :title="t('account.basic.emailTitle')">
                 <dl>
                     <CpField :label="t('account.fields.email')" mono>
                         <span class="account-email">

@@ -1,10 +1,6 @@
 <template>
     <div>
-        <CpPageHeader
-            :kicker="t('common.nav.account')"
-            :title="t('common.nav.privacy')"
-            :description="t('account.privacy.description')"
-        >
+        <CpPageHeader :kicker="t('common.nav.account')" :title="t('common.nav.privacy')">
             <template #actions>
                 <el-button @click="navigateTo(`/user/${me.username}`)">
                     {{ t('common.nav.publicProfile') }}
@@ -13,10 +9,7 @@
         </CpPageHeader>
 
         <div class="cp-stack">
-            <CpSheet
-                :title="t('account.privacy.visibilityTitle')"
-                :description="t('account.privacy.visibilityText')"
-            >
+            <CpSheet :title="t('account.privacy.visibilityTitle')">
                 <form class="privacy-form" method="post" novalidate @submit.prevent="save">
                     <fieldset class="privacy-form__group">
                         <legend>{{ t('account.privacy.platformsLegend') }}</legend>
@@ -91,7 +84,7 @@
                     <CpNote v-if="saveError" tone="danger">{{ saveError }}</CpNote>
                     <div class="privacy-form__actions">
                         <el-button :disabled="!dirty || saving" @click="reset">
-                            {{ t('common.actions.cancel') }}
+                            {{ t('common.actions.discard') }}
                         </el-button>
                         <el-button
                             type="primary"

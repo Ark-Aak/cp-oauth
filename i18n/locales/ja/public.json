@@ -1,13 +1,13 @@
 {
     "public": {
         "home": {
-            "title": "一度のログインで、すべてのプラットフォームを証明",
-            "statement": "CP OAuth は競技プログラマー向けの OAuth 2.0 プロバイダーです。Luogu、AtCoder、LeetCode、Codeforces などのアカウントを連携・検証し、アプリが読み取れる情報をあなたが決めます。",
+            "title": "1 度のログインで、すべての競技プラットフォームを証明",
+            "statement": "CP OAuth は競技プログラマー向けの OAuth 2.0 ID プロバイダーです。Luogu、AtCoder、LeetCode、Codeforces などのアカウントを連携・認証し、アプリに公開する情報を自分で選べます。",
             "openProfile": "プロフィールを開く",
             "openDeveloper": "OAuth クライアントを管理",
-            "howItWorks": "仕組み",
-            "figures": "サイトの数値",
-            "figuresUnavailable": "サイトの数値は一時的に利用できません。",
+            "howItWorks": "仕組みを見る",
+            "figures": "サイト統計",
+            "figuresUnavailable": "サイト統計を一時的に取得できません。",
             "stats": {
                 "users": "アカウント",
                 "linkedAccounts": "連携アカウント",
@@ -17,31 +17,29 @@
             "notices": "お知らせ",
             "noNotices": "お知らせはまだありません。",
             "pinned": "固定",
-            "members": "新しいメンバー",
+            "members": "新着メンバー",
             "noMembers": "メンバーはまだいません。",
-            "joined": "{date} に登録"
+            "joined": "{date} 登録"
         },
         "about": {
             "title": "CP OAuth について",
-            "description": "アカウントの検証方法と、アプリがログインする仕組み。",
             "toDeveloper": "OAuth クライアントを作成",
             "platformsTitle": "対応プラットフォーム",
-            "platformsText": "連携アカウントは保存前にすべて検証されます。",
-            "providerSignIn": "プロバイダーへのログインで検証します。",
+            "providerSignIn": "プラットフォームへのログインで認証します。",
             "proof": {
-                "luogu": "Luogu の公開クリップボードに置いたコードで検証します。",
-                "atcoder": "AtCoder プロフィールの所属（Affiliation）欄に置いたコードで検証します。",
-                "leetcode": "leetcode.cn プロフィールの自己紹介に置いたコードで検証します。"
+                "luogu": "Luogu の公開クリップボードにコードを置いて認証します。",
+                "atcoder": "AtCoder プロフィールの Affiliation にコードを置いて認証します。",
+                "leetcode": "leetcode.cn プロフィールの自己紹介にコードを置いて認証します。"
             },
             "flowTitle": "認可コードフロー",
-            "flowText": "標準の OAuth 2.0。PKCE（S256 または plain）に任意で対応。",
+            "flowText": "標準の OAuth 2.0（任意の PKCE：S256 / plain）に対応します。",
             "steps": {
-                "register": "開発者コンソールでクライアントを登録し、完全一致するリダイレクト URI を追加します。",
-                "redirect": "client_id、redirect_uri、response_type=code、scope、state を付けてユーザーを認可エンドポイントへ送ります。公開クライアントは PKCE の code_challenge も付けます。",
-                "consent": "ユーザーがログインして権限を承認すると、10 分間有効な code とともにリダイレクト URI に戻ります。",
-                "exchange": "トークンエンドポイントで code をアクセストークン（1 時間）とリフレッシュトークン（30 日）に交換します。",
-                "userinfo": "Bearer アクセストークンで userinfo エンドポイントを呼び出します。返る情報は許可されたスコープに限られます。",
-                "refresh": "リフレッシュトークンで新しいトークンを取得します。各リフレッシュトークンは一度だけ使え、使用時に置き換えられます。"
+                "register": "開発者コンソールで OAuth クライアントを作成し、完全一致のリダイレクト URI を登録します。",
+                "redirect": "client_id、redirect_uri、response_type=code、scope、state（パブリッククライアントは PKCE の code_challenge）を付けて認可エンドポイントへ遷移させます。",
+                "consent": "ログインと許可のあと、10 分間有効な認可コード付きでリダイレクト URI に戻ります。",
+                "exchange": "トークンエンドポイントで認可コードをアクセストークン（1 時間）とリフレッシュトークン（30 日）に交換します。",
+                "userinfo": "Bearer トークンでユーザー情報エンドポイントを呼び出し、許可されたスコープの情報を取得します。",
+                "refresh": "リフレッシュトークンで新しいトークンを取得します。使用ごとに新しいトークンへ更新されます。"
             },
             "endpointsTitle": "エンドポイント",
             "endpoints": {
@@ -51,38 +49,34 @@
                 "userinfo": "ユーザー情報",
                 "revocation": "失効"
             },
-            "scopesTitle": "スコープ",
-            "scopesText": "アプリが要求したスコープは、同意画面で 1 つずつ表示されます。"
+            "scopesTitle": "スコープ"
         },
         "showcase": {
             "title": "ショーケース",
-            "description": "CP OAuth を利用しているサイトとプロジェクト。",
             "sites": "サイト",
-            "sitesText": "CP OAuth でログインできるサービス。",
-            "noSites": "掲載されているサイトはまだありません。",
+            "noSites": "登録されたサイトはまだありません。",
             "projects": "プロジェクト",
-            "projectsText": "CP OAuth を中心に作られたライブラリやツール。",
-            "noProjects": "掲載されているプロジェクトはまだありません。"
+            "noProjects": "登録されたプロジェクトはまだありません。"
         },
         "user": {
             "kicker": "公開プロフィール",
-            "joined": "{date} に登録",
+            "joined": "{date} 登録",
             "editProfile": "公開プロフィールを編集",
-            "homepage": "自己紹介",
+            "homepage": "プロフィール",
             "linkedAccounts": "連携アカウント",
-            "noLinkedAccounts": "公開している連携アカウントはありません。",
+            "noLinkedAccounts": "公開中の連携アカウントはありません。",
             "contestStats": "コンテスト統計",
             "highestRating": "最高レーティング",
-            "totalContests": "参加コンテスト数",
-            "contests": "参加数",
+            "totalContests": "参加回数",
+            "contests": "参加回数",
             "rank": "順位",
             "lastActivity": "最終参加",
-            "noStats": "公開している連携アカウントのコンテストデータはありません。",
-            "statsUnavailable": "Clist.by のコンテストデータは一時的に利用できません。",
+            "noStats": "コンテスト統計データはありません。",
+            "statsUnavailable": "Clist.by のコンテストデータを一時的に取得できません。",
             "ratingHistory": "レーティング履歴",
-            "noRatingHistory": "公開している連携アカウントのレート変動はありません。",
-            "recentChanges": "最近のレーティング変動",
-            "chartLabel": "レーティングの推移",
+            "noRatingHistory": "レーティング対象のコンテスト履歴はありません。",
+            "recentChanges": "最近のレーティング推移",
+            "chartLabel": "レーティング推移",
             "chartResource": "プラットフォーム",
             "chartTooltip": "{date} · {rating}（{change}）",
             "columns": {
