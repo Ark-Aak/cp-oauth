@@ -6,7 +6,7 @@ import prisma from './prisma';
 import { parseBody } from './validation';
 import { requireRegistrationEnabled } from './config';
 import { enforceRateLimit } from './rate-limit';
-import { verifyTurnstileToken } from './turnstile';
+import { verifyCapToken } from './cap';
 import { completePrimaryAuthentication } from './auth-completion';
 import { createUserWithLinkedIdentity } from './thirdparty-auth';
 import {
@@ -22,7 +22,7 @@ import {
 const requestSchema = z.strictObject({
     platformUid: platformUidSchema,
     redirect: z.string().optional(),
-    turnstileToken: z.string().max(4096).optional()
+    capToken: z.string().max(4096).optional()
 });
 const verifySchema = z.strictObject({
     requestId: platformChallengeIdSchema,
@@ -38,7 +38,7 @@ export async function requestPlatformRegistration(event: H3Event, platform: Regi
     const platformUid = normalizePlatformUid(platform, body.platformUid);
     await enforceRateLimit(event, 'register');
     await enforceRateLimit(event, 'challenge', `${platform}:${platformUid}`);
-    await verifyTurnstileToken({ token: body.turnstileToken, action: 'register' });
+    await verifyCapToken({ token: body.capToken, action: 'register' });
     const taken = await prisma.linkedAccount.findUnique({
         where: { platform_platformUid: { platform, platformUid } },
         select: { id: true }

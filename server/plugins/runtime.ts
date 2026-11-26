@@ -27,6 +27,15 @@ export default defineNitroPlugin(nitroApp => {
         throw new Error('NUXT_DATA_ENCRYPTION_KEY must be base64 encoding of exactly 32 bytes');
     }
 
+    const capSecret: unknown = config.capSecret;
+    if (
+        capSecret !== undefined &&
+        capSecret !== '' &&
+        (typeof capSecret !== 'string' || Buffer.byteLength(capSecret, 'utf8') < 32)
+    ) {
+        throw new Error('NUXT_CAP_SECRET must be at least 32 UTF-8 bytes when set');
+    }
+
     const redisUrl: unknown = config.redisUrl;
     let parsedRedisUrl: URL;
     try {

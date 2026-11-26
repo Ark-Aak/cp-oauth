@@ -8,7 +8,13 @@ const AUTH_PAGES: Record<string, true> = {
     '/email-verified': true,
     '/oauth/authorize': true
 };
-const PRIVATE_API_PREFIXES = ['/api/auth/', '/api/account/', '/api/admin/', '/api/oauth/'];
+const PRIVATE_API_PREFIXES = [
+    '/api/auth/',
+    '/api/account/',
+    '/api/admin/',
+    '/api/oauth/',
+    '/api/cap/'
+];
 
 export default defineEventHandler(event => {
     const path = getRequestURL(event).pathname;

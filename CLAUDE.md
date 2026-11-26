@@ -60,7 +60,7 @@ ESLint extends the Nuxt preset with `eslint-config-prettier`. `vue/no-v-html` is
 - **Auth**: JWT-based — `server/utils/auth.ts` (`getUserIdFromEvent`) and `server/utils/admin.ts` (`requireAdmin`). Tokens passed as `Bearer` in Authorization header, also stored client-side in `auth_token` cookie.
 - **System config**: Key-value pairs in `system_config` table with Redis caching (60s TTL) — managed via `server/utils/config.ts`
 - **Email**: Nodemailer with SMTP settings pulled from system config — `server/utils/mailer.ts`
-- **CAPTCHA**: Optional Cloudflare Turnstile — `components/CpTurnstile.vue` renders the client-side widget
+- **CAPTCHA**: Optional self-hosted Cap (`capjs-core` + `cap-widget`) — `server/utils/cap.ts` and `server/api/cap/[scope]/` handle challenge/redeem with Redis; `components/CpCap.vue` renders the client-side widget
 
 ### OAuth 2.0 Implementation
 

@@ -23,8 +23,8 @@ import { OAUTH_PROVIDERS, PLATFORMS, type OAuthProvider } from '~/utils/platform
 const props = defineProps<{
     mode: 'login' | 'register';
     redirect: string;
-    /** Turnstile token for the same action as the surrounding form; required when enabled. */
-    turnstileToken?: string;
+    /** Cap token for the same action as the surrounding form; required when enabled. */
+    capToken?: string;
     disabled?: boolean;
 }>();
 const emit = defineEmits<{ used: [] }>();
@@ -46,8 +46,8 @@ const busy = ref<OAuthProvider | null>(null);
 const error = ref('');
 
 async function start(provider: OAuthProvider) {
-    if (config.value.turnstileEnabled && !props.turnstileToken) {
-        error.value = t('common.turnstile.required');
+    if (config.value.capEnabled && !props.capToken) {
+        error.value = t('common.captcha.required');
         return;
     }
     busy.value = provider;
@@ -56,7 +56,7 @@ async function start(provider: OAuthProvider) {
         await startProvider(provider, {
             mode: props.mode,
             redirect: props.redirect,
-            turnstileToken: props.turnstileToken || undefined
+            capToken: props.capToken || undefined
         });
     } catch (cause) {
         error.value = describe(cause);

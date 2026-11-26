@@ -25,8 +25,7 @@ export interface PublicConfigResponse {
     siteTitle: string;
     registrationEnabled: boolean;
     recentUsersCount: number;
-    turnstileEnabled: boolean;
-    turnstileSiteKey: string;
+    capEnabled: boolean;
     githubLoginEnabled: boolean;
     googleLoginEnabled: boolean;
     codeforcesLoginEnabled: boolean;

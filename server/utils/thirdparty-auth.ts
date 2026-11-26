@@ -18,7 +18,7 @@ import {
 } from './auth';
 import { completePrimaryAuthentication, requireFreshReauthentication } from './auth-completion';
 import { enforceRateLimit } from './rate-limit';
-import { verifyTurnstileToken } from './turnstile';
+import { verifyCapToken } from './cap';
 import {
     AUTH_RANDOM_ID_PATTERN,
     ensureAuthFlowHash,
@@ -89,7 +89,7 @@ const startSchema = z
     .strictObject({
         mode: z.enum(['login', 'register', 'bind', 'reauth']).default('login'),
         redirect: z.string().optional(),
-        turnstileToken: z.string().max(4096).optional(),
+        capToken: z.string().max(4096).optional(),
         purpose: z
             .enum([
                 'email_change',
@@ -217,8 +217,8 @@ export async function startThirdpartyAuthentication(event: H3Event, provider: OA
         expectedUid = existing?.platformUid;
     } else {
         await enforceRateLimit(event, query.mode === 'register' ? 'register' : 'challenge');
-        await verifyTurnstileToken({
-            token: query.turnstileToken,
+        await verifyCapToken({
+            token: query.capToken,
             action: query.mode === 'register' ? 'register' : 'login'
         });
     }

@@ -5,7 +5,6 @@ import { createJiti } from 'jiti';
 const BATCH_SIZE = 100;
 const CONFIG_SECRET_KEYS = [
     'smtp_pass',
-    'turnstile_secret_key',
     'codeforces_client_secret',
     'github_client_secret',
     'google_client_secret',

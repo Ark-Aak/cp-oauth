@@ -54,6 +54,11 @@ export default defineNuxtConfig({
         classSuffix: '',
         storageKey: 'cp-oauth-color-mode'
     },
+    vue: {
+        compilerOptions: {
+            isCustomElement: tag => tag.startsWith('cap-')
+        }
+    },
     vite: {
         optimizeDeps: {
             include: [
@@ -88,6 +93,7 @@ export default defineNuxtConfig({
         jwtSecret: '',
         redisUrl: '',
         dataEncryptionKey: '',
+        capSecret: '',
         trustProxy: '',
         public: {
             appName: 'CP OAuth',
@@ -126,7 +132,7 @@ export default defineNuxtConfig({
     nitro: {
         prerender: { failOnError: true },
         externals: {
-            external: ['@prisma/client', '.prisma/client']
+            external: ['@prisma/client', '.prisma/client', 'esbuild']
         }
     }
 });

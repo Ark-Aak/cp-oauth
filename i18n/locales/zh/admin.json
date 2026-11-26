@@ -42,8 +42,8 @@
                 "siteText": "名称、注册与列表设置。",
                 "smtp": "邮件发送",
                 "smtpText": "用于发送验证、重置密码和登录验证码邮件的 SMTP 服务器。",
-                "turnstile": "Cloudflare Turnstile",
-                "turnstileText": "注册与登录时的人机验证。"
+                "cap": "Cap 人机验证",
+                "capText": "用于注册与登录的自托管工作量证明人机验证。"
             },
             "fields": {
                 "siteTitle": "站点名称",
@@ -59,10 +59,8 @@
                 "smtpPass": "密码",
                 "smtpFrom": "发件地址",
                 "smtpFromHint": "例如：CP OAuth <no-reply{'@'}example.com>",
-                "turnstileEnabled": "启用 Turnstile",
-                "turnstileHint": "开启前必须先设置两个密钥。",
-                "siteKey": "站点密钥（Site key）",
-                "secretKey": "私密密钥（Secret key）",
+                "capEnabled": "启用 Cap 验证",
+                "capHint": "由本服务端配合 Redis 运行，无需配置外部密钥。",
                 "clientId": "客户端 ID",
                 "clientSecret": "客户端密钥"
             }

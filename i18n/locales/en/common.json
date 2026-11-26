@@ -130,8 +130,8 @@
             "light": "Light",
             "dark": "Dark"
         },
-        "turnstile": {
-            "failed": "The security check didn't load.",
+        "captcha": {
+            "failed": "The security check failed.",
             "required": "Complete the security check first."
         },
         "footer": {

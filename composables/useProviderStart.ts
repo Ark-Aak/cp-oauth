@@ -4,7 +4,7 @@ import type { OAuthProvider } from '~/utils/platforms';
 export interface ProviderStartQuery {
     mode: 'login' | 'register' | 'bind' | 'reauth';
     redirect?: string;
-    turnstileToken?: string;
+    capToken?: string;
     purpose?: ReauthPurpose;
 }
 
@@ -21,7 +21,7 @@ export function useProviderStart() {
     ): Promise<void> {
         const params: Record<string, string> = { mode: query.mode };
         if (query.redirect) params.redirect = query.redirect;
-        if (query.turnstileToken) params.turnstileToken = query.turnstileToken;
+        if (query.capToken) params.capToken = query.capToken;
         if (query.purpose) params.purpose = query.purpose;
         const { authorizationUrl } = await api<{ authorizationUrl: string }>(
             `/api/auth/thirdparty/${provider}/start`,

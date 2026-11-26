@@ -294,27 +294,16 @@ const groups = computed(() => [
         ] as Field[]
     },
     {
-        id: 'turnstile',
-        title: t('admin.config.groups.turnstile'),
-        description: t('admin.config.groups.turnstileText'),
+        id: 'cap',
+        title: t('admin.config.groups.cap'),
+        description: t('admin.config.groups.capText'),
         callback: '',
         fields: [
             {
-                key: 'turnstile_enabled',
-                label: t('admin.config.fields.turnstileEnabled'),
+                key: 'cap_enabled',
+                label: t('admin.config.fields.capEnabled'),
                 kind: 'switch',
-                hint: t('admin.config.fields.turnstileHint')
-            },
-            {
-                key: 'turnstile_site_key',
-                label: t('admin.config.fields.siteKey'),
-                kind: 'text',
-                mono: true
-            },
-            {
-                key: 'turnstile_secret_key',
-                label: t('admin.config.fields.secretKey'),
-                kind: 'secret'
+                hint: t('admin.config.fields.capHint')
             }
         ] as Field[]
     },

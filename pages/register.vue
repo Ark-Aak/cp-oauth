@@ -62,7 +62,7 @@
                         :disabled="!hydrated || busy"
                     />
                 </AuthField>
-                <CpTurnstile ref="proofTurnstile" v-model="proofToken" action="register" />
+                <CpCap ref="proofCap" v-model="proofToken" action="register" />
                 <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
                 <div class="register-form__actions">
                     <el-button :disabled="busy" @click="leaveProof">{{
@@ -76,7 +76,7 @@
                             !hydrated ||
                             !proofUid.trim() ||
                             proofUidInvalid ||
-                            (config.turnstileEnabled && !proofToken)
+                            (config.capEnabled && !proofToken)
                         "
                     >
                         {{ t('auth.luogu.getCode') }}
@@ -144,14 +144,14 @@
                     :disabled="!hydrated || busy"
                 />
             </AuthField>
-            <CpTurnstile ref="registerTurnstile" v-model="registerToken" action="register" />
+            <CpCap ref="registerCap" v-model="registerToken" action="register" />
             <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
             <el-button
                 class="register-form__submit"
                 type="primary"
                 native-type="submit"
                 :loading="busy"
-                :disabled="!hydrated || !valid || (config.turnstileEnabled && !registerToken)"
+                :disabled="!hydrated || !valid || (config.capEnabled && !registerToken)"
             >
                 {{ t('common.actions.createAccount') }}
             </el-button>
@@ -162,9 +162,9 @@
                 <AuthProviders
                     mode="register"
                     :redirect="redirect"
-                    :turnstile-token="registerToken"
+                    :cap-token="registerToken"
                     :disabled="busy"
-                    @used="registerTurnstile?.reset()"
+                    @used="registerCap?.reset()"
                 />
                 <el-button
                     v-for="platform in PROOF_PLATFORMS"
@@ -260,7 +260,7 @@ const email = ref('');
 const password = ref('');
 const confirm = ref('');
 const registerToken = ref('');
-const registerTurnstile = ref<{ reset: () => void } | null>(null);
+const registerCap = ref<{ reset: () => void } | null>(null);
 const errors = reactive<Record<string, string>>({});
 
 const passwordValid = computed(
@@ -298,7 +298,7 @@ async function submit() {
                     email: email.value.trim(),
                     password: password.value,
                     redirect: redirect.value,
-                    turnstileToken: registerToken.value || undefined
+                    capToken: registerToken.value || undefined
                 }
             })
         );
@@ -309,7 +309,7 @@ async function submit() {
         else if (!Object.keys(info.fields).length) error.value = describe(cause);
     } finally {
         busy.value = false;
-        registerTurnstile.value?.reset();
+        registerCap.value?.reset();
     }
 }
 
@@ -317,7 +317,7 @@ async function submit() {
 const proofPlatform = ref<ProofPlatform | null>(null);
 const proofUid = ref('');
 const proofToken = ref('');
-const proofTurnstile = ref<{ reset: () => void } | null>(null);
+const proofCap = ref<{ reset: () => void } | null>(null);
 const proofChallenge = ref<{ requestId: string; code: string; expiresIn: number } | null>(null);
 const proofUidInvalid = computed(
     () =>
@@ -351,7 +351,7 @@ async function requestProof() {
                 body: {
                     platformUid: proofUid.value.trim(),
                     redirect: redirect.value,
-                    turnstileToken: proofToken.value || undefined
+                    capToken: proofToken.value || undefined
                 }
             }
         );
@@ -359,7 +359,7 @@ async function requestProof() {
         error.value = describe(cause);
     } finally {
         busy.value = false;
-        proofTurnstile.value?.reset();
+        proofCap.value?.reset();
     }
 }
 

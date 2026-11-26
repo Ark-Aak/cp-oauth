@@ -11,7 +11,7 @@ import { createUserWithInitialRole } from '~/server/utils/role';
 import { emailSchema, usernameSchema, newPasswordSchema } from '~/utils/validation';
 import { getSafeRedirectTarget } from '~/utils/auth-redirect';
 import { parseBody } from '~/server/utils/validation';
-import { verifyTurnstileToken } from '~/server/utils/turnstile';
+import { verifyCapToken } from '~/server/utils/cap';
 import { enforceRateLimit } from '~/server/utils/rate-limit';
 import { completePrimaryAuthentication } from '~/server/utils/auth-completion';
 
@@ -20,7 +20,7 @@ const registerSchema = z
         username: usernameSchema,
         email: emailSchema,
         password: newPasswordSchema,
-        turnstileToken: z.string().max(4096).optional(),
+        capToken: z.string().max(4096).optional(),
         redirect: z.string().max(4096).optional()
     })
     .strict();
@@ -29,7 +29,7 @@ export default defineEventHandler(async event => {
     const body = await parseBody(event, registerSchema);
     await enforceRateLimit(event, 'register');
     await requireRegistrationEnabled();
-    await verifyTurnstileToken({ token: body.turnstileToken, action: 'register' });
+    await verifyCapToken({ token: body.capToken, action: 'register' });
     const redirect = getSafeRedirectTarget(body.redirect);
     const baseUrl = getPublicBaseUrl();
     getDataEncryptionKey();

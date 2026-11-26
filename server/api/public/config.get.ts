@@ -6,9 +6,7 @@ export default defineEventHandler(async event => {
         'site_title',
         'registration_enabled',
         'home_recent_users_count',
-        'turnstile_enabled',
-        'turnstile_site_key',
-        'turnstile_secret_key',
+        'cap_enabled',
         'codeforces_client_id',
         'codeforces_client_secret',
         'github_client_id',
@@ -19,17 +17,11 @@ export default defineEventHandler(async event => {
         'clist_client_secret'
     ]);
 
-    const turnstileEnabled =
-        config.turnstile_enabled === 'true' &&
-        !!config.turnstile_site_key.trim() &&
-        !!config.turnstile_secret_key.trim();
-
     return {
         siteTitle: config.site_title,
         registrationEnabled: config.registration_enabled === 'true',
         recentUsersCount: Number(config.home_recent_users_count),
-        turnstileEnabled,
-        turnstileSiteKey: turnstileEnabled ? config.turnstile_site_key : '',
+        capEnabled: config.cap_enabled === 'true',
         codeforcesLoginEnabled:
             !!config.codeforces_client_id.trim() && !!config.codeforces_client_secret.trim(),
         githubLoginEnabled:

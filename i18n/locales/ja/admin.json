@@ -42,8 +42,8 @@
                 "siteText": "名前、登録、一覧表示の設定。",
                 "smtp": "メール送信",
                 "smtpText": "確認、パスワード再設定、ログインコードのメールに使う SMTP サーバー。",
-                "turnstile": "Cloudflare Turnstile",
-                "turnstileText": "登録とログイン時の CAPTCHA。"
+                "cap": "Cap CAPTCHA",
+                "capText": "登録とログインに使うセルフホスト型 Proof-of-Work CAPTCHA。"
             },
             "fields": {
                 "siteTitle": "サイト名",
@@ -59,10 +59,8 @@
                 "smtpPass": "パスワード",
                 "smtpFrom": "送信元アドレス",
                 "smtpFromHint": "例：CP OAuth <no-reply{'@'}example.com>",
-                "turnstileEnabled": "Turnstile を必須にする",
-                "turnstileHint": "有効にする前に両方のキーを設定してください。",
-                "siteKey": "サイトキー",
-                "secretKey": "シークレットキー",
+                "capEnabled": "Cap を必須にする",
+                "capHint": "このサーバーと Redis で動作するため、外部キーは不要です。",
                 "clientId": "クライアント ID",
                 "clientSecret": "クライアントシークレット"
             }

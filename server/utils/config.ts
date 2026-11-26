@@ -45,9 +45,7 @@ export const CONFIG_REGISTRY = {
     smtp_user: { default: '', schema: stringSchema, secret: false },
     smtp_pass: { default: '', schema: stringSchema, secret: true },
     smtp_from: { default: 'noreply@example.com', schema: stringSchema, secret: false },
-    turnstile_enabled: { default: 'false', schema: booleanSchema, secret: false },
-    turnstile_site_key: { default: '', schema: stringSchema, secret: false },
-    turnstile_secret_key: { default: '', schema: stringSchema, secret: true },
+    cap_enabled: { default: 'false', schema: booleanSchema, secret: false },
     codeforces_client_id: { default: '', schema: stringSchema, secret: false },
     codeforces_client_secret: { default: '', schema: stringSchema, secret: true },
     github_client_id: { default: '', schema: stringSchema, secret: false },
@@ -178,23 +176,6 @@ export async function updateConfig(
         }
         for (const key of patch.clearSecrets ?? []) changes.set(key, '');
         for (const [key, value] of changes) values[key] = value;
-
-        if (
-            values.turnstile_enabled === 'true' &&
-            (!values.turnstile_site_key.trim() || !values.turnstile_secret_key.trim())
-        ) {
-            throw createError({
-                statusCode: 400,
-                message: 'Turnstile requires both site and secret keys',
-                data: {
-                    code: 'VALIDATION_ERROR',
-                    fields: {
-                        'values.turnstile_enabled':
-                            'Configure both Turnstile keys before enabling it'
-                    }
-                }
-            });
-        }
 
         let encryptionKey: Uint8Array | undefined;
         for (const [key, plaintext] of changes) {

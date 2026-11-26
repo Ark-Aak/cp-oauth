@@ -42,7 +42,7 @@
                         :disabled="!hydrated || busy"
                     />
                 </AuthField>
-                <CpTurnstile ref="luoguTurnstile" v-model="luoguToken" action="luogu_challenge" />
+                <CpCap ref="luoguCap" v-model="luoguToken" action="luogu_challenge" />
                 <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
                 <div class="login-form__actions">
                     <el-button :disabled="busy" @click="leaveLuogu">{{
@@ -56,7 +56,7 @@
                             !hydrated ||
                             !luoguUid.trim() ||
                             luoguUidInvalid ||
-                            (config.turnstileEnabled && !luoguToken)
+                            (config.capEnabled && !luoguToken)
                         "
                     >
                         {{ t('auth.luogu.getCode') }}
@@ -93,7 +93,7 @@
                     />
                 </template>
             </AuthField>
-            <CpTurnstile ref="loginTurnstile" v-model="loginToken" action="login" />
+            <CpCap ref="loginCap" v-model="loginToken" action="login" />
             <CpNote v-if="error" tone="danger">{{ error }}</CpNote>
             <el-button
                 class="login-form__submit"
@@ -101,10 +101,7 @@
                 native-type="submit"
                 :loading="busy"
                 :disabled="
-                    !hydrated ||
-                    !email.trim() ||
-                    !password ||
-                    (config.turnstileEnabled && !loginToken)
+                    !hydrated || !email.trim() || !password || (config.capEnabled && !loginToken)
                 "
             >
                 {{ t('common.actions.signIn') }}
@@ -126,9 +123,9 @@
                 <AuthProviders
                     mode="login"
                     :redirect="redirect"
-                    :turnstile-token="loginToken"
+                    :cap-token="loginToken"
                     :disabled="busy"
-                    @used="resetLoginTurnstile"
+                    @used="resetLoginCap"
                 />
                 <el-button class="login-alternatives__button" :disabled="busy" @click="enterLuogu">
                     <CpPlatformMark platform="luogu" :label="false" />
@@ -217,10 +214,10 @@ async function finish(result: AuthResult) {
 const email = ref('');
 const password = ref('');
 const loginToken = ref('');
-const loginTurnstile = ref<{ reset: () => void } | null>(null);
+const loginCap = ref<{ reset: () => void } | null>(null);
 
-function resetLoginTurnstile() {
-    loginTurnstile.value?.reset();
+function resetLoginCap() {
+    loginCap.value?.reset();
 }
 
 async function submitPassword() {
@@ -235,7 +232,7 @@ async function submitPassword() {
                     email: email.value.trim(),
                     password: password.value,
                     redirect: redirect.value,
-                    turnstileToken: loginToken.value || undefined
+                    capToken: loginToken.value || undefined
                 }
             })
         );
@@ -244,7 +241,7 @@ async function submitPassword() {
         password.value = '';
     } finally {
         busy.value = false;
-        resetLoginTurnstile();
+        resetLoginCap();
     }
 }
 
@@ -286,7 +283,7 @@ async function signInWithPasskey() {
 /* Luogu clipboard */
 const luoguUid = ref('');
 const luoguToken = ref('');
-const luoguTurnstile = ref<{ reset: () => void } | null>(null);
+const luoguCap = ref<{ reset: () => void } | null>(null);
 const luoguChallenge = ref<{ requestId: string; code: string; expiresIn: number } | null>(null);
 const luoguUidInvalid = computed(
     () => luoguUid.value.trim() !== '' && !/^\d{1,20}$/.test(luoguUid.value.trim())
@@ -314,7 +311,7 @@ async function requestLuogu() {
                 body: {
                     luoguUid: luoguUid.value.trim(),
                     redirect: redirect.value,
-                    turnstileToken: luoguToken.value || undefined
+                    capToken: luoguToken.value || undefined
                 }
             }
         );
@@ -322,7 +319,7 @@ async function requestLuogu() {
         error.value = describe(cause);
     } finally {
         busy.value = false;
-        luoguTurnstile.value?.reset();
+        luoguCap.value?.reset();
     }
 }
 

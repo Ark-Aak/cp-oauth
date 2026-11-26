@@ -42,8 +42,8 @@
                 "siteText": "Name, registration and listing settings.",
                 "smtp": "Email delivery",
                 "smtpText": "SMTP server for verification, reset and sign-in code emails.",
-                "turnstile": "Cloudflare Turnstile",
-                "turnstileText": "CAPTCHA for registration and sign-in."
+                "cap": "Cap CAPTCHA",
+                "capText": "Self-hosted proof-of-work CAPTCHA for registration and sign-in."
             },
             "fields": {
                 "siteTitle": "Site title",
@@ -59,10 +59,8 @@
                 "smtpPass": "Password",
                 "smtpFrom": "From address",
                 "smtpFromHint": "For example: CP OAuth <no-reply{'@'}example.com>",
-                "turnstileEnabled": "Require Turnstile",
-                "turnstileHint": "Both keys must be set before turning this on.",
-                "siteKey": "Site key",
-                "secretKey": "Secret key",
+                "capEnabled": "Require Cap",
+                "capHint": "Runs in this server with Redis; no external keys are required.",
                 "clientId": "Client ID",
                 "clientSecret": "Client secret"
             }
